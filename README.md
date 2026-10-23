@@ -4,4 +4,4 @@ A free ebook library and auto-scrolling reader that runs in your browser. It ope
 
 Books and reading positions are stored only in each reader's own browser. Nothing is uploaded to this site.
 
-To show donation links, edit `18QjUhwZLywKEawEt5MKWVz5Gmzkb3zBjm`.
+Support Velvet Scroll. bitcoin: `18QjUhwZLywKEawEt5MKWVz5Gmzkb3zBjm`.
