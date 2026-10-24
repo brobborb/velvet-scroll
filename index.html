@@ -109,6 +109,13 @@ main.wrap{padding-block:20px 48px;display:flex;flex-direction:column;gap:16px}
 .dfields{display:flex;flex-direction:column;gap:12px;min-width:0}
 .dfields label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);font-weight:700}
 .dfields input{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--bg);color:var(--fg);font-size:15px;font-weight:400;min-width:0}
+.cadd{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.urlrow{display:flex;gap:6px;flex:1 1 260px;min-width:0}
+.urlrow input{flex:1;min-width:0;border:1px solid var(--line);border-radius:999px;padding:8px 14px;background:var(--bg);color:var(--fg);font-size:14px}
+.dcover canvas,.ctile .th canvas{width:100%;height:100%;display:block}
+.dcover canvas.drag{cursor:grab;touch-action:none}
+.dcover canvas.drag:active{cursor:grabbing}
+.dcover.dropping{outline:3px dashed var(--accent);outline-offset:3px}
 .covers{display:grid;grid-template-columns:repeat(auto-fill,minmax(82px,1fr));gap:10px}
 .ctile{border:2px solid transparent;border-radius:8px;padding:4px;background:none;cursor:pointer;display:flex;flex-direction:column;gap:4px;font-size:11px;line-height:1.25;color:var(--muted);min-width:0}
 .ctile:hover{border-color:var(--line)}
@@ -182,9 +189,35 @@ body.dragging .drop{display:grid}
 .page.pdfmode{max-width:none}
 .pdfpg{width:var(--pgw,90%);max-width:100%;margin:0 auto 16px;background:#fff;box-shadow:0 1px 3px rgb(0 0 0 / .25);position:relative}
 .pdfpg canvas{display:block;width:100%;height:100%}
+.comicpg{background:color-mix(in srgb,var(--rfg) 6%,transparent);box-shadow:none;margin-bottom:10px}
+.comicpg img{display:block;width:100%;height:100%;margin:0;max-width:none}
+.pdfpages.strip .comicpg{margin-bottom:0}
+.page p.verse{padding-left:1.2em}
+.page .gap{height:1em}
+.page .fb-poem{margin:1em 0 1em 1.5em}
+.page .fb-stanza{margin-bottom:.8em}
+.page .fb-epigraph{margin:1em 0 1.5em auto;max-width:80%;font-style:italic;border-left:0}
+.page .fb-text-author{text-align:right;font-style:italic}
+.page a.note{font-size:.7em;vertical-align:super;line-height:0}
 .page.tint-light .pdfpg,.page.tint-dark .pdfpg{background:var(--rbg);box-shadow:0 0 0 1px color-mix(in srgb,var(--rfg) 15%,transparent)}
 .page.tint-light .pdfpg canvas{mix-blend-mode:multiply}
 .page.tint-dark .pdfpg canvas{filter:invert(1) hue-rotate(180deg);mix-blend-mode:screen}
+.tool.solo{border:1px solid color-mix(in srgb,var(--rfg) 22%,transparent)}
+.lens{position:absolute;z-index:3;left:0;top:0;pointer-events:none;--rim:16px}
+@media (pointer:coarse){ .lens{--rim:26px} }
+.lens-view{position:absolute;inset:var(--rim);overflow:hidden;background:var(--rbg);border-radius:var(--lr)}
+.lens-content{position:absolute;left:0;top:0;transform-origin:0 0;margin:0!important;padding:0!important;max-width:none!important;pointer-events:none}
+.lens-content > *{position:absolute;margin:0!important;box-sizing:border-box}
+.lens-bezel{position:absolute;inset:0;border-radius:var(--lo);border:var(--rim) solid color-mix(in srgb,var(--rbg) 55%,var(--rfg));box-shadow:0 10px 34px rgb(0 0 0 / .35),inset 0 0 0 1px rgb(255 255 255 / .18);pointer-events:none}
+.lens-bezel::after{content:"";position:absolute;inset:calc(var(--rim) * -1 + 3px);border-radius:inherit;border:1px dashed color-mix(in srgb,var(--rbg) 70%,transparent);opacity:.6}
+.lens-ring{position:absolute;inset:0;pointer-events:auto;cursor:grab;touch-action:none}
+.lens.dragging .lens-ring{cursor:grabbing}
+.lens-size{position:absolute;width:calc(var(--rim) + 10px);height:calc(var(--rim) + 10px);border-radius:50%;background:var(--rguide);box-shadow:0 1px 4px rgb(0 0 0 / .4);pointer-events:auto;cursor:nwse-resize;touch-action:none;transform:translate(-50%,-50%)}
+.lens-bar{position:absolute;left:50%;top:100%;transform:translate(-50%,8px);display:flex;gap:2px;align-items:center;padding:3px;border-radius:999px;background:color-mix(in srgb,var(--rbg) 92%,var(--rfg));border:1px solid color-mix(in srgb,var(--rfg) 20%,transparent);box-shadow:0 4px 14px rgb(0 0 0 / .25);pointer-events:auto;white-space:nowrap;font-family:var(--f-ui)}
+.lens-bar button{min-width:34px;height:32px;border:0;border-radius:999px;background:transparent;color:var(--rfg);font-weight:700;font-size:16px;cursor:pointer;padding:0 8px}
+.lens-bar button:hover{background:color-mix(in srgb,var(--rfg) 10%,transparent)}
+.lens-bar output{min-width:3.2em;text-align:center;font-size:13px;font-variant-numeric:tabular-nums;color:var(--rfg)}
+.lens.flip .lens-bar{top:auto;bottom:100%;transform:translate(-50%,-8px)}
 .toolseg{display:flex;flex:none;gap:2px;padding:2px;border-radius:999px;border:1px solid color-mix(in srgb,var(--rfg) 22%,transparent)}
 .tool{width:38px;height:38px;flex:none;border-radius:50%;border:1px solid transparent;background:transparent;color:var(--rfg);display:grid;place-items:center;cursor:pointer}
 .tool svg{width:20px;height:20px}
@@ -270,7 +303,7 @@ kbd{font-family:var(--f-ui);font-size:12px;border:1px solid var(--line);border-b
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
       Add books
     </label>
-    <input type="file" id="file" accept=".epub,.mobi,.azw3,.azw,.prc,.pdf,application/epub+zip,application/x-mobipocket-ebook,application/pdf" multiple hidden>
+    <input type="file" id="file" accept=".epub,.kepub,.mobi,.azw3,.azw,.prc,.pdf,.txt,.htm,.html,.xhtml,.fb2,.fbz,.cbz,.zip,application/epub+zip,application/x-mobipocket-ebook,application/pdf,text/plain,text/html,application/x-cbz,application/zip" multiple hidden>
     </div>
   </div>
 </header>
@@ -289,7 +322,7 @@ kbd{font-family:var(--f-ui);font-size:12px;border:1px solid var(--line);border-b
   <div id="chips" class="chips" role="group" aria-label="Filter"></div>
   <div id="notice" class="notice" hidden></div>
   <section id="grid" class="grid" aria-label="Books"></section>
-  <p class="foot"><a class="plink" href="https://velvetscroll.net/privacy.html" target="_blank" rel="noopener">Privacy</a> · Books stay in this browser on this device; nothing is uploaded. Opens EPUB, MOBI, AZW3 and PDF files. Drag them anywhere on the page to add them. DRM-protected and password-locked books, including Kindle store purchases, can't be opened.</p>
+  <p class="foot"><a class="plink" href="https://velvetscroll.net/privacy.html" target="_blank" rel="noopener">Privacy</a> · Books stay in this browser on this device; nothing is uploaded. Opens EPUB, KEPUB, MOBI, AZW3, PDF, TXT, HTML, FB2 and CBZ comic files, including zipped ones. Drag them anywhere on the page to add them. DRM-protected and password-locked books, including Kindle store purchases, can't be opened.</p>
   <section id="donate" class="donate" hidden aria-labelledby="donH">
     <div class="don-text"><h2 id="donH">Support Velvet Scroll</h2><p>Velvet Scroll is free. If you enjoy it, you can help keep it going.</p></div>
     <div class="don-ways">
@@ -319,6 +352,17 @@ kbd{font-family:var(--f-ui);font-size:12px;border:1px solid var(--line);border-b
   <div class="r-stage" id="stage">
     <div id="scroller" class="scroller" tabindex="-1"><article id="page" class="page"></article></div>
     <div id="guide" class="guide band"></div>
+    <div id="lens" class="lens circle" hidden>
+      <div class="lens-view"><div class="lens-content page" aria-hidden="true"></div></div>
+      <div class="lens-bezel"></div>
+      <div class="lens-ring" title="Drag the rim to move the magnifier" aria-hidden="true"></div>
+      <div class="lens-size" title="Drag to resize" aria-hidden="true"></div>
+      <div class="lens-bar" role="group" aria-label="Magnifier">
+        <button id="lzOut" aria-label="Less magnification">−</button><output id="lzVal"></output><button id="lzIn" aria-label="More magnification">+</button>
+        <button id="lShape" aria-label="Switch magnifier shape"></button>
+        <button id="lClose" aria-label="Close magnifier">✕</button>
+      </div>
+    </div>
     <div id="loading" class="loading" hidden>Opening book…</div>
   </div>
   <div class="r-bottom chrome">
@@ -326,6 +370,7 @@ kbd{font-family:var(--f-ui);font-size:12px;border:1px solid var(--line);border-b
       <svg id="icPlay" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg>
       <svg id="icPause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" hidden><rect x="5.5" y="4" width="4.5" height="16" rx="1"/><rect x="14" y="4" width="4.5" height="16" rx="1"/></svg>
     </button>
+    <button id="magBtn" class="tool solo" aria-pressed="false" aria-label="Magnifier" title="Magnifier (M)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21M8 10.5h5M10.5 8v5"/></svg></button>
     <div class="toolseg" role="group" aria-label="Pointer">
       <button id="toolArrow" class="tool" aria-pressed="true" aria-label="Pointer: select text" title="Pointer: select text (H to switch)">
       <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 3.5v15.2l4.1-3.9 2.7 6.1 2.6-1.1-2.7-6h5.7z"/></svg>
@@ -384,6 +429,14 @@ kbd{font-family:var(--f-ui);font-size:12px;border:1px solid var(--line);border-b
     </div>
 
     <div class="grp">
+      <span class="lbl">Magnifier</span>
+      <div class="seg" id="lensShapes" role="group" aria-label="Magnifier shape"><button data-v="circle">Circle</button><button data-v="rect">Rectangle</button></div>
+      <div class="field"><label for="sLensSize">Size</label><input type="range" id="sLensSize" min="120" max="480" step="10"><output id="oLensSize"></output></div>
+      <div class="field"><label for="sLensZoom">Magnification</label><input type="range" id="sLensZoom" min="1.25" max="5" step="0.25"><output id="oLensZoom"></output></div>
+      <p class="hint">Turn it on with the magnifier button or the M key. Drag its rim to move it, or the dot on the rim to resize it.</p>
+    </div>
+
+    <div class="grp">
       <span class="lbl">Motion</span>
       <label class="check"><input type="checkbox" id="sSmooth"> Smooth motion</label>
       <p class="hint">Moves the text in fractions of a pixel so it glides instead of stepping. Turn it off if text looks slightly soft while it scrolls.</p>
@@ -397,10 +450,10 @@ kbd{font-family:var(--f-ui);font-size:12px;border:1px solid var(--line);border-b
     </div>
 
     <div class="grp" id="pdfGroup" hidden>
-      <span class="lbl">PDF pages</span>
+      <span class="lbl" id="pgLbl">PDF pages</span>
       <div class="field"><label for="sPgw">Page width</label><input type="range" id="sPgw" min="30" max="100" step="1"><output id="oPgw"></output></div>
-      <label class="check"><input type="checkbox" id="sTint"> Tint pages to match the colours above</label>
-      <p class="hint">Text size, typeface and spacing apply when the PDF is shown as reflowed text.</p>
+      <label class="check" id="tintRow"><input type="checkbox" id="sTint"> Tint pages to match the colours above</label>
+      <p class="hint" id="pgHint">Text size, typeface and spacing apply when the PDF is shown as reflowed text.</p>
     </div>
 
     <div class="grp">
@@ -410,6 +463,7 @@ kbd{font-family:var(--f-ui);font-size:12px;border:1px solid var(--line);border-b
         <kbd>↑</kbd> <kbd>↓</kbd> faster / slower<br>
         <kbd>[</kbd> <kbd>]</kbd> smaller / larger text<br>
         <kbd>H</kbd> switch between pointer and hand tool<br>
+        <kbd>M</kbd> magnifier on / off<br>
         <kbd>Esc</kbd> close panel, then back to library
       </div>
     </div>
@@ -430,6 +484,15 @@ kbd{font-family:var(--f-ui);font-size:12px;border:1px solid var(--line);border-b
     <div class="grp">
       <span class="lbl">Cover</span>
       <div class="covers" id="dCovers" role="group" aria-label="Choose a cover"></div>
+      <div class="cadd">
+        <label class="btn" for="dImg">Upload image</label><input type="file" id="dImg" accept="image/*" hidden>
+        <div class="urlrow" id="dUrlRow"><input id="dUrl" type="url" inputmode="url" placeholder="Or paste an image’s web address" aria-label="Cover image web address" autocomplete="off"><button class="btn" id="dUrlGo">Use</button></div>
+      </div>
+      <div id="dFit" hidden>
+        <div class="seg" role="group" aria-label="How the image fits the cover"><button data-m="fill">Fill the cover</button><button data-m="fit">Show the whole image</button></div>
+        <p class="hint" id="dFitHint">Drag the large preview to choose which part of the image shows.</p>
+      </div>
+      <p class="hint" id="dCoverHint">Images are shaped to a 2:3 book cover automatically. You can also paste an image, or drop one onto the large preview.</p>
     </div>
     <div class="grp">
       <span class="lbl">Public databases</span>
@@ -646,13 +709,14 @@ async function renderEpub(ep, page){
   const frag = document.createDocumentFragment();
   for(let i=0;i<ep.spine.length;i++){
     const m = ep.spine[i]; const f = getFile(ep.zip, m.href); if(!f) continue;
-    const d = parseDoc(await f.async('string'));
+    const d = parseDoc(decodeText(await f.async('uint8array')));
     const body = d.body || d.getElementsByTagName('body')[0]; if(!body) continue;
     scrub(body);
     for(const e of body.querySelectorAll('[id]')) e.setAttribute('id', `sec${i}-${e.getAttribute('id')}`);
     for(const img of body.querySelectorAll('img')){
       const src = img.getAttribute('src') || ''; img.removeAttribute('src');
-      if(src && !/^(https?|blob):/i.test(src)){ const u = await blobUrl(resolvePath(m.href, src)); if(u) img.setAttribute('src', u); }
+      if(/^data:image\/(png|jpe?g|gif|webp);/i.test(src)) img.setAttribute('src', src);
+      else if(src && !/^(https?|blob|data):/i.test(src)){ const u = await blobUrl(resolvePath(m.href, src)); if(u) img.setAttribute('src', u); }
       if(!img.getAttribute('alt')) img.setAttribute('alt','');
     }
     for(const im of body.querySelectorAll('image')){
@@ -1177,7 +1241,7 @@ const LOOKUP = (() => {
     }
     return {title:'', author:''};
   }
-  const weakTitle = (t, fileName) => !t || /^(unknown|untitled|document|book|ebook)$/i.test(t.trim()) || /[_]|\.(epub|mobi|azw3?|pdf|docx?)$/i.test(t) || /^[\d\s\-_.]+$/.test(t) || (!/\s/.test(t.trim()) && /\d/.test(t) && /[-_.]/.test(t)) || (fileName && normTitle(t) === normTitle(fileName.replace(/\.[^.]+$/,'')) && /[_\-\d]/.test(fileName));
+  const weakTitle = (t, fileName) => !t || /^(unknown|untitled|document|book|ebook)$/i.test(t.trim()) || /[_]|\.(epub|mobi|azw3?|pdf|docx?|txt|x?html?|fb2|fbz|cbz|kepub|zip)$/i.test(t) || /^[\d\s\-_.]+$/.test(t) || (!/\s/.test(t.trim()) && /\d/.test(t) && /[-_.]/.test(t)) || (fileName && normTitle(t) === normTitle(fileName.replace(/\.[^.]+$/,'')) && /[_\-\d]/.test(fileName));
 
   async function getJSON(url, signal){ const r = await fetch(url, {signal, credentials:'omit'}); if(!r.ok) throw new Error('http '+r.status); return r.json(); }
   async function openLibrary(q, signal){
@@ -1262,6 +1326,11 @@ async function openingTextOf(buf){
       try{ let t = ''; for(let i=1;i<=Math.min(3, pdf.numPages);i++){ const tc = await (await pdf.getPage(i)).getTextContent(); t += tc.items.map(x => (x.str||'') + (x.hasEOL ? '\n' : '')).join('') + '\n'; } return t; }
       finally{ pdf.destroy(); }
     }
+    const sn = await sniff(buf).catch(() => ({kind:'none'}));
+    if(sn.kind === 'txt') return decodeText(await bytesOf(sn, buf)).slice(0, 20000);
+    if(sn.kind === 'fb2') return fb2Doc(await bytesOf(sn, buf)).getElementsByTagNameNS('*','body')[0]?.textContent.slice(0, 20000) || '';
+    if(sn.kind === 'cbz') return '';
+    if(sn.kind === 'html' || sn.kind === 'htmlzip'){ const ep = htmlBook(sn, buf), f = getFile(ep.zip, ep.spine[0].href); return f ? blockText(new DOMParser().parseFromString(decodeText(await f.async('uint8array')), 'text/html').body).slice(0, 20000) : ''; }
     if(MOBI.isMobi(u8)){ const c = MOBI.content(MOBI.open(buf)); return blockText(new DOMParser().parseFromString(c.sections.join('').slice(0, 80000), 'text/html').body); }
     const ep = await openEpub(buf); let t = '';
     for(const m of ep.spine.slice(0, 5)){ const f = getFile(ep.zip, m.href); if(f){ const d = parseDoc(await f.async('string')); t += blockText(d.body || d.documentElement) + '\n'; } if(t.length > 20000) break; }
@@ -1324,16 +1393,108 @@ $('#find').onclick = async () => {
 let dlg = null;
 function coverImg(buf, type){ const u = URL.createObjectURL(new Blob([buf], {type:type || 'image/jpeg'})); coverUrls.push(u); return el('img', {src:u, alt:''}); }
 function dlgPreview(){ return {title: $('#dTitle').value.trim() || dlg.b.title, author: $('#dAuthor').value.trim(), year: parseInt($('#dYear').value,10) || null}; }
+/* ---------- Your own cover image: upload, web address, paste or drop; shaped to 2:3 ---------- */
+const COVER_W = 600, COVER_H = 900, IN_CLAUDE = !!(window.claude && typeof window.claude.use === 'function');
+async function decodeImage(blob){
+  if(!blob || blob.size > 30e6) throw new Error(blob ? 'big' : 'format');
+  try{ return await createImageBitmap(blob, {imageOrientation:'from-image'}); }catch(e){}
+  const u = URL.createObjectURL(blob);
+  try{ const im = new Image(); im.src = u; await im.decode(); return im; } catch(e){ throw new Error('format'); } finally{ setTimeout(() => URL.revokeObjectURL(u), 1000); }
+}
+const imgW = s => s.naturalWidth || s.width, imgH = s => s.naturalHeight || s.height;
+// fill = crop to the cover shape (fx, fy choose the visible part, 0..1); fit = whole image on a blurred backdrop
+function drawCustom(ctx, W, H, c){
+  const src = c.src, iw = imgW(src), ih = imgH(src);
+  ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+  const fillS = Math.max(W/iw, H/ih), fw = iw*fillS, fh = ih*fillS;
+  if(c.mode === 'fill'){ ctx.drawImage(src, (W-fw)*c.fx, (H-fh)*c.fy, fw, fh); return; }
+  ctx.save();
+  if('filter' in ctx){ ctx.filter = `blur(${Math.round(W/22)}px) brightness(0.62)`; ctx.drawImage(src, (W-fw*1.1)/2, (H-fh*1.1)/2, fw*1.1, fh*1.1); }
+  else { ctx.fillStyle = '#222'; ctx.fillRect(0,0,W,H); }
+  ctx.restore();
+  const s = Math.min(W/iw, H/ih), dw = iw*s, dh = ih*s;
+  ctx.drawImage(src, (W-dw)/2, (H-dh)/2, dw, dh);
+}
+function customCanvas(w, h){ const cv = document.createElement('canvas'), d = Math.min(2, devicePixelRatio || 1); cv.width = Math.round(w*d); cv.height = Math.round(h*d); drawCustom(cv.getContext('2d'), cv.width, cv.height, dlg.custom); return cv; }
+function setCustom(src){
+  const a = imgW(src) / imgH(src);
+  // close to book shape, or a tall image: crop to fill; a wide image (a photo or a scan of a spread): show it whole
+  dlg.custom = {src, mode: a > 0.95 ? 'fit' : 'fill', fx:0.5, fy: a < 0.6 ? 0.2 : 0.5};
+  dlg.choice = {kind:'custom'};
+  $('#dStatus').textContent = 'Your image is ready. Choose Save to use it as the cover.';
+  renderCoverChoices();
+}
+async function useImageBlob(blob){
+  try{ setCustom(await decodeImage(blob)); }
+  catch(e){ $('#dStatus').textContent = e.message === 'big' ? 'That image is too large. Choose one under 30 MB.' : 'That image couldn’t be read. Use a JPEG, PNG, WebP or GIF image.'; }
+}
+function wireCoverDrag(cv){
+  const c = dlg.custom; if(c.mode !== 'fill') return;
+  const iw = imgW(c.src), ih = imgH(c.src), W = cv.clientWidth, H = cv.clientHeight, s = Math.max(W/iw, H/ih), ox = iw*s - W, oy = ih*s - H;
+  if(ox < 1 && oy < 1) return;
+  cv.classList.add('drag'); let st = null;
+  cv.addEventListener('pointerdown', e => { st = {x:e.clientX, y:e.clientY, fx:c.fx, fy:c.fy}; cv.setPointerCapture(e.pointerId); e.preventDefault(); });
+  cv.addEventListener('pointermove', e => { if(!st) return;
+    if(ox >= 1) c.fx = Math.min(1, Math.max(0, st.fx - (e.clientX - st.x)/ox));
+    if(oy >= 1) c.fy = Math.min(1, Math.max(0, st.fy - (e.clientY - st.y)/oy));
+    const ctx = cv.getContext('2d'); ctx.clearRect(0,0,cv.width,cv.height); drawCustom(ctx, cv.width, cv.height, c); });
+  const end = () => { if(st){ st = null; renderCoverChoices(); } };
+  cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
+  cv.addEventListener('keydown', e => { const k = {ArrowLeft:[-.05,0], ArrowRight:[.05,0], ArrowUp:[0,-.05], ArrowDown:[0,.05]}[e.key]; if(!k) return; e.preventDefault();
+    c.fx = Math.min(1, Math.max(0, c.fx + k[0])); c.fy = Math.min(1, Math.max(0, c.fy + k[1])); renderCoverChoices(); $('#dCover canvas')?.focus(); });
+  cv.tabIndex = 0; cv.setAttribute('aria-label', 'Cover preview. Drag, or use the arrow keys, to choose which part of the image shows.');
+}
+$('#dImg').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if(f && dlg) useImageBlob(f); });
+$('#dFit').addEventListener('click', e => { const m = e.target.closest('[data-m]'); if(!m || !dlg || !dlg.custom) return; dlg.custom.mode = m.dataset.m; dlg.choice = {kind:'custom'}; renderCoverChoices(); });
+$('#dUrlGo').onclick = async () => {
+  if(!dlg) return;
+  const raw = $('#dUrl').value.trim(); let u;
+  try{ u = new URL(/^[a-z][a-z0-9+.-]*:/i.test(raw) ? raw : 'https://' + raw); }catch(e){ u = null; }
+  if(!u || /\s/.test(raw) || !/^https?:$/.test(u.protocol) || !(/\./.test(u.hostname) || u.hostname === 'localhost')){ $('#dStatus').textContent = 'Enter a web address starting with https://'; return; }
+  // the extension asks once for permission to read images from this site; this must be the first thing the click does
+  const asked = IS_EXT ? browser.permissions.request({origins:[u.origin + '/*']}).catch(() => false) : Promise.resolve(true);
+  const ok = await asked;
+  if(!ok){ $('#dStatus').textContent = 'Velvet Scroll needs your permission to load images from ' + u.hostname + '.'; return; }
+  $('#dStatus').textContent = 'Loading image…'; $('#dUrlGo').disabled = true;
+  try{
+    let blob = null;
+    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 10000);
+    try{ const r = await fetch(u.href, {credentials:'omit', signal:ctl.signal}); if(r.ok) blob = await r.blob(); }catch(e){}
+    clearTimeout(timer);
+    if(blob && !/^image\//.test(blob.type) && blob.type){ $('#dStatus').textContent = 'That address isn’t an image. Right-click the image (or press and hold on a phone) and copy the image address.'; return; }
+    if(blob && blob.size){ await useImageBlob(blob); return; }
+    // a site that doesn't allow other pages to fetch its files may still allow its images to be drawn
+    const im = new Image(); im.crossOrigin = 'anonymous'; im.referrerPolicy = 'no-referrer'; im.src = u.href;
+    try{ await Promise.race([im.decode(), new Promise((_, no) => setTimeout(() => no(new Error('slow')), 10000))]); const t = document.createElement('canvas'); t.width = t.height = 1; t.getContext('2d').drawImage(im, 0, 0); t.getContext('2d').getImageData(0,0,1,1); setCustom(im); }
+    catch(e){ $('#dStatus').textContent = 'That site doesn’t let other pages load its images. Save the image to your device, then use Upload image.'; }
+  } finally { $('#dUrlGo').disabled = false; }
+};
+$('#dUrl').addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); $('#dUrlGo').click(); } });
+document.addEventListener('paste', e => {
+  if(!dlg || $('#dlg').hidden) return;
+  const it = [...(e.clipboardData?.items || [])].find(i => i.kind === 'file' && /^image\//.test(i.type));
+  if(it){ e.preventDefault(); useImageBlob(it.getAsFile()); }
+});
+['dragenter','dragover'].forEach(t => $('#dCover').addEventListener(t, e => { e.preventDefault(); e.stopPropagation(); $('#dCover').classList.add('dropping'); }));
+$('#dCover').addEventListener('dragleave', () => $('#dCover').classList.remove('dropping'));
+$('#dCover').addEventListener('drop', e => { e.preventDefault(); e.stopPropagation(); $('#dCover').classList.remove('dropping');
+  const f = [...e.dataTransfer.files].find(f => /^image\//.test(f.type)); if(f) useImageBlob(f); else $('#dStatus').textContent = 'Drop an image file (JPEG, PNG, WebP or GIF).'; });
+
 function renderCoverChoices(){
   const b = dlg.b, tiles = [];
-  if(b.coverBuf) tiles.push({kind:'own', label: b.coverSrc==='online' || b.prevSrc==='online' ? 'Current cover' : (b.coverSrc==='page' || b.prevSrc==='page') ? 'First page' : 'Book’s own cover', node:() => coverImg(b.coverBuf, b.coverType)});
+  if(dlg.custom) tiles.push({kind:'custom', label:'Your image', node:() => customCanvas(84, 126)});
+  if(b.coverBuf) tiles.push({kind:'own', label: b.coverSrc==='custom' || b.prevSrc==='custom' ? 'Your cover' : b.coverSrc==='online' || b.prevSrc==='online' ? 'Current cover' : (b.coverSrc==='page' || b.prevSrc==='page') ? 'First page' : 'Book’s own cover', node:() => coverImg(b.coverBuf, b.coverType)});
   tiles.push({kind:'classic', label:'Classic leather', node:() => classicCover(dlgPreview())});
   for(const r of dlg.results) if(r.thumb) tiles.push({kind:'online', url:r.cover, thumb:r.thumb, label: r.source + (r.year ? ` · ${r.year}` : '') + (r.openCover ? '' : ' (copyright may apply)'), node:() => el('img', {src:r.thumb, alt:'', loading:'lazy', referrerpolicy:'no-referrer'})});
   const isSel = t => dlg.choice.kind === t.kind && (t.kind !== 'online' || dlg.choice.url === t.url);
   $('#dCovers').replaceChildren(...tiles.map(t => el('button', {class:'ctile', 'aria-pressed':String(isSel(t)), onclick:() => { dlg.choice = {kind:t.kind, url:t.url, thumb:t.thumb}; renderCoverChoices(); }},
     el('span', {class:'th', 'aria-hidden':'true'}, t.node()), el('span', {text:t.label}))));
   const sel = tiles.find(isSel) || tiles[0];
-  $('#dCover').replaceChildren(sel.kind === 'online' ? el('img', {src:sel.url, alt:'', referrerpolicy:'no-referrer'}) : sel.node());
+  if(sel.kind === 'custom'){ const box = $('#dCover'), w = box.clientWidth || 128, cv = customCanvas(w, w*1.5); box.replaceChildren(cv); wireCoverDrag(cv); }
+  else $('#dCover').replaceChildren(sel.kind === 'online' ? el('img', {src:sel.url, alt:'', referrerpolicy:'no-referrer'}) : sel.node());
+  const fit = $('#dFit'); fit.hidden = sel.kind !== 'custom';
+  if(dlg.custom){ fit.querySelectorAll('[data-m]').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.m === dlg.custom.mode)));
+    $('#dFitHint').hidden = dlg.custom.mode !== 'fill'; }
 }
 function renderResults(){
   $('#dResults').replaceChildren(...dlg.results.map(r => {
@@ -1356,8 +1517,9 @@ function popLayer(name){ const i = layers.lastIndexOf(name); if(i < 0){ closeLay
 addEventListener('popstate', e => { const d = e.state && e.state.bookroll ? e.state.depth : 0; while(layers.length > d) closeLayerNow(layers.pop()); });
 
 async function openDetails(b){
+  $('#dUrl').value = ''; $('#dUrlRow').hidden = IN_CLAUDE;
   pushLayer('details');
-  dlg = {b, results:[], choice: b.coverBuf && b.coverSrc !== 'classic' ? {kind:'own'} : {kind:'classic'}};
+  dlg = {b, results:[], custom:null, choice: b.coverBuf && b.coverSrc !== 'classic' ? {kind:'own'} : {kind:'classic'}};
   $('#dTitle').value = b.title; $('#dAuthor').value = b.author || ''; $('#dYear').value = b.year || '';
   $('#dResults').replaceChildren(); $('#dStatus').textContent = '';
   $('#dSearch').hidden = !IS_EXT;
@@ -1395,7 +1557,13 @@ $('#dSearch').onclick = async () => {
 };
 $('#dSave').onclick = async () => {
   if(!dlg) return; const b = dlg.b, ch = dlg.choice;
-  if(ch.kind === 'online'){
+  if(ch.kind === 'custom' && dlg.custom){
+    const cv = document.createElement('canvas'); cv.width = COVER_W; cv.height = COVER_H;
+    drawCustom(cv.getContext('2d'), COVER_W, COVER_H, dlg.custom);
+    const blob = await new Promise(r => cv.toBlob(r, 'image/jpeg', 0.88));
+    if(!blob){ $('#dStatus').textContent = 'Couldn’t prepare that image. Try another one.'; return; }
+    b.coverBuf = await blob.arrayBuffer(); b.coverType = 'image/jpeg'; b.coverSrc = 'custom'; b.prevSrc = undefined;
+  } else if(ch.kind === 'online'){
     $('#dStatus').textContent = 'Downloading cover…';
     const img = await fetchCover(ch.url) || (ch.thumb && await fetchCover(ch.thumb));
     if(!img){ $('#dStatus').textContent = 'Couldn’t download that cover. Choose another one.'; return; }
@@ -1535,7 +1703,7 @@ async function restore(zip){
     const local = books.find(b => b.id === m.id || (m.fp && b.fp === m.fp) || (b.title === m.title && (b.author||'') === (m.author||'')));
     if(local){
       if((m.upd || 0) > (local.upd || 0)){ for(const k of ['title','author','year','shelf','needsCheck','looked','upd']) if(k in m) local[k] = m[k]; }
-      if(m.hasCover && (!local.coverBuf || ((m.upd||0) > (local.upd||0) && m.coverSrc === 'online'))){ const c = zip.file('covers/' + m.id); if(c){ local.coverBuf = await c.async('arraybuffer'); local.coverType = m.coverType; local.coverSrc = m.coverSrc; } }
+      if(m.hasCover && (!local.coverBuf || ((m.upd||0) > (local.upd||0) && (m.coverSrc === 'online' || m.coverSrc === 'custom')))){ const c = zip.file('covers/' + m.id); if(c){ local.coverBuf = await c.async('arraybuffer'); local.coverType = m.coverType; local.coverSrc = m.coverSrc; } }
       if(m.coverSrc === 'classic' && (m.upd||0) > (local.upd||0)){ local.prevSrc = local.coverSrc; local.coverSrc = 'classic'; }
       if(!local.fp && m.fp) local.fp = m.fp;
       await dbPutMeta(local);
@@ -1610,8 +1778,198 @@ $('#syncOn').addEventListener('change', async e => {
   syncSettings(); await syncFlush();
 });
 
+/* ---------- More formats: TXT, HTML, FB2, KEPUB, CBZ comics and zipped books ---------- */
+const IMG_EXT = /\.(jpe?g|png|gif|webp|avif|bmp)$/i;
+const natural = new Intl.Collator(undefined, {numeric:true, sensitivity:'base'});
+function decodeText(u8, declared){
+  if(u8[0] === 0xEF && u8[1] === 0xBB && u8[2] === 0xBF) return new TextDecoder('utf-8').decode(u8.subarray(3));
+  if(u8[0] === 0xFF && u8[1] === 0xFE) return new TextDecoder('utf-16le').decode(u8.subarray(2));
+  if(u8[0] === 0xFE && u8[1] === 0xFF) return new TextDecoder('utf-16be').decode(u8.subarray(2));
+  if(!declared){ const head = new TextDecoder('latin1').decode(u8.subarray(0, 2048));
+    const m = /<\?xml[^>]*encoding=["']([\w-]+)["']/i.exec(head) || /<meta[^>]+charset=["']?([\w-]+)/i.exec(head); if(m) declared = m[1]; }
+  if(declared && !/^utf-?8$/i.test(declared)){ try{ return new TextDecoder(declared).decode(u8); }catch(e){} }
+  try{ return new TextDecoder('utf-8', {fatal:true}).decode(u8); }catch(e){ return new TextDecoder('windows-1252').decode(u8); }
+}
+// work out what a file is from its contents (and its name as a tie-breaker)
+async function sniff(buf, name){
+  const u8 = new Uint8Array(buf); name = name || '';
+  if(PDF.isPdf(u8)) return {kind:'pdf'};
+  if(MOBI.isMobi(u8)) return {kind:'mobi'};
+  if(u8[0] === 0x50 && u8[1] === 0x4B){
+    const zip = await JSZip.loadAsync(buf);
+    const files = Object.keys(zip.files).filter(p => !zip.files[p].dir && !/(^|\/)(__MACOSX|\.)/.test(p));
+    if(zip.file('mimetype') || zip.file('META-INF/container.xml')) return {kind:'epub'};
+    if(zip.file('library.json')) throw new Error('backup');
+    const fb2 = files.find(p => /\.fb2$/i.test(p)); if(fb2) return {kind:'fb2', zip, path:fb2};
+    const html = files.filter(p => /\.(x?html?)$/i.test(p)).sort(natural.compare);
+    if(html.length) return {kind:'htmlzip', zip, paths:html};
+    const imgs = files.filter(p => IMG_EXT.test(p)).sort(natural.compare);
+    if(imgs.length) return {kind:'cbz', zip, paths:imgs};
+    const txt = files.find(p => /\.txt$/i.test(p)); if(txt) return {kind:'txt', zip, path:txt};
+    throw new Error('invalid');
+  }
+  const head = decodeText(u8.subarray(0, 4096));
+  if(/<FictionBook[\s>]/.test(head)) return {kind:'fb2'};
+  if(/<!doctype html|<html[\s>]|<body[\s>]/i.test(head) || /\.(x?html?)$/i.test(name)) return {kind:'html'};
+  // plain text: mostly printable characters
+  let bad = 0; for(let i=0;i<Math.min(u8.length, 4096);i++){ const c = u8[i]; if(c < 9 || (c > 13 && c < 32)) bad++; }
+  if(bad < 8) return {kind:'txt'};
+  throw new Error('invalid');
+}
+async function bytesOf(s, buf){ return s.zip ? await s.zip.file(s.path).async('uint8array') : new Uint8Array(buf); }
+
+/* plain text → paragraphs, verse and chapter headings */
+const HEAD_RE = /^(chapter|book|part|section|prologue|epilogue|introduction|preface|foreword|afterword|act|scene|canto|letter|volume|appendix|stave)\b[\w\s.:,'’-]{0,60}$|^([ivxlcdm]+|\d{1,3})\.?$/i;
+function txtToHtml(text){
+  text = text.replace(/\r\n?/g, '\n').replace(/\t/g, '    ');
+  const esc = s => s.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+  let blocks = text.split(/\n[ \t]*\n+/);
+  const lines = text.split('\n').filter(l => l.trim()), long = lines.filter(l => l.length > 180).length;
+  if(blocks.length < lines.length / 6 && long > lines.length / 4) blocks = lines;   // one paragraph per line
+  let out = '', heads = 0;
+  for(const raw of blocks){
+    const ls = raw.split('\n').filter(l => l.trim()); if(!ls.length) continue;
+    const one = ls.length === 1 ? ls[0].trim() : null;
+    if(one && one.length <= 80 && !/^[*=#~-]{3}/.test(one) && (HEAD_RE.test(one) || (/[A-Z]/.test(one) && one === one.toUpperCase() && one.length >= 3 && !/[.,;]$/.test(one) && /[A-Z]{3}/.test(one)))){
+      out += `<h2 id="t${heads++}">${esc(one)}</h2>\n`; continue;
+    }
+    const short = ls.filter(l => l.trim().length < 50).length, indented = ls.filter(l => /^ {4,}/.test(l)).length;
+    if(ls.length > 1 && ls.filter(l => l.trim().length > 100).length / ls.length > 0.5){ out += ls.map(l => `<p>${esc(l.trim())}</p>`).join('\n') + '\n'; continue; }
+    if(ls.length > 1 && (short / ls.length > 0.6 || indented / ls.length > 0.6)) out += `<p class="verse">${ls.map(l => esc(l.trim())).join('<br>')}</p>\n`;
+    else out += `<p>${esc(ls.map(l => l.trim()).join(' '))}</p>\n`;
+  }
+  return out;
+}
+
+/* FictionBook (FB2) → reading page */
+function fb2Doc(u8){ const d = new DOMParser().parseFromString(decodeText(u8), 'application/xml'); if(d.getElementsByTagName('parsererror').length) throw new Error('invalid'); return d; }
+const kids = (n, name) => [...n.children].filter(c => c.localName === name);
+const kid = (n, name) => kids(n, name)[0];
+const XL = 'http://www.w3.org/1999/xlink';
+const fbHref = n => (n.getAttributeNS(XL, 'href') || n.getAttribute('l:href') || n.getAttribute('xlink:href') || n.getAttribute('href') || '').replace(/^#/, '');
+function fb2Meta(doc){
+  const ti = doc.getElementsByTagNameNS('*', 'title-info')[0]; if(!ti) return {};
+  const authors = kids(ti, 'author').map(a => ['first-name','middle-name','last-name'].map(k => kid(a,k)?.textContent.trim()).filter(Boolean).join(' ') || kid(a,'nickname')?.textContent.trim() || '').filter(Boolean);
+  const date = kid(ti, 'date'), y = parseInt((date && (date.getAttribute('value') || date.textContent)) || '', 10);
+  const cp = kid(ti, 'coverpage'), im = cp && kid(cp, 'image');
+  return {title: kid(ti, 'book-title')?.textContent.trim() || '', author: authors.slice(0,3).join(' & '), year: y > 0 && y < 3000 ? y : null, coverId: im ? fbHref(im) : null};
+}
+function fb2Binary(doc, id){
+  const b = [...doc.getElementsByTagNameNS('*', 'binary')].find(x => x.getAttribute('id') === id); if(!b) return null;
+  try{ const s = atob(b.textContent.replace(/\s+/g, '')), u = new Uint8Array(s.length); for(let i=0;i<s.length;i++) u[i] = s.charCodeAt(i);
+    return {data:u, type:b.getAttribute('content-type') || 'image/jpeg'}; }catch(e){ return null; }
+}
+function renderFb2(doc, page){
+  const urls = [], cache = {}, toc = []; let fbSeq = 0, inNotes = false;
+  const img = id => { if(!(id in cache)){ const b = fb2Binary(doc, id); cache[id] = b ? URL.createObjectURL(new Blob([b.data], {type:b.type})) : null; if(cache[id]) urls.push(cache[id]); } return cache[id]; };
+  const MAP = {emphasis:'em', strong:'strong', strikethrough:'s', sub:'sub', sup:'sup', code:'code', cite:'blockquote', epigraph:'blockquote', table:'table', tr:'tr', td:'td', th:'th', 'text-author':'p', subtitle:'h4', poem:'div', stanza:'div', v:'div'};
+  function conv(n, depth, secIdx){
+    if(n.nodeType === 3) return document.createTextNode(n.nodeValue);
+    if(n.nodeType !== 1) return null;
+    const t = n.localName; let e;
+    if(t === 'section'){
+      e = document.createElement('div'); e.className = 'fb-sec';
+      const title = kid(n, 'title');
+      if(title){ const id = 'fbt' + (fbSeq++); if(!inNotes) toc.push({label:kids(title, 'p').map(p => p.textContent.replace(/\s+/g,' ').trim()).filter(Boolean).join(': ') || title.textContent.trim() || 'Section', target:id, sec:secIdx, depth:depth-1});
+        const h = document.createElement(depth <= 1 ? 'h2' : depth === 2 ? 'h3' : 'h4'); h.id = id;
+        kids(title, 'p').forEach((p, i) => { if(i) h.append(document.createElement('br')); [...p.childNodes].forEach(c => { const x = conv(c, depth, secIdx); x && h.append(x); }); });
+        e.append(h); }
+      for(const c of n.childNodes){ if(c.localName === 'title') continue; const x = conv(c, c.localName === 'section' ? depth + 1 : depth, secIdx); x && e.append(x); }
+      if(n.getAttribute('id')) e.id = 'fb-' + n.getAttribute('id');
+      return e;
+    }
+    if(t === 'title'){ e = document.createElement('h4'); }
+    else if(t === 'p'){ e = document.createElement('p'); }
+    else if(t === 'empty-line'){ e = document.createElement('div'); e.className = 'gap'; return e; }
+    else if(t === 'image'){ const u = img(fbHref(n)); if(!u) return null; e = document.createElement('img'); e.src = u; e.alt = n.getAttribute('alt') || ''; return e; }
+    else if(t === 'a'){ e = document.createElement('a'); const h = (n.getAttributeNS(XL, 'href') || n.getAttribute('l:href') || '');
+      if(h.startsWith('#')) e.setAttribute('data-go', 'fb-' + h.slice(1)); else if(/^https?:/i.test(h)){ e.href = h; e.target = '_blank'; e.rel = 'noopener'; }
+      if(n.getAttribute('type') === 'note') e.className = 'note'; }
+    else if(MAP[t]){ e = document.createElement(MAP[t]); if(['poem','stanza','v','epigraph','text-author'].includes(t)) e.className = 'fb-' + t; }
+    else e = document.createElement('span');
+    if(n.getAttribute('id')) e.id = 'fb-' + n.getAttribute('id');
+    for(const c of n.childNodes){ const x = conv(c, depth, secIdx); x && e.append(x); }
+    return e;
+  }
+  const frag = document.createDocumentFragment(); let si = 0;
+  const newSec = () => { const sec = document.createElement('section'); sec.className = 'chap'; sec.id = 'sec' + si++; frag.append(sec); return sec; };
+  for(const body of doc.getElementsByTagNameNS('*', 'body')){
+    if(/notes|comments/i.test(body.getAttribute('name') || '')){
+      const sec = newSec(), h = document.createElement('h2'); h.id = 'fbt' + (fbSeq++); h.textContent = 'Notes';
+      toc.push({label:'Notes', target:h.id, sec:si-1, depth:0}); sec.append(h);
+      inNotes = true; for(const c of body.children){ if(c.localName === 'title') continue; const y = conv(c, 2, si-1); y && sec.append(y); } inNotes = false;
+      continue;
+    }
+    let lead = null;
+    for(const c of body.children){
+      if(c.localName === 'section'){ const sec = newSec(); const y = conv(c, 1, si-1); y && sec.append(y); lead = null; continue; }
+      if(!lead) lead = newSec();
+      if(c.localName === 'title'){ const H = document.createElement('h1'); kids(c, 'p').forEach((p, i) => { if(i) H.append(document.createElement('br')); H.append(p.textContent); }); lead.append(H); }
+      else { const y = conv(c, 1, si-1); y && lead.append(y); }
+    }
+  }
+  page.replaceChildren(frag);
+  return {urls, toc};
+}
+
+/* comic page sizes from image headers, without decoding the image */
+function imageSize(u){
+  const be16 = o => (u[o]<<8)|u[o+1], le16 = o => u[o]|(u[o+1]<<8), le24 = o => u[o]|(u[o+1]<<8)|(u[o+2]<<16), be32 = o => ((u[o]<<24)>>>0)+(u[o+1]<<16)+(u[o+2]<<8)+u[o+3];
+  if(u[0] === 0x89 && u[1] === 0x50) return [be32(16), be32(20)];
+  if(u[0] === 0x47 && u[1] === 0x49) return [le16(6), le16(8)];
+  if(u[0] === 0x42 && u[1] === 0x4D) return [le16(18) | (le16(20) << 16), Math.abs((le16(22) | (le16(24) << 16)) << 0)];
+  if(u[0] === 0x52 && u[1] === 0x49 && u[8] === 0x57){ const f = String.fromCharCode(u[12],u[13],u[14],u[15]);
+    if(f === 'VP8 ') return [le16(26) & 0x3fff, le16(28) & 0x3fff];
+    if(f === 'VP8L'){ const b = u[21] | (u[22]<<8) | (u[23]<<16) | (u[24]<<24); return [(b & 0x3fff) + 1, ((b >> 14) & 0x3fff) + 1]; }
+    if(f === 'VP8X') return [le24(24) + 1, le24(27) + 1]; }
+  if(u[0] === 0xFF && u[1] === 0xD8){ let o = 2;
+    while(o < u.length - 9){ if(u[o] !== 0xFF){ o++; continue; } const m = u[o+1];
+      if(m >= 0xC0 && m <= 0xCF && ![0xC4,0xC8,0xCC].includes(m)) return [be16(o+7), be16(o+5)];
+      o += 2 + be16(o+2); } }
+  return null;
+}
+const imgType = p => ({jpg:'image/jpeg', jpeg:'image/jpeg', png:'image/png', gif:'image/gif', webp:'image/webp', avif:'image/avif', bmp:'image/bmp'})[(p.split('.').pop()||'').toLowerCase()] || 'image/jpeg';
+async function comicMeta(zip){
+  const ci = Object.keys(zip.files).find(p => /(^|\/)comicinfo\.xml$/i.test(p)); if(!ci) return {};
+  try{ const d = new DOMParser().parseFromString(await zip.file(ci).async('string'), 'application/xml'), g = n => d.getElementsByTagName(n)[0]?.textContent.trim() || '';
+    const series = g('Series'), num = g('Number'), y = parseInt(g('Year'), 10);
+    return {title: g('Title') ? (series && !g('Title').includes(series) ? `${series} ${num ? '#' + num + ': ' : ''}${g('Title')}` : g('Title')) : series ? `${series}${num ? ' #' + num : ''}` : '', author: g('Writer'), year: y > 0 ? y : null}; }catch(e){ return {}; }
+}
+async function smallCover(blob){
+  try{ const bm = await createImageBitmap(blob), w = 360, h = Math.round(bm.height * w / bm.width), cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+    const ctx = cv.getContext('2d'); ctx.imageSmoothingQuality = 'high'; ctx.drawImage(bm, 0, 0, w, h);
+    const out = await new Promise(r => cv.toBlob(r, 'image/jpeg', 0.84)); return out ? {coverBuf: await out.arrayBuffer(), coverType:'image/jpeg'} : {}; }catch(e){ return {}; }
+}
+
+// a single HTML file, or a zip of HTML pages, read through the EPUB reader
+function htmlBook(s, buf){
+  if(s.kind === 'htmlzip') return {zip:s.zip, spine:s.paths.map(href => ({href}))};
+  const zip = new JSZip(); zip.file('book.html', new Uint8Array(buf)); return {zip, spine:[{href:'book.html'}]};
+}
+async function htmlMeta(ep){
+  const f = getFile(ep.zip, ep.spine[0].href); if(!f) return {};
+  const d = new DOMParser().parseFromString(decodeText(await f.async('uint8array')), 'text/html');
+  let title = (d.title || '').trim(), author = (d.querySelector('meta[name="author" i],meta[name="dc.creator" i],meta[name="DC.Creator"]')?.content || '').trim();
+  const pg = /Project Gutenberg e-?book,?\s+(?:of\s+)?(.+?),?\s+by\s+(.+)$/i.exec(title);
+  if(pg){ title = pg[1].trim(); author = author || pg[2].trim(); } else if(/project gutenberg/i.test(title)) title = '';
+  const out = {title, author};
+  const im = [...d.querySelectorAll('img')].find(i => /cover/i.test((i.getAttribute('src')||'') + ' ' + (i.alt||'') + ' ' + (i.id||'') + ' ' + (i.className||'')));
+  if(im){ const cf = getFile(ep.zip, resolvePath(ep.spine[0].href, im.getAttribute('src'))); if(cf){ out.coverBuf = await cf.async('arraybuffer'); out.coverType = imgType(im.getAttribute('src')); } }
+  return out;
+}
+
 /* title, author and cover for the library, from any format */
-async function readMeta(buf){
+async function readMeta(buf, name){
+  const s = await sniff(buf, name);
+  if(s.kind === 'txt'){ const t = decodeText(await bytesOf(s, buf)), g = LOOKUP.guessFromText(t);
+    if(!g.title){ const first = t.replace(/^\uFEFF/, '').split(/\n/).map(l => l.trim()).find(Boolean) || '';
+      if(first.length >= 2 && first.length <= 60 && !HEAD_RE.test(first) && !/[.,;:!?]$/.test(first)) g.title = first; }
+    return {title:g.title, author:g.author}; }
+  if(s.kind === 'html' || s.kind === 'htmlzip') return htmlMeta(htmlBook(s, buf));
+  if(s.kind === 'fb2'){ const d = fb2Doc(await bytesOf(s, buf)), m = fb2Meta(d), c = m.coverId && fb2Binary(d, m.coverId);
+    return {title:m.title, author:m.author, year:m.year, coverBuf: c ? c.data.slice().buffer : null, coverType: c ? c.type : null}; }
+  if(s.kind === 'cbz'){ const m = await comicMeta(s.zip), first = await s.zip.file(s.paths[0]).async('blob');
+    return Object.assign(m, await smallCover(new Blob([first], {type:imgType(s.paths[0])}))); }
   if(PDF.isPdf(new Uint8Array(buf))){
     const pdf = await PDF.load(buf);
     try{
@@ -1663,7 +2021,7 @@ const SAMPLE_HTML = `
 <p>Go back to the library and choose <em>Add books</em>, or drag files straight onto the page. You can add several at once. Covers, titles and authors are read from the books themselves.</p>
 <p>Type a shelf name under any book to organise it. Shelves appear as filters at the top of the library alongside Reading, Unread and Finished. Search looks through titles and authors.</p>
 <p>Your place in each book is saved as you read, so opening a book takes you back to where you stopped.</p>
-<p>Everything stays in this browser on this device. If you clear your browser's site data, or open the library on another computer, you will need to add the books again. EPUB, MOBI, AZW3 and PDF files all work. For PDFs, use the button at the top to switch between reflowed text, which follows your text size and colours, and the original pages. Books bought from most commercial stores, including the Kindle store, carry DRM and can't be opened here; DRM-free books, such as those from Project Gutenberg or Standard Ebooks, work well.</p>
+<p>Everything stays in this browser on this device. If you clear your browser's site data, or open the library on another computer, you will need to add the books again. EPUB, KEPUB, MOBI, AZW3, PDF, TXT, HTML and FB2 books all work, as do CBZ comics and zipped versions of these. For PDFs, use the button at the top to switch between reflowed text, which follows your text size and colours, and the original pages. Books bought from most commercial stores, including the Kindle store, carry DRM and can't be opened here; DRM-free books, such as those from Project Gutenberg or Standard Ebooks, work well.</p>
 <p>That's the end of the sample. Happy reading.</p></section>`;
 
 /* ---------- Library UI ---------- */
@@ -1709,7 +2067,7 @@ function render(){
   list.sort((a,b)=> s==='title' ? a.title.localeCompare(b.title) : s==='author' ? (a.author||'').localeCompare(b.author||'') : s==='year' ? (a.year||9999)-(b.year||9999) :
     s==='added' ? b.added-a.added : ((progress[b.id]?.t||0)-(progress[a.id]?.t||0)) || b.added-a.added);
   const notice = $('#notice');
-  if(!books.length){ notice.hidden=false; notice.textContent='Your library is empty. Open the sample to try the scroller, then add your own EPUB, MOBI, AZW3 or PDF files.'; }
+  if(!books.length){ notice.hidden=false; notice.textContent='Your library is empty. Open the sample to try the scroller, then add your own ebooks or comics.'; }
   else if(!list.length){ notice.hidden=false; notice.textContent='No books match this search or filter.'; }
   else notice.hidden=true;
   $('#grid').replaceChildren(...list.map(card));
@@ -1736,34 +2094,38 @@ function card(b){
 }
 
 async function addFiles(files){
-  files = [...files].filter(f => /\.(epub|mobi|azw3?|prc|pdf)$/i.test(f.name) || f.type==='application/epub+zip' || f.type==='application/pdf');
-  if(!files.length){ toast('Choose EPUB, MOBI, AZW3 or PDF files.'); return; }
+  const all = [...files];
+  const rar = all.filter(f => /\.(cbr|cb7|rar)$/i.test(f.name)).map(f => f.name);
+  const rarMsg = rar.length ? ` ${rar.join(', ')} ${rar.length === 1 ? 'is a CBR/CB7 comic' : 'are CBR/CB7 comics'}, which Velvet Scroll can’t open. Convert to CBZ first (Calibre does this for free).` : '';
+  if(rar.length && !all.some(f => !/\.(cbr|cb7|rar)$/i.test(f.name))){ toast(rarMsg.trim(), 9000); return; }
+  files = all.filter(f => /\.(epub|kepub|mobi|azw3?|prc|pdf|txt|x?html?|fb2|fbz|cbz|zip)$/i.test(f.name) || ['application/epub+zip','application/pdf','text/plain','text/html'].includes(f.type));
+  if(!files.length){ toast('Choose ebook files: EPUB, MOBI, AZW3, PDF, TXT, HTML, FB2 or CBZ.' + rarMsg, 8000); return; }
   let added=0, dup=0, bad=[]; const fresh=[];
   toast(`Adding ${files.length} book${files.length>1?'s':''}…`, 60000);
   for(const f of files){
     try{
       const buf = await f.arrayBuffer();
-      const ep = await readMeta(buf);
+      const ep = await readMeta(buf, f.name);
       // a missing or file-name title, or no author: read them from the book's opening pages
       if(LOOKUP.weakTitle(ep.title, f.name) || !ep.author){
         const g = LOOKUP.guessFromText(await openingTextOf(buf));
         if(g.title && LOOKUP.weakTitle(ep.title, f.name)) ep.title = g.title;
         if(g.author && !ep.author) ep.author = g.author;
       }
-      const title = ep.title || f.name.replace(/\.[a-z0-9]+$/i,'');
+      const title = ep.title || f.name.replace(/(\.(fb2|txt|x?html?|kepub))?\.[a-z0-9]+$/i,'').replace(/[_-]+/g,' ').trim();
       if(books.some(b=>b.title===title && b.author===ep.author)){ dup++; continue; }
-      const m = {id:uid(), title, author:ep.author, added:Date.now(), upd:Date.now(), shelf:'', file:f.name, size:buf.byteLength, fp: await fingerprint(buf)};
+      const m = {id:uid(), title, author:ep.author, year:ep.year || null, added:Date.now(), upd:Date.now(), shelf:'', file:f.name, size:buf.byteLength, fp: await fingerprint(buf)};
       if(m.fp && books.some(b => b.fp === m.fp)){ dup++; continue; }
       if(ep.coverBuf){ m.coverBuf = ep.coverBuf; m.coverType = ep.coverType; m.coverSrc = PDF.isPdf(new Uint8Array(buf)) ? 'page' : 'own'; }
       await dbPutFile(m.id, buf); await dbPutMeta(m); books.push(m); added++; fresh.push(m);
-    }catch(e){ bad.push(f.name + (e.message==='drm' ? ' (DRM-protected)' : e.message==='password' ? ' (password-protected)' : e.message==='nopdf' ? ' (the PDF reader couldn’t load; check your connection)' : '')); }
+    }catch(e){ bad.push(f.name + (e.message==='drm' ? ' (DRM-protected)' : e.message==='backup' ? ' (that’s a Velvet Scroll backup: restore it with Backup)' : e.message==='password' ? ' (password-protected)' : e.message==='nopdf' ? ' (the PDF reader couldn’t load; check your connection)' : '')); }
   }
   render();
   const parts = [];
   if(added) parts.push(`Added ${added} book${added>1?'s':''}.`);
   if(dup) parts.push(`${dup} already in your library.`);
   if(bad.length) parts.push(`Couldn’t read ${bad.join(', ')}.`);
-  toast(parts.join(' ') || 'Nothing added.', bad.length ? 7000 : 3500);
+  toast((parts.join(' ') || 'Nothing added.') + rarMsg, bad.length || rarMsg ? 9000 : 3500);
   if(fresh.length && await hasLookup()){
     const res = await autoLookup(fresh);
     if(!res.offline && (res.upd || res.check)) toast(`Found details for ${res.upd} new book${res.upd===1?'':'s'}.` + (res.check ? ` ${res.check} need${res.check===1?'s':''} checking.` : ''), 6000);
@@ -1773,10 +2135,10 @@ $('#file').addEventListener('change', e=>{ addFiles(e.target.files); e.target.va
 $('#q').addEventListener('input', render);
 $('#sort').addEventListener('change', ()=>{ LS.set('sort', $('#sort').value); render(); });
 let dragN = 0;
-addEventListener('dragenter', e=>{ if([...e.dataTransfer.types].includes('Files')){ dragN++; document.body.classList.add('dragging'); } });
+addEventListener('dragenter', e=>{ if(!$('#dlg').hidden) return; if([...e.dataTransfer.types].includes('Files')){ dragN++; document.body.classList.add('dragging'); } });
 addEventListener('dragleave', ()=>{ if(--dragN<=0){ dragN=0; document.body.classList.remove('dragging'); } });
 addEventListener('dragover', e=>e.preventDefault());
-addEventListener('drop', e=>{ e.preventDefault(); dragN=0; document.body.classList.remove('dragging'); if(e.dataTransfer.files.length) addFiles(e.dataTransfer.files); });
+addEventListener('drop', e=>{ e.preventDefault(); if(!$('#dlg').hidden) return; dragN=0; document.body.classList.remove('dragging'); if(e.dataTransfer.files.length) addFiles(e.dataTransfer.files); });
 
 /* ---------- Reader settings ---------- */
 const PRESETS = [
@@ -1787,14 +2149,14 @@ const FONTS = [
   {n:'Lexend', v:'"Lexend", system-ui, sans-serif'}, {n:'Georgia', v:'Georgia, "Times New Roman", serif'}];
 const GMODES = [['band','Band'],['under','Underline'],['spot','Spotlight'],['off','Off']];
 const HOME_DEFAULT = {mode:'system', accent:null, bg:null};
-const S = Object.assign({home:{...HOME_DEFAULT}, size:22, lh:1.6, width:62, font:'Literata', bg:'#fbfaf7', fg:'#1d1c1a', bright:100, gmode:'band', gpos:32, gh:1, guide:'#e0a72e', lpm:20, pgw:90, tint:true, hand:false, smooth:true, hz:'auto'}, LS.get('settings', {}));
+const S = Object.assign({lensShape:'circle', lensSize:240, lensZoom:2, home:{...HOME_DEFAULT}, size:22, lh:1.6, width:62, font:'Literata', bg:'#fbfaf7', fg:'#1d1c1a', bright:100, gmode:'band', gpos:32, gh:1, guide:'#e0a72e', lpm:20, pgw:90, tint:true, hand:false, smooth:true, hz:'auto'}, LS.get('settings', {}));
 const R = $('#reader'), stage = $('#stage'), scroller = $('#scroller'), page = $('#page'), guide = $('#guide');
 
 let pdfDoc = null, pdfMode = 'text', pdfOutline = [], pgTops = null, pgLine = 0;
 const pdfModes = LS.get('pdfmode', {});
 const pdfTextCache = new Map();
 // in page view, one "line" is estimated from the page width (about 14pt leading on a letter-size page)
-const lineH = () => { if(pdfDoc && pdfMode === 'pages'){ if(!pgLine){ const d = page.querySelector('.pdfpg'); pgLine = Math.max(8, (d ? d.clientWidth : 600) * 14/612); } return pgLine; } return S.size * S.lh; };
+const lineH = () => { if((pdfDoc && pdfMode === 'pages') || comic){ if(!pgLine){ const d = page.querySelector('.pdfpg'); pgLine = Math.max(8, (d ? d.clientWidth : 600) * 14/612); } return pgLine; } return S.size * S.lh; };
 const guideY = () => Math.round(stage.clientHeight * S.gpos/100);
 /* ---------- Library appearance: theme, accent and background ---------- */
 const C = {
@@ -1864,7 +2226,7 @@ function applySettings(save=true){
   R.style.setProperty('--rfont', (FONTS.find(f=>f.n===S.font)||FONTS[0]).v);
   R.style.setProperty('--rbg', S.bg); R.style.setProperty('--rfg', S.fg); R.style.setProperty('--rguide', S.guide);
   $('#dim').style.opacity = String((100-S.bright)/100*0.85);
-  guide.className = 'guide ' + S.gmode;
+  guide.className = 'guide ' + (comic ? 'off' : S.gmode);   // a reading guide doesn't suit comic art
   layoutGuide();
   $('#sSize').value=S.size; $('#oSize').value=S.size+' px';
   $('#sLh').value=S.lh; $('#oLh').value=(+S.lh).toFixed(2);
@@ -1886,6 +2248,10 @@ function applySettings(save=true){
   document.querySelectorAll('#fonts button').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.v===S.font)));
   document.querySelectorAll('#gmodes button').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.v===S.gmode)));
   document.querySelectorAll('#swatches button').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.bg===S.bg && b.dataset.fg===S.fg)));
+  $('#sLensSize').value = S.lensSize; $('#oLensSize').value = S.lensSize + ' px';
+  $('#sLensZoom').value = S.lensZoom; $('#oLensZoom').value = (+S.lensZoom).toFixed(2).replace(/\.?0+$/,'') + '×';
+  document.querySelectorAll('#lensShapes button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === S.lensShape)));
+  try{ lensRefresh(true); }catch(e){}   // the magnifier may not be set up yet on first load
   if(save){ LS.set('settings', S); LS.set('settingsT', Date.now()); syncSettings(); }
   updateStatus();
 }
@@ -1926,7 +2292,7 @@ async function openBook(b){
   cur = b; document.body.classList.add('locked');
   R.hidden = false; $('#rTitle').textContent = b.title; $('#rChap').textContent = b.author || '';
   page.replaceChildren(); setLoading('Opening book…'); $('#toc').replaceChildren();
-  ready = false; hidePanels(); applySettings(false);
+  ready = false; hidePanels(); applySettings(false); tocItems = [];
   try{
     if(b.sample){
       page.replaceChildren(...new DOMParser().parseFromString(SAMPLE_HTML,'text/html').body.childNodes);
@@ -1941,10 +2307,17 @@ async function openBook(b){
         const res = await renderMobi(MOBI.open(buf), page); urls = res.urls;
         tocItems = res.toc.filter(t => page.querySelector('#'+CSS.escape(t.target))).map(t => ({...t, label:t.label || 'Untitled'}));
       } else {
-        const ep = await openEpub(buf);
+        const sn = await sniff(buf, b.file);
+        if(sn.kind === 'cbz') await showComic(sn);
+        else if(sn.kind === 'fb2'){ const res = renderFb2(fb2Doc(await bytesOf(sn, buf)), page); urls = res.urls; tocItems = res.toc; }
+        else if(sn.kind === 'txt'){ const sec = document.createElement('section'); sec.className = 'chap'; sec.id = 'sec0';
+          sec.append(...new DOMParser().parseFromString(txtToHtml(decodeText(await bytesOf(sn, buf))), 'text/html').body.childNodes); page.replaceChildren(sec); }
+        else {
+        const ep = sn.kind === 'epub' ? await openEpub(buf) : htmlBook(sn, buf);
         const res = await renderEpub(ep, page); urls = res.urls;
-        const toc = await readToc(ep);
+        const toc = sn.kind === 'epub' ? await readToc(ep) : [];
         tocItems = toc.map(t=>{ const s = res.idmap[t.path]; if(!s) return null; return {label:t.label||'Untitled', target: t.frag ? `${s}-${t.frag}` : s, sec:+s.slice(3), depth:t.depth}; }).filter(Boolean);
+        }
       }
       if(!tocItems.length && page.querySelectorAll('section.chap').length < 3){
         tocItems = [...page.querySelectorAll('h1,h2,h3')].slice(0,300).map((hd,i)=>{ if(!hd.id) hd.id = 'hd'+i; const sc = hd.closest('section.chap');
@@ -1955,7 +2328,7 @@ async function openBook(b){
   }catch(e){
     $('#loading').hidden = true; closeReader();
     toast(e.message==='missing' ? 'This book’s file is no longer in browser storage. Remove it and add it again.' : e.message==='drm' ? 'This book is DRM-protected and can’t be opened.' :
-      e.message==='password' ? 'This PDF is password-protected and can’t be opened.' : e.message==='nopdf' ? 'The PDF reader couldn’t load. Check your internet connection and try again.' : 'Couldn’t open this book. The file may be damaged.', 6000);
+      e.message==='password' ? 'This PDF is password-protected and can’t be opened.' : e.message==='backup' ? 'That file is a Velvet Scroll backup. Restore it with Backup.' : e.message==='nopdf' ? 'The PDF reader couldn’t load. Check your internet connection and try again.' : 'Couldn’t open this book. The file may be damaged.', 6000);
     return;
   }
   $('#loading').hidden = true;
@@ -2053,7 +2426,7 @@ async function pumpPages(){
 }
 // the page (1-based) at the reading guide, from the page anchors
 function currentPage(){
-  if(!pdfDoc) return 0;
+  if(!pdfDoc && !comic) return 0;
   if(!pgTops){
     const base = scroller.getBoundingClientRect().top - scroller.scrollTop;   // anchor tops in scroll coordinates
     pgTops = [...page.querySelectorAll('[id^="sec0-pg"]')].map(a => [a.getBoundingClientRect().top - base, +a.id.slice(7)]);
@@ -2075,16 +2448,54 @@ $('#rMode').onclick = async () => {
   requestAnimationFrame(() => requestAnimationFrame(() => { goTo('sec0-pg'+n); ready = true; updateStatus(); saveCur(); }));
 };
 
+/* ---------- Comics (CBZ): pages shown like a PDF's original pages ---------- */
+let comic = null, comicNear = null, comicFar = null;
+async function showComic(sn){
+  const pages = [], n = sn.paths.length;
+  for(let i=0;i<n;i++){
+    const u8 = await sn.zip.file(sn.paths[i]).async('uint8array');
+    let wh = imageSize(u8);
+    if(!wh || !wh[0] || !wh[1]){ try{ const bm = await createImageBitmap(new Blob([u8])); wh = [bm.width, bm.height]; bm.close && bm.close(); }catch(e){ wh = null; } }
+    if(wh) pages.push({p:sn.paths[i], w:wh[0], h:wh[1]});
+    if(i % 8 === 0){ setLoading(`Preparing page ${i+1} of ${n}…`); await new Promise(r => setTimeout(r)); }
+  }
+  if(!pages.length) throw new Error('invalid');
+  comic = {zip:sn.zip, pages, urls:new Map()};
+  const ratios = pages.map(x => x.h / x.w).sort((a,b) => a-b), strip = ratios[ratios.length >> 1] > 2.2;
+  const sec = document.createElement('section'); sec.className = 'chap pdfpages' + (strip ? ' strip' : ''); sec.id = 'sec0';
+  pages.forEach((x, i) => { const d = document.createElement('div'); d.className = 'pdfpg comicpg'; d.id = 'sec0-pg' + (i+1); d.dataset.n = i+1; d.style.aspectRatio = `${x.w} / ${x.h}`; sec.append(d); });
+  page.replaceChildren(sec); page.classList.add('pdfmode'); R.classList.add('is-comic');
+  const c = comic;
+  comicNear = new IntersectionObserver(es => { for(const e of es) if(e.isIntersecting) loadComicPage(c, e.target); }, {root:scroller, rootMargin:'200% 0px'});
+  comicFar = new IntersectionObserver(es => { for(const e of es) if(!e.isIntersecting && e.target.firstChild){ e.target.replaceChildren(); const u = c.urls.get(e.target.dataset.n); if(u){ URL.revokeObjectURL(u); c.urls.delete(e.target.dataset.n); } } }, {root:scroller, rootMargin:'600% 0px'});
+  sec.querySelectorAll('.comicpg').forEach(d => { comicNear.observe(d); comicFar.observe(d); });
+  tocItems = pages.map((_, i) => ({label:`Page ${i+1}`, target:'sec0-pg' + (i+1), sec:0, depth:0, page:i+1}));
+  $('#pdfGroup').hidden = false; $('#pgLbl').textContent = 'Comic pages'; $('#tintRow').hidden = true; $('#pgHint').hidden = true;
+  applySettings(false);
+}
+async function loadComicPage(c, d){
+  if(d.firstChild || d.dataset.loading) return; d.dataset.loading = 1;
+  try{
+    const x = c.pages[d.dataset.n - 1], u8 = await c.zip.file(x.p).async('uint8array');
+    if(comic !== c || !d.isConnected || d.firstChild) return;
+    const u = URL.createObjectURL(new Blob([u8], {type:imgType(x.p)})); c.urls.set(d.dataset.n, u);
+    const im = new Image(); im.decoding = 'async'; im.alt = 'Page ' + d.dataset.n; im.src = u; d.append(im);
+  } finally { delete d.dataset.loading; }
+}
+function stopComic(){ comicNear?.disconnect(); comicFar?.disconnect(); comicNear = comicFar = null; if(comic){ comic.urls.forEach(u => URL.revokeObjectURL(u)); comic = null; }
+  R.classList.remove('is-comic'); $('#pgLbl').textContent = 'PDF pages'; $('#tintRow').hidden = false; $('#pgHint').hidden = false; }
+
 function goTo(id){
   const t = page.querySelector('#'+CSS.escape(id)); if(!t) return;
   scroller.scrollTop = t.getBoundingClientRect().top - page.getBoundingClientRect().top - guideY();
 }
 function closeReader(){ popLayer('reader'); }
 function closeReaderNow(){
+  setLens(false);
   if(R.hidden) return;
   pause(); hidePanels();
   if(!R.hidden && page.childNodes.length) saveCur(); ready = false;
-  stopPdfPages(); try{ pdfDoc?.destroy(); }catch(e){} pdfDoc = null; pdfSizes = null; pgTops = null; pgLine = 0;
+  stopComic(); stopPdfPages(); try{ pdfDoc?.destroy(); }catch(e){} pdfDoc = null; pdfSizes = null; pgTops = null; pgLine = 0;
   R.classList.remove('is-pdf','pdf-pages'); page.classList.remove('pdfmode','tint-light','tint-dark');
   $('#rMode').hidden = true; $('#pdfGroup').hidden = true;
   R.hidden = true; document.body.classList.remove('locked');
@@ -2149,6 +2560,7 @@ function tick(t){
   if(scroller.scrollTop !== whole) scroller.scrollTop = whole;
   if(S.smooth && !drag){ const fr = pos - whole; page.style.transform = fr > 0.001 ? `translate3d(0,${(-fr).toFixed(3)}px,0)` : ''; }
   else page.style.transform = '';
+  if(lensOn) lensDraw();
   raf = requestAnimationFrame(tick);
 }
 const toggle = () => playing ? pause() : play();
@@ -2156,6 +2568,96 @@ $('#play').onclick = toggle;
 let drag = null, suppressClick = false, fling = 0;
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 function setHand(on){ S.hand = on; applySettings(); }
+/* ---------- Magnifier: a lens over a live copy of the page ---------- */
+const lensEl = $('#lens'), lensView = lensEl.querySelector('.lens-view'), lensContent = lensEl.querySelector('.lens-content');
+let lensOn = false, lx = 0, ly = 0, lensRange = null, lensDirty = true, lensRaf = 0, lensMO = null;
+const lensDims = () => { const sw = stage.clientWidth, sh = stage.clientHeight, z = S.lensSize;
+  return S.lensShape === 'circle' ? [Math.min(z, sw - 8, sh - 60), Math.min(z, sw - 8, sh - 60)] : [Math.min(Math.round(z * 2.2), sw - 8), Math.min(Math.round(z * 0.75), sh - 60)]; };
+// copy the blocks of the page near the visible area, each pinned to its exact position, so text reflows identically
+function lensClone(){
+  const pr = page.getBoundingClientRect(), H = scroller.clientHeight, top = scroller.scrollTop - H, bot = scroller.scrollTop + 2 * H;
+  const sTop = scroller.getBoundingClientRect().top, out = [];
+  const collect = el => { for(const c of el.children){ const r = c.getBoundingClientRect(), y0 = r.top - sTop + scroller.scrollTop, y1 = y0 + r.height;
+    if(y1 < top || y0 > bot || !r.width) continue;
+    if(r.height > H * 1.5 && c.children.length && !c.matches('p,h1,h2,h3,h4,h5,h6,li,pre,blockquote,table,img,svg,canvas,.pdfpg')) collect(c); else out.push([c, r]); } };
+  collect(page);
+  lensContent.className = page.className + ' lens-content';
+  lensContent.style.width = pr.width + 'px'; lensContent.style.height = page.scrollHeight + 'px';
+  lensContent.replaceChildren(...out.map(([c, r]) => {
+    const k = c.cloneNode(true);
+    k.removeAttribute('id'); k.querySelectorAll('[id]').forEach(n => n.removeAttribute('id'));
+    k.style.left = (r.left - pr.left) + 'px'; k.style.top = (r.top - pr.top) + 'px'; k.style.width = r.width + 'px';
+    if(c.matches('.pdfpg, .comicpg')) k.style.height = r.height + 'px';
+    const src = c.matches('canvas') ? [c] : c.querySelectorAll('canvas'), dst = k.matches('canvas') ? [k] : k.querySelectorAll('canvas');
+    [...src].forEach((cv, i) => { const d = dst[i]; if(!d) return; d.width = cv.width; d.height = cv.height; try{ d.getContext('2d').drawImage(cv, 0, 0); }catch(e){} });
+    return k; }));
+  lensRange = [top + H * 0.5, bot - H * 0.5]; lensDirty = false;
+}
+function lensShape(){
+  const [w, h] = lensDims(), rim = parseFloat(getComputedStyle(lensEl).getPropertyValue('--rim')) || 16;
+  lensEl.style.width = w + 'px'; lensEl.style.height = h + 'px';
+  const ro = S.lensShape === 'circle' ? w / 2 : Math.min(28, h / 3), ri = Math.max(0, ro - rim);
+  lensEl.style.setProperty('--lo', ro + 'px'); lensEl.style.setProperty('--lr', ri + 'px');
+  // only the rim catches the pointer: an outer shape minus the inner window, so taps inside reach the page
+  const rr = (x, y, W, H2, r) => `M${x+r},${y} H${x+W-r} A${r},${r} 0 0 1 ${x+W},${y+r} V${y+H2-r} A${r},${r} 0 0 1 ${x+W-r},${y+H2} H${x+r} A${r},${r} 0 0 1 ${x},${y+H2-r} V${y+r} A${r},${r} 0 0 1 ${x+r},${y} Z`;
+  lensEl.querySelector('.lens-ring').style.clipPath = `path(evenodd, "${rr(0, 0, w, h, ro)} ${rr(rim, rim, w - 2*rim, h - 2*rim, ri)}")`;
+  const hs = lensEl.querySelector('.lens-size');
+  if(S.lensShape === 'circle'){ const a = Math.PI / 4, rad = w / 2 - rim / 2; hs.style.left = (w/2 + rad * Math.cos(a)) + 'px'; hs.style.top = (h/2 + rad * Math.sin(a)) + 'px'; }
+  else { hs.style.left = (w - rim / 2) + 'px'; hs.style.top = (h - rim / 2) + 'px'; }
+  lensEl.classList.toggle('circle', S.lensShape === 'circle'); lensEl.classList.toggle('rect', S.lensShape !== 'circle');
+  $('#lShape').textContent = S.lensShape === 'circle' ? '▭' : '◯';
+  $('#lShape').title = S.lensShape === 'circle' ? 'Switch to a rectangle' : 'Switch to a circle';
+  $('#lzVal').value = (+S.lensZoom).toFixed(2).replace(/\.?0+$/,'') + '×';
+}
+function lensPlace(){
+  const [w, h] = lensDims(), sw = stage.clientWidth, sh = stage.clientHeight;
+  lx = Math.min(Math.max(lx, w / 2), sw - w / 2); ly = Math.min(Math.max(ly, h / 2), sh - h / 2);
+  lensEl.style.transform = `translate(${Math.round(lx - w / 2)}px, ${Math.round(ly - h / 2)}px)`;
+  lensEl.classList.toggle('flip', ly + h / 2 + 50 > sh);
+}
+function lensDraw(){
+  lensRaf = 0; if(!lensOn) return;
+  const H = scroller.clientHeight, st = stage.getBoundingClientRect(), centreY = scroller.scrollTop + ly;
+  if(lensDirty || !lensRange || centreY < lensRange[0] || centreY > lensRange[1]) lensClone();
+  const pr = page.getBoundingClientRect(), vw = lensView.clientWidth, vh = lensView.clientHeight, z = +S.lensZoom;
+  const px = st.left + lx - pr.left, py = st.top + ly - pr.top;   // the point of the page under the lens centre
+  lensContent.style.transform = `translate(${vw / 2 - z * px}px, ${vh / 2 - z * py}px) scale(${z})`;
+}
+const lensUpdate = () => { if(lensOn && !lensRaf) lensRaf = requestAnimationFrame(lensDraw); };
+function lensRefresh(layoutChanged){ if(!lensOn) return; if(layoutChanged) lensDirty = true; lensShape(); lensPlace(); lensUpdate(); }
+function setLens(on){
+  lensOn = on && !R.hidden; lensEl.hidden = !lensOn; $('#magBtn').setAttribute('aria-pressed', String(lensOn));
+  lensMO?.disconnect(); lensMO = null;
+  if(!lensOn){ lensContent.replaceChildren(); return; }
+  lx = stage.clientWidth / 2; ly = stage.clientHeight / 2;     // opens in the centre
+  lensDirty = true; lensShape(); lensPlace(); lensUpdate();
+  // re-copy when the page changes underneath: a new chapter, a PDF page drawn, a comic page loaded
+  lensMO = new MutationObserver(() => { lensDirty = true; lensUpdate(); });
+  lensMO.observe(page, {childList:true, subtree:true});
+}
+$('#magBtn').onclick = () => setLens(!lensOn);
+$('#lClose').onclick = () => setLens(false);
+$('#lShape').onclick = () => { S.lensShape = S.lensShape === 'circle' ? 'rect' : 'circle'; applySettings(); };
+$('#lzIn').onclick = () => { S.lensZoom = Math.min(5, +S.lensZoom + 0.25); applySettings(); };
+$('#lzOut').onclick = () => { S.lensZoom = Math.max(1.25, +S.lensZoom - 0.25); applySettings(); };
+$('#lensShapes').addEventListener('click', e => { const b = e.target.closest('[data-v]'); if(b){ S.lensShape = b.dataset.v; applySettings(); } });
+bind('#sLensSize', 'lensSize'); bind('#sLensZoom', 'lensZoom');
+function lensDragger(el, onMove){
+  let st = null;
+  el.addEventListener('pointerdown', e => { st = {x:e.clientX, y:e.clientY, lx, ly, size:S.lensSize}; el.setPointerCapture(e.pointerId); lensEl.classList.add('dragging'); e.preventDefault(); e.stopPropagation(); });
+  el.addEventListener('pointermove', e => { if(st) onMove(e.clientX - st.x, e.clientY - st.y, st); });
+  const end = () => { if(st){ st = null; lensEl.classList.remove('dragging'); LS.set('settings', S); } };
+  el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
+}
+lensDragger(lensEl.querySelector('.lens-ring'), (dx, dy, st) => { lx = st.lx + dx; ly = st.ly + dy; lensPlace(); lensUpdate(); });
+lensDragger(lensEl.querySelector('.lens-size'), (dx, dy, st) => {
+  const grow = S.lensShape === 'circle' ? (dx + dy) : (dx / 2.2 + dy / 0.75) / 2;
+  S.lensSize = Math.round(Math.min(480, Math.max(120, st.size + grow)) / 10) * 10;
+  $('#sLensSize').value = S.lensSize; $('#oLensSize').value = S.lensSize + ' px'; lensShape(); lensPlace(); lensUpdate(); });
+lensEl.querySelector('.lens-bar').addEventListener('pointerdown', e => e.stopPropagation());
+scroller.addEventListener('scroll', lensUpdate, {passive:true});
+addEventListener('resize', () => lensRefresh(true));
+
 $('#toolArrow').onclick = () => setHand(false);
 $('#toolHand').onclick = () => setHand(true);
 scroller.addEventListener('pointerdown', e=>{
@@ -2208,11 +2710,11 @@ function updateStatus(){
   // current chapter
   const y = scroller.scrollTop + guideY() + 2;
   let curIdx = -1;
-  if(pdfDoc){
-    const n = currentPage();
+  if(pdfDoc || comic){
+    const n = currentPage(), total = pdfDoc ? pdfDoc.numPages : comic.pages.length;
     for(let i=0;i<tocItems.length;i++) if(tocItems[i].page <= n) curIdx = i;
     const lab = curIdx >= 0 && !/^Page \d+$/.test(tocItems[curIdx].label) ? tocItems[curIdx].label + ' · ' : '';
-    $('#rChap').textContent = `${lab}Page ${n} of ${pdfDoc.numPages}`;
+    $('#rChap').textContent = `${lab}Page ${n} of ${total}`;
     document.querySelectorAll('#toc button').forEach(b=>b.classList.toggle('cur', +b.dataset.i===curIdx));
     const now = Date.now(); if(ready && now - saveT > 1000){ saveT = now; saveCur(); }
     return;
@@ -2262,7 +2764,8 @@ addEventListener('keydown', e=>{
   else if(e.key===']'){ keepPlace(()=>{ S.size=Math.min(56,S.size+1); applySettings(); }); }
   else if(e.key==='['){ keepPlace(()=>{ S.size=Math.max(14,S.size-1); applySettings(); }); }
   else if((e.key==='h' || e.key==='H') && !e.ctrlKey && !e.metaKey && !e.altKey){ setHand(!S.hand); }
-  else if(e.key==='Escape'){ if(!$('#tocPanel').hidden || !$('#setPanel').hidden) closePanels(); else closeReader(); }
+  else if((e.key==='m' || e.key==='M') && !e.ctrlKey && !e.metaKey && !e.altKey){ setLens(!lensOn); }
+  else if(e.key==='Escape'){ if(!$('#tocPanel').hidden || !$('#setPanel').hidden) closePanels(); else if(lensOn) setLens(false); else closeReader(); }
 });
 document.addEventListener('visibilitychange', ()=>{ if(document.hidden){ pause(); saveCur(); } else if(!R.hidden) detectHz(); });
 addEventListener('pagehide', () => { saveCur(); syncFlush(); });
