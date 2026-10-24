@@ -149,6 +149,7 @@ a.btn.primary{color:var(--accent-fg)}
 .btc .btn{padding:7px 13px;font-size:14px}
 @media (max-width:480px){ .btc{flex-direction:column;align-items:flex-start;width:100%} .btc canvas{width:120px;height:120px} }
 .btc code{font-size:12px;overflow-wrap:anywhere;user-select:all;max-width:30ch}
+.plink{color:var(--accent)}
 .foot{color:var(--muted);font-size:13px;margin:8px 0 0;max-width:65ch}
 .drop{position:fixed;inset:0;z-index:80;display:none;place-items:center;background:color-mix(in srgb,var(--bg) 80%,transparent);font-family:var(--f-display);font-size:28px;color:var(--accent);border:3px dashed var(--accent)}
 body.dragging .drop{display:grid}
@@ -288,7 +289,7 @@ kbd{font-family:var(--f-ui);font-size:12px;border:1px solid var(--line);border-b
   <div id="chips" class="chips" role="group" aria-label="Filter"></div>
   <div id="notice" class="notice" hidden></div>
   <section id="grid" class="grid" aria-label="Books"></section>
-  <p class="foot">Books stay in this browser on this device; nothing is uploaded. Opens EPUB, MOBI, AZW3 and PDF files. Drag them anywhere on the page to add them. DRM-protected and password-locked books, including Kindle store purchases, can't be opened.</p>
+  <p class="foot"><a class="plink" href="https://velvetscroll.net/privacy.html" target="_blank" rel="noopener">Privacy</a> · Books stay in this browser on this device; nothing is uploaded. Opens EPUB, MOBI, AZW3 and PDF files. Drag them anywhere on the page to add them. DRM-protected and password-locked books, including Kindle store purchases, can't be opened.</p>
   <section id="donate" class="donate" hidden aria-labelledby="donH">
     <div class="don-text"><h2 id="donH">Support Velvet Scroll</h2><p>Velvet Scroll is free. If you enjoy it, you can help keep it going.</p></div>
     <div class="don-ways">
@@ -490,9 +491,9 @@ kbd{font-family:var(--f-ui);font-size:12px;border:1px solid var(--line);border-b
       <p class="hint" id="bkLoadSt" role="status"></p>
     </div>
     <div class="grp" id="syncGrp" hidden>
-      <span class="lbl">Firefox Sync</span>
+      <span class="lbl" id="syncLbl">Browser sync</span>
       <label class="check"><input type="checkbox" id="syncOn"> Sync reading positions, shelves, book details and settings</label>
-      <p class="hint">Uses Firefox's own encrypted sync between computers where you're signed in to Firefox with add-on syncing turned on. The books themselves aren't synced: copy them once with a backup, and after that your place follows you.</p>
+      <p class="hint" id="syncHint">Uses your browser's own sync between computers where you're signed in to the browser with extension syncing turned on. The books themselves aren't synced: copy them once with a backup, and after that your place follows you.</p>
       <p class="hint" id="syncSt" role="status"></p>
       <div id="syncMissing" hidden><p class="hint">In your synced library but not on this computer:</p><ul class="missing" id="syncList"></ul></div>
     </div>
@@ -1237,7 +1238,14 @@ const LOOKUP = (() => {
   return {HOSTS, guessFromText, weakTitle, search, best, titleScore, authorMatch, surname};
 })();
 
+// Chrome names its extension API "chrome"; Firefox calls it "browser". Use one name for both.
+if(typeof globalThis.browser === 'undefined' && typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) globalThis.browser = chrome;
 const IS_EXT = typeof browser !== 'undefined' && !!(browser.permissions && browser.permissions.request);
+const IS_FIREFOX = /Firefox\//.test(navigator.userAgent);
+if(IS_FIREFOX){ const l = document.getElementById('syncLbl'), h = document.getElementById('syncHint');
+  if(l) l.textContent = 'Firefox Sync';
+  if(h) h.textContent = 'Uses Firefox’s own encrypted sync between computers where you’re signed in to Firefox with add-on syncing turned on. The books themselves aren’t synced: copy them once with a backup, and after that your place follows you.'; }
+else if(/Chrome\//.test(navigator.userAgent)){ const l = document.getElementById('syncLbl'); if(l) l.textContent = 'Chrome sync'; }
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 function blockText(root){
   if(!root) return '';
@@ -1354,7 +1362,7 @@ async function openDetails(b){
   $('#dResults').replaceChildren(); $('#dStatus').textContent = '';
   $('#dSearch').hidden = !IS_EXT;
   $('#dHint').textContent = IS_EXT ? 'Searches using the title and author above. Only those words are sent. Covers from Wikimedia Commons and Project Gutenberg are openly licensed.'
-    : 'Looking up details needs the Velvet Scroll Firefox extension, because this page can’t connect to other websites. You can still edit the details and choose the classic leather cover here.';
+    : 'Looking up details needs the Velvet Scroll browser extension, because this page can’t connect to other websites. You can still edit the details and choose the classic leather cover here.';
   renderCoverChoices(); $('#dlg').hidden = false; $('#dTitle').focus();
   if(LOOKUP.weakTitle(b.title, b.file) || !b.author){
     const g = LOOKUP.guessFromText(await openingText(b));
@@ -1494,7 +1502,7 @@ $('#bkSave').onclick = async () => {
     st.textContent = ok ? `Backup saved (${fmtMB(bytes.length)}).` : 'Save cancelled.';
   }catch(e){
     st.textContent = e.message === 'toolarge' ? 'The backup is too large to save here. Try saving it without the books.' :
-      e.message === 'nosave' ? 'Saving files isn’t available in this view. Open Velvet Scroll in claude.ai in a browser, or use the Firefox extension.' : 'Couldn’t create the backup. Please try again.';
+      e.message === 'nosave' ? 'Saving files isn’t available in this view. Open Velvet Scroll in claude.ai in a browser, or use the Velvet Scroll browser extension.' : 'Couldn’t create the backup. Please try again.';
   }finally{ $('#bkSave').disabled = false; }
 };
 let pendingRestore = null;
@@ -1565,7 +1573,7 @@ async function syncFlush(){
   if(!syncOn || !syncQ.size) return;
   const obj = Object.fromEntries(syncQ); syncQ.clear();
   try{ await SY.set(obj); syncMsg = 'Last synced at ' + new Date().toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}) + '.'; }
-  catch(e){ syncMsg = /quota/i.test(String(e && e.message)) ? 'Firefox Sync’s space for add-ons is full, so some books aren’t syncing.' : 'Couldn’t save to Firefox Sync.'; }
+  catch(e){ syncMsg = /quota/i.test(String(e && e.message)) ? 'Your browser’s sync space for extensions is full, so some books aren’t syncing.' : 'Couldn’t save to browser sync.'; }
   showSyncStatus();
 }
 async function syncPull(){
@@ -2297,6 +2305,5 @@ setupDonate();
 })();
 })();
 </script>
-
 </body>
 </html>
