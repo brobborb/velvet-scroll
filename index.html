@@ -136,6 +136,8 @@ main.wrap{padding-block:20px 48px;display:flex;flex-direction:column;gap:16px}
 .swatch.bgsw{border-radius:10px;background:linear-gradient(135deg,var(--c) 50%,var(--d) 50%)}
 .swatch[aria-pressed="true"]{border-color:var(--fg);box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--accent)}
 .swatch[aria-pressed="true"]::after{content:"";position:absolute;inset:0;margin:auto;width:10px;height:10px;border-radius:50%;background:var(--surface);box-shadow:0 0 0 1px var(--fg)}
+.isbnmsg{margin:-6px 0 0;min-height:1.2em;font-size:13px}
+.isbnmsg.bad{color:var(--danger)}
 .pwrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
 .pwrow label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);font-weight:700}
 .pwrow input{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--bg);color:var(--fg);font-size:15px;font-weight:400;min-width:0}
@@ -246,6 +248,18 @@ body.dragging .drop{display:grid}
 .ctl input[type=range]{flex:1;min-width:80px;accent-color:var(--rguide)}
 .ctl output,.ctl .num{font-variant-numeric:tabular-nums;white-space:nowrap;opacity:.85}
 .stepbtn{width:30px;height:30px;flex:none;border-radius:50%;border:1px solid color-mix(in srgb,var(--rfg) 22%,transparent);background:transparent;color:var(--rfg);cursor:pointer;font-weight:700}
+.rbtn.icon{padding:6px 9px;display:inline-grid;place-items:center}
+.rbtn.icon svg{width:18px;height:18px}
+.ribtog{display:none;width:36px;height:36px;flex:none;margin-left:auto;border-radius:50%;border:1px solid color-mix(in srgb,var(--rfg) 22%,transparent);background:transparent;color:var(--rfg);place-items:center;cursor:pointer}
+.ribtog svg,.ribup svg{width:20px;height:20px}
+@media (hover:none),(pointer:coarse){ .ribtog{display:grid} }
+.ribup{position:absolute;left:50%;bottom:calc(10px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:5;width:58px;height:30px;display:grid;place-items:center;border-radius:999px;border:1px solid color-mix(in srgb,var(--rfg) 22%,transparent);background:color-mix(in srgb,var(--rbg) 82%,var(--rfg));color:var(--rfg);opacity:.75;box-shadow:0 2px 10px rgb(0 0 0 / .2);cursor:pointer}
+.ribup:hover,.ribup:focus-visible{opacity:1}
+/* hidden bars slide out of the way and stop taking space */
+.reader.min .r-bottom,.reader.immersive .r-bottom{position:absolute;left:0;right:0;bottom:0;z-index:5;transform:translateY(105%);visibility:hidden;transition:transform .25s ease,visibility 0s .25s}
+.reader.immersive .r-top{position:absolute;left:0;right:0;top:0;z-index:5;transform:translateY(-105%);visibility:hidden;transition:transform .25s ease,visibility 0s .25s}
+.reader.immersive.show-top .r-top,.reader.immersive.show-bottom .r-bottom{transform:none;visibility:visible;transition:transform .25s ease}
+.reader.immersive .chrome{opacity:1!important;box-shadow:0 0 24px rgb(0 0 0 / .18)}
 .reader.playing .chrome{opacity:.16}
 .reader.playing .chrome:hover,.reader.playing .chrome:focus-within{opacity:1}
 .dim{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none;z-index:4}
@@ -310,7 +324,7 @@ kbd{font-family:var(--f-ui);font-size:12px;border:1px solid var(--line);border-b
 
 <main class="wrap">
   <div class="tools">
-    <input id="q" class="search" type="search" placeholder="Search titles and authors" aria-label="Search library">
+    <input id="q" class="search" type="search" placeholder="Search titles, authors or ISBN" aria-label="Search library">
     <select id="sort" class="sortsel" aria-label="Sort by">
       <option value="recent">Recently read</option>
       <option value="added">Recently added</option>
@@ -348,6 +362,7 @@ kbd{font-family:var(--f-ui);font-size:12px;border:1px solid var(--line);border-b
     <button id="rMode" class="rbtn" hidden></button>
     <button id="rToc" class="rbtn">Contents</button>
     <button id="rSet" class="rbtn">Display</button>
+    <button id="fsBtn" class="rbtn icon" aria-label="Full screen" title="Full screen (F)"><svg id="icFs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><svg id="icFsOff" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg></button>
   </div>
   <div class="r-stage" id="stage">
     <div id="scroller" class="scroller" tabindex="-1"><article id="page" class="page"></article></div>
@@ -391,7 +406,9 @@ kbd{font-family:var(--f-ui);font-size:12px;border:1px solid var(--line);border-b
       <span class="num" id="pct">0%</span>
       <span class="num" id="eta"></span>
     </div>
+    <button id="ribDown" class="ribtog" aria-label="Hide the controls" title="Hide the controls"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
   </div>
+  <button id="ribUp" class="ribup" aria-label="Show the controls" title="Show the controls" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg></button>
   <div id="dim" class="dim"></div>
 
   <aside id="tocPanel" class="panel left" hidden aria-label="Contents">
@@ -464,6 +481,7 @@ kbd{font-family:var(--f-ui);font-size:12px;border:1px solid var(--line);border-b
         <kbd>[</kbd> <kbd>]</kbd> smaller / larger text<br>
         <kbd>H</kbd> switch between pointer and hand tool<br>
         <kbd>M</kbd> magnifier on / off<br>
+        <kbd>F</kbd> full screen on / off<br>
         <kbd>Esc</kbd> close panel, then back to library
       </div>
     </div>
@@ -479,6 +497,8 @@ kbd{font-family:var(--f-ui);font-size:12px;border:1px solid var(--line);border-b
         <label for="dTitle">Title<input id="dTitle" autocomplete="off"></label>
         <label for="dAuthor">Author<input id="dAuthor" autocomplete="off"></label>
         <label for="dYear">First published<input id="dYear" inputmode="numeric" placeholder="e.g. 1890" autocomplete="off"></label>
+        <label for="dIsbn">ISBN<input id="dIsbn" placeholder="e.g. 978-0-14-118776-1" autocomplete="off" spellcheck="false" aria-describedby="dIsbnMsg"></label>
+        <p class="hint isbnmsg" id="dIsbnMsg" aria-live="polite"></p>
       </div>
     </div>
     <div class="grp">
@@ -655,7 +675,9 @@ async function openEpub(buf){
   const nav = Object.values(manifest).find(m=>/\bnav\b/.test(m.props));
   const ncxId = tags('spine')[0]?.getAttribute('toc');
   const ncx = (ncxId && manifest[ncxId]) || Object.values(manifest).find(m=>m.type==='application/x-dtbncx+xml');
-  return {zip, title, author, spine, cover, nav, ncx};
+  let isbn = '';
+  for(const idEl of tags('identifier')){ const c = isbnClean(idEl.textContent); if(isbnValid(c) && (!isbn || c.length === 13)) isbn = c; }
+  return {zip, title, author, spine, cover, nav, ncx, isbn};
 }
 
 async function readToc(ep){
@@ -920,7 +942,8 @@ const MOBI = (() => {
     const author = (ex[100]||[]).map(str).filter(Boolean).join(' & ');
     let cover = null;
     for(const t of [201, 202]){ if(cover || !ex[t] || h0.resourceStart===NONE) continue; const o = u32(ex[t][0],0); if(o !== NONE) cover = resource(rec(h0.resourceStart + o)); }
-    return {u8, rec, n, h0, kf8, dec, title, author, cover};
+    const isbn = ex[104] ? str(ex[104][0]) : '';
+    return {u8, rec, n, h0, kf8, dec, title, author, cover, isbn};
   }
 
   function mobi6(mb){
@@ -1278,17 +1301,31 @@ const LOOKUP = (() => {
     });
   }
 
+  // an exact edition: Open Library's record for this ISBN, plus that edition's own cover if it has one
+  async function openLibraryIsbn(isbn, signal){
+    const j = await getJSON('https://openlibrary.org/search.json?' + new URLSearchParams({isbn, fields:'key,title,author_name,first_publish_year,cover_i', limit:'3'}), signal);
+    const out = (j.docs||[]).map(d => ({source:'Open Library', title:d.title, author:(d.author_name||[]).slice(0,3).join(' & '), year:d.first_publish_year || null,
+      thumb: d.cover_i ? `https://covers.openlibrary.org/b/id/${d.cover_i}-M.jpg` : null, cover: d.cover_i ? `https://covers.openlibrary.org/b/id/${d.cover_i}-L.jpg` : null,
+      openCover:false, link:'https://openlibrary.org' + d.key, isbnMatch:true}));
+    if(out.length) out.push({source:'This edition (ISBN)', title:out[0].title, author:out[0].author, year:null, isbnMatch:true, editionCover:true, openCover:false,
+      thumb:`https://covers.openlibrary.org/b/isbn/${isbn}-M.jpg?default=false`, cover:`https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg?default=false`, link:`https://openlibrary.org/isbn/${isbn}`});
+    return out;
+  }
   async function search(q, timeoutMs=9000){
     const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), timeoutMs);
-    const runs = await Promise.allSettled([openLibrary(q, ctl.signal), wikidata(q, ctl.signal), gutenberg(q, ctl.signal)]);
+    if(!q.title && q.isbn) q = {...q, title:''};
+    const jobs = q.title ? [openLibrary(q, ctl.signal), wikidata(q, ctl.signal), gutenberg(q, ctl.signal)] : [];
+    if(q.isbn) jobs.unshift(openLibraryIsbn(q.isbn, ctl.signal));
+    const runs = await Promise.allSettled(jobs);
     clearTimeout(timer);
     const failed = runs.filter(r => r.status === 'rejected').length;
     const all = runs.flatMap(r => r.status === 'fulfilled' ? r.value : []);
     for(const c of all){ c.ts = titleScore(q.title, c.title); c.am = authorMatch(q.author, c.author);
       c.score = c.ts*2 + c.am + (c.year ? 0.15 : 0) + (c.cover ? 0.15 : 0) + (c.openCover ? 0.1 : 0);
-      c.confident = c.ts >= 0.99 && (c.am === 1 || (!q.author && c.source !== 'Open Library')); }
+      c.confident = c.ts >= 0.99 && (c.am === 1 || (!q.author && c.source !== 'Open Library'));
+      if(c.isbnMatch){ c.confident = !c.editionCover; c.score += 3; } }
     all.sort((a,b) => b.score - a.score);
-    return {results: all.filter(c => c.ts >= 0.3).slice(0, 12), failed, total: runs.length};
+    return {results: all.filter(c => c.ts >= 0.3 || c.isbnMatch).slice(0, 12), failed, total: runs.length};
   }
   // Pick what to apply without asking: only matches where title and author both agree
   function best(results){
@@ -1296,7 +1333,7 @@ const LOOKUP = (() => {
     if(!ok.length) return null;
     const years = ok.map(c => c.year).filter(y => y && y > 0);
     const cover = ok.find(c => c.openCover && c.source === 'Wikidata') || ok.find(c => c.openCover) || null;
-    const main = ok.find(c => c.source === 'Open Library') || ok[0];
+    const main = ok.find(c => c.isbnMatch) || ok.find(c => c.source === 'Open Library') || ok[0];
     return {title:main.title, author:main.author || ok.find(c => c.author)?.author || '', year: years.length ? Math.min(...years) : null, cover};
   }
   return {HOSTS, guessFromText, weakTitle, search, best, titleScore, authorMatch, surname};
@@ -1352,10 +1389,10 @@ async function autoLookup(list, onEach){
   let upd = 0, check = 0, offline = false, i = 0;
   for(const b of list){
     onEach && onEach(++i, list.length);
-    const q = {title:b.title, author:b.author || ''};
+    const q = {title:b.title, author:b.author || '', isbn: isbnValid(b.isbn || '') ? isbnTo13(b.isbn) : ''};
     if(LOOKUP.weakTitle(b.title, b.file) || !q.author){ const g = LOOKUP.guessFromText(await openingText(b));
       if(g.title && LOOKUP.weakTitle(q.title, b.file)) q.title = g.title; if(g.author && !q.author) q.author = g.author; }
-    let r = null; if(q.title){ try{ r = await LOOKUP.search(q); }catch(e){} }
+    let r = null; if(q.title || q.isbn){ try{ r = await LOOKUP.search(q); }catch(e){} }
     if(r && r.failed === r.total){ offline = true; break; }
     const best = r && LOOKUP.best(r.results);
     const noRealCover = !b.coverBuf || b.coverSrc === 'page';
@@ -1485,7 +1522,7 @@ function renderCoverChoices(){
   if(dlg.custom) tiles.push({kind:'custom', label:'Your image', node:() => customCanvas(84, 126)});
   if(b.coverBuf) tiles.push({kind:'own', label: b.coverSrc==='custom' || b.prevSrc==='custom' ? 'Your cover' : b.coverSrc==='online' || b.prevSrc==='online' ? 'Current cover' : (b.coverSrc==='page' || b.prevSrc==='page') ? 'First page' : 'Book’s own cover', node:() => coverImg(b.coverBuf, b.coverType)});
   tiles.push({kind:'classic', label:'Classic leather', node:() => classicCover(dlgPreview())});
-  for(const r of dlg.results) if(r.thumb) tiles.push({kind:'online', url:r.cover, thumb:r.thumb, label: r.source + (r.year ? ` · ${r.year}` : '') + (r.openCover ? '' : ' (copyright may apply)'), node:() => el('img', {src:r.thumb, alt:'', loading:'lazy', referrerpolicy:'no-referrer'})});
+  for(const r of dlg.results) if(r.thumb) tiles.push({kind:'online', url:r.cover, thumb:r.thumb, label: r.source + (r.year ? ` · ${r.year}` : '') + (r.openCover ? '' : ' (copyright may apply)'), node:() => el('img', {src:r.thumb, alt:'', loading:'lazy', referrerpolicy:'no-referrer', onerror:e => { const t = e.target.closest('.ctile'); if(t) t.hidden = true; }})});
   const isSel = t => dlg.choice.kind === t.kind && (t.kind !== 'online' || dlg.choice.url === t.url);
   $('#dCovers').replaceChildren(...tiles.map(t => el('button', {class:'ctile', 'aria-pressed':String(isSel(t)), onclick:() => { dlg.choice = {kind:t.kind, url:t.url, thumb:t.thumb}; renderCoverChoices(); }},
     el('span', {class:'th', 'aria-hidden':'true'}, t.node()), el('span', {text:t.label}))));
@@ -1502,7 +1539,7 @@ function renderResults(){
     use.onclick = () => { $('#dTitle').value = r.title || $('#dTitle').value; if(r.author) $('#dAuthor').value = r.author; if(r.year) $('#dYear').value = r.year;
       if(r.thumb) dlg.choice = {kind:'online', url:r.cover, thumb:r.thumb}; renderCoverChoices(); $('#dStatus').textContent = 'Details filled in. Choose Save to keep them.'; };
     return el('li', {},
-      r.thumb ? el('img', {class:'rt', src:r.thumb, alt:'', loading:'lazy', referrerpolicy:'no-referrer'}) : el('span', {class:'rt'}),
+      r.thumb ? el('img', {class:'rt', src:r.thumb, alt:'', loading:'lazy', referrerpolicy:'no-referrer', onerror:e => e.target.style.visibility = 'hidden'}) : el('span', {class:'rt'}),
       el('div', {}, el('strong', {text:r.title}), el('div', {class:'meta', text:[r.author, r.year].filter(Boolean).join(' · ')}),
         el('div', {class:'meta'}, el('a', {href:r.link, target:'_blank', rel:'noopener', text:r.source}))),
       use);
@@ -1520,12 +1557,14 @@ async function openDetails(b){
   $('#dUrl').value = ''; $('#dUrlRow').hidden = IN_CLAUDE;
   pushLayer('details');
   dlg = {b, results:[], custom:null, choice: b.coverBuf && b.coverSrc !== 'classic' ? {kind:'own'} : {kind:'classic'}};
-  $('#dTitle').value = b.title; $('#dAuthor').value = b.author || ''; $('#dYear').value = b.year || '';
+  $('#dTitle').value = b.title; $('#dAuthor').value = b.author || ''; $('#dYear').value = b.year || ''; $('#dIsbn').value = b.isbn || ''; isbnMsg();
   $('#dResults').replaceChildren(); $('#dStatus').textContent = '';
   $('#dSearch').hidden = !IS_EXT;
   $('#dHint').textContent = IS_EXT ? 'Searches using the title and author above. Only those words are sent. Covers from Wikimedia Commons and Project Gutenberg are openly licensed.'
     : 'Looking up details needs the Velvet Scroll browser extension, because this page can’t connect to other websites. You can still edit the details and choose the classic leather cover here.';
   renderCoverChoices(); $('#dlg').hidden = false; $('#dTitle').focus();
+  if(!b.isbn){ const t = await openingText(b), found = findIsbn(t);
+    if(found && dlg && dlg.b === b && !$('#dIsbn').value){ $('#dIsbn').value = found; isbnMsg(); $('#dStatus').textContent = 'ISBN found in the book.'; } }
   if(LOOKUP.weakTitle(b.title, b.file) || !b.author){
     const g = LOOKUP.guessFromText(await openingText(b));
     if(dlg && dlg.b === b){
@@ -1536,6 +1575,13 @@ async function openDetails(b){
     }
   }
 }
+function isbnMsg(){
+  const raw = $('#dIsbn').value.trim(), c = isbnClean(raw), m = $('#dIsbnMsg');
+  m.classList.toggle('bad', !!raw && !isbnValid(c));
+  m.textContent = !raw ? '' : isbnValid(c) ? `Valid ISBN-${c.length}` + (c.length === 10 ? ` (ISBN-13: ${isbnTo13(c)})` : '') :
+    c.length === 10 || c.length === 13 ? 'This ISBN’s check digit doesn’t match. Check for a typo.' : 'An ISBN has 10 or 13 digits (the last can be X).';
+}
+$('#dIsbn').addEventListener('input', isbnMsg);
 function closeDetailsNow(){ $('#dlg').hidden = true; dlg = null; }
 function closeDetails(){ popLayer('details'); }
 ['#dTitle','#dAuthor','#dYear'].forEach(id => $(id).addEventListener('input', () => { if(dlg && dlg.choice.kind === 'classic') renderCoverChoices(); }));
@@ -1545,8 +1591,8 @@ $('#dSearch').onclick = async () => {
   if(!dlg) return;
   const ok = await grantLookup();
   if(!ok){ $('#dStatus').textContent = 'Velvet Scroll wasn’t given permission to contact the book databases.'; return; }
-  const q = {title:$('#dTitle').value.trim(), author:$('#dAuthor').value.trim()};
-  if(!q.title){ $('#dStatus').textContent = 'Enter a title to search for.'; return; }
+  const ic = isbnClean($('#dIsbn').value), q = {title:$('#dTitle').value.trim(), author:$('#dAuthor').value.trim(), isbn: isbnValid(ic) ? isbnTo13(ic) : ''};
+  if(!q.title && !q.isbn){ $('#dStatus').textContent = 'Enter a title or an ISBN to search for.'; return; }
   $('#dStatus').textContent = 'Searching…'; $('#dSearch').disabled = true;
   try{
     const r = await LOOKUP.search(q); if(!dlg) return;
@@ -1570,7 +1616,7 @@ $('#dSave').onclick = async () => {
     b.coverBuf = img.buf; b.coverType = img.type; b.coverSrc = 'online'; b.prevSrc = undefined;
   } else if(ch.kind === 'classic'){ if(b.coverSrc !== 'classic'){ b.prevSrc = b.coverSrc; b.coverSrc = 'classic'; } }
   else if(b.coverSrc === 'classic'){ b.coverSrc = b.prevSrc || 'own'; }
-  b.title = $('#dTitle').value.trim() || b.title; b.author = $('#dAuthor').value.trim();
+  b.title = $('#dTitle').value.trim() || b.title; b.author = $('#dAuthor').value.trim(); b.isbn = isbnClean($('#dIsbn').value);
   const y = parseInt($('#dYear').value, 10); b.year = Number.isFinite(y) ? y : null;
   b.needsCheck = false; b.looked = true; b.upd = Date.now();
   await dbPutMeta(b); closeDetails(); render(); toast('Details saved.');
@@ -1702,7 +1748,7 @@ async function restore(zip){
     const rp = lib.progress && lib.progress[m.id];
     const local = books.find(b => b.id === m.id || (m.fp && b.fp === m.fp) || (b.title === m.title && (b.author||'') === (m.author||'')));
     if(local){
-      if((m.upd || 0) > (local.upd || 0)){ for(const k of ['title','author','year','shelf','needsCheck','looked','upd']) if(k in m) local[k] = m[k]; }
+      if((m.upd || 0) > (local.upd || 0)){ for(const k of ['title','author','year','isbn','shelf','needsCheck','looked','upd']) if(k in m) local[k] = m[k]; }
       if(m.hasCover && (!local.coverBuf || ((m.upd||0) > (local.upd||0) && (m.coverSrc === 'online' || m.coverSrc === 'custom')))){ const c = zip.file('covers/' + m.id); if(c){ local.coverBuf = await c.async('arraybuffer'); local.coverType = m.coverType; local.coverSrc = m.coverSrc; } }
       if(m.coverSrc === 'classic' && (m.upd||0) > (local.upd||0)){ local.prevSrc = local.coverSrc; local.coverSrc = 'classic'; }
       if(!local.fp && m.fp) local.fp = m.fp;
@@ -1732,7 +1778,7 @@ const syncQ = new Map();
 function syncBook(b){
   if(!syncOn || !b || !b.fp || b.sample) return;
   const pr = progress[b.id] || {};
-  syncQ.set('b:' + b.fp, {title:b.title, author:b.author || '', year:b.year || null, shelf:b.shelf || '', upd:b.upd || b.added || 0, p:pr.p || 0, pt:pr.t || 0, pg:pr.pg || null, mode:pr.mode || null});
+  syncQ.set('b:' + b.fp, {title:b.title, author:b.author || '', year:b.year || null, isbn:b.isbn || '', shelf:b.shelf || '', upd:b.upd || b.added || 0, p:pr.p || 0, pt:pr.t || 0, pg:pr.pg || null, mode:pr.mode || null});
   if(!syncTimer) syncTimer = setTimeout(syncFlush, 15000);   // at most every 15 seconds while reading
 }
 function syncSettings(){ if(!syncOn) return; const {hz, ...rest} = S; syncQ.set('settings', {t:LS.get('settingsT', Date.now()), s:rest}); if(!syncTimer) syncTimer = setTimeout(syncFlush, 15000); }
@@ -1752,7 +1798,7 @@ async function syncPull(){
     if(!k.startsWith('b:') || !v) continue;
     const b = books.find(x => x.fp === k.slice(2));
     if(!b){ missing.push(v); continue; }
-    if((v.upd || 0) > (b.upd || 0)){ Object.assign(b, {title:v.title || b.title, author:v.author, year:v.year, shelf:v.shelf, upd:v.upd}); await dbPutMeta(b); changed = true; }
+    if((v.upd || 0) > (b.upd || 0)){ Object.assign(b, {title:v.title || b.title, author:v.author, year:v.year, isbn:v.isbn || b.isbn || '', shelf:v.shelf, upd:v.upd}); await dbPutMeta(b); changed = true; }
     const lp = progress[b.id];
     if(v.pt && (!lp || v.pt > (lp.t || 0)) && !(cur && cur.id === b.id)){ setProgressRec(b.id, {p:v.p, t:v.pt, pg:v.pg || undefined, mode:v.mode || undefined}); changed = true; }
   }
@@ -1777,6 +1823,22 @@ $('#syncOn').addEventListener('change', async e => {
   for(const b of books) syncBook(b);
   syncSettings(); await syncFlush();
 });
+
+/* ---------- ISBN ---------- */
+function isbnClean(s){ return String(s || '').toUpperCase().replace(/^\s*(URN:)?ISBN[:\s-]*/, '').replace(/[^0-9X]/g, ''); }
+function isbnValid(c){
+  if(/^\d{9}[\dX]$/.test(c)){ let t = 0; for(let i=0;i<10;i++) t += (c[i] === 'X' ? 10 : +c[i]) * (10 - i); return t % 11 === 0; }
+  if(/^97[89]\d{10}$/.test(c)){ let t = 0; for(let i=0;i<13;i++) t += +c[i] * (i % 2 ? 3 : 1); return t % 10 === 0; }
+  return false;
+}
+function isbnTo13(c){ if(c.length === 13) return c; const b = '978' + c.slice(0, 9); let t = 0; for(let i=0;i<12;i++) t += +b[i] * (i % 2 ? 3 : 1); return b + ((10 - t % 10) % 10); }
+// an ISBN printed in the book, such as on its copyright page ("ISBN 978-0-14-118776-1", "ISBN-10 (ebook): ...")
+function findIsbn(text){
+  const re = /ISBN(?:[-\s]?1[03])?[^0-9\n]{0,25}?((?:97[89][\s‐-–-]?)?(?:\d[\s‐-–-]?){9}[\dXx])/gi;
+  let ten = '';
+  for(const m of String(text || '').matchAll(re)){ const c = isbnClean(m[1]); if(isbnValid(c)){ if(c.length === 13) return c; ten = ten || c; } }
+  return ten;
+}
 
 /* ---------- More formats: TXT, HTML, FB2, KEPUB, CBZ comics and zipped books ---------- */
 const IMG_EXT = /\.(jpe?g|png|gif|webp|avif|bmp)$/i;
@@ -1852,7 +1914,8 @@ function fb2Meta(doc){
   const authors = kids(ti, 'author').map(a => ['first-name','middle-name','last-name'].map(k => kid(a,k)?.textContent.trim()).filter(Boolean).join(' ') || kid(a,'nickname')?.textContent.trim() || '').filter(Boolean);
   const date = kid(ti, 'date'), y = parseInt((date && (date.getAttribute('value') || date.textContent)) || '', 10);
   const cp = kid(ti, 'coverpage'), im = cp && kid(cp, 'image');
-  return {title: kid(ti, 'book-title')?.textContent.trim() || '', author: authors.slice(0,3).join(' & '), year: y > 0 && y < 3000 ? y : null, coverId: im ? fbHref(im) : null};
+  const isbn = isbnClean(doc.getElementsByTagNameNS('*', 'isbn')[0]?.textContent || '');
+  return {isbn: isbnValid(isbn) ? isbn : '', title: kid(ti, 'book-title')?.textContent.trim() || '', author: authors.slice(0,3).join(' & '), year: y > 0 && y < 3000 ? y : null, coverId: im ? fbHref(im) : null};
 }
 function fb2Binary(doc, id){
   const b = [...doc.getElementsByTagNameNS('*', 'binary')].find(x => x.getAttribute('id') === id); if(!b) return null;
@@ -1967,7 +2030,7 @@ async function readMeta(buf, name){
     return {title:g.title, author:g.author}; }
   if(s.kind === 'html' || s.kind === 'htmlzip') return htmlMeta(htmlBook(s, buf));
   if(s.kind === 'fb2'){ const d = fb2Doc(await bytesOf(s, buf)), m = fb2Meta(d), c = m.coverId && fb2Binary(d, m.coverId);
-    return {title:m.title, author:m.author, year:m.year, coverBuf: c ? c.data.slice().buffer : null, coverType: c ? c.type : null}; }
+    return {title:m.title, author:m.author, year:m.year, isbn:m.isbn, coverBuf: c ? c.data.slice().buffer : null, coverType: c ? c.type : null}; }
   if(s.kind === 'cbz'){ const m = await comicMeta(s.zip), first = await s.zip.file(s.paths[0]).async('blob');
     return Object.assign(m, await smallCover(new Blob([first], {type:imgType(s.paths[0])}))); }
   if(PDF.isPdf(new Uint8Array(buf))){
@@ -1987,10 +2050,11 @@ async function readMeta(buf, name){
   }
   if(MOBI.isMobi(new Uint8Array(buf))){
     const mb = MOBI.open(buf);
-    return {title:mb.title, author:mb.author, coverBuf: mb.cover ? mb.cover.data.slice().buffer : null, coverType: mb.cover?.type};
+    const mi = isbnClean(mb.isbn);
+    return {title:mb.title, author:mb.author, isbn: isbnValid(mi) ? mi : '', coverBuf: mb.cover ? mb.cover.data.slice().buffer : null, coverType: mb.cover?.type};
   }
   const ep = await openEpub(buf);
-  const out = {title:ep.title, author:ep.author};
+  const out = {title:ep.title, author:ep.author, isbn:ep.isbn};
   if(ep.cover){ const cf = getFile(ep.zip, ep.cover.href); if(cf){ out.coverBuf = await cf.async('arraybuffer'); out.coverType = ep.cover.type; } }
   return out;
 }
@@ -2061,7 +2125,11 @@ function render(){
     return el('button',{class:'chip','aria-pressed':String(filter===k), onclick:()=>{filter=k; render()}}, l, el('b',{text:String(n)})); }));
   // filter & sort
   const q = $('#q').value.trim().toLowerCase();
-  let list = list0.filter(b => (!q || (b.title+' '+b.author).toLowerCase().includes(q)) &&
+  const qd = isbnClean(q).length >= 5 && /^[\d\sxX-]+$/.test(q) ? isbnClean(q) : '';
+  const qd13 = qd.length === 10 && isbnValid(qd) ? isbnTo13(qd) : '';   // an ISBN-10 also finds the same book stored as ISBN-13
+  const isbnHit = b => { if(!qd || !b.isbn) return false; const own = isbnValid(b.isbn) ? isbnTo13(b.isbn) : b.isbn;
+    return b.isbn.includes(qd) || own.includes(qd) || (!!qd13 && own === qd13); };
+  let list = list0.filter(b => (!q || (b.title+' '+b.author).toLowerCase().includes(q) || isbnHit(b)) &&
     (filter==='all' || (filter.startsWith('shelf:') ? b.shelf===filter.slice(6) : status(b)===filter)));
   const s = $('#sort').value;
   list.sort((a,b)=> s==='title' ? a.title.localeCompare(b.title) : s==='author' ? (a.author||'').localeCompare(b.author||'') : s==='year' ? (a.year||9999)-(b.year||9999) :
@@ -2107,14 +2175,16 @@ async function addFiles(files){
       const buf = await f.arrayBuffer();
       const ep = await readMeta(buf, f.name);
       // a missing or file-name title, or no author: read them from the book's opening pages
+      let opening = null; const openingOnce = async () => opening ?? (opening = await openingTextOf(buf).catch(() => ''));
+      if(!ep.isbn) ep.isbn = findIsbn(await openingOnce());
       if(LOOKUP.weakTitle(ep.title, f.name) || !ep.author){
-        const g = LOOKUP.guessFromText(await openingTextOf(buf));
+        const g = LOOKUP.guessFromText(await openingOnce());
         if(g.title && LOOKUP.weakTitle(ep.title, f.name)) ep.title = g.title;
         if(g.author && !ep.author) ep.author = g.author;
       }
       const title = ep.title || f.name.replace(/(\.(fb2|txt|x?html?|kepub))?\.[a-z0-9]+$/i,'').replace(/[_-]+/g,' ').trim();
       if(books.some(b=>b.title===title && b.author===ep.author)){ dup++; continue; }
-      const m = {id:uid(), title, author:ep.author, year:ep.year || null, added:Date.now(), upd:Date.now(), shelf:'', file:f.name, size:buf.byteLength, fp: await fingerprint(buf)};
+      const m = {id:uid(), title, author:ep.author, year:ep.year || null, isbn:ep.isbn || '', added:Date.now(), upd:Date.now(), shelf:'', file:f.name, size:buf.byteLength, fp: await fingerprint(buf)};
       if(m.fp && books.some(b => b.fp === m.fp)){ dup++; continue; }
       if(ep.coverBuf){ m.coverBuf = ep.coverBuf; m.coverType = ep.coverType; m.coverSrc = PDF.isPdf(new Uint8Array(buf)) ? 'page' : 'own'; }
       await dbPutFile(m.id, buf); await dbPutMeta(m); books.push(m); added++; fresh.push(m);
@@ -2268,7 +2338,55 @@ $('#fonts').append(...FONTS.map(f=>{ const b = el('button',{'data-v':f.n, text:f
 $('#gmodes').append(...GMODES.map(([v,l])=>el('button',{'data-v':v, text:l, onclick:()=>{S.gmode=v; applySettings();}})));
 $('#swatches').append(...PRESETS.map(p=>{ const b = el('button',{class:'sw','data-bg':p.bg,'data-fg':p.fg, text:p.n}); b.style.background=p.bg; b.style.color=p.fg; b.onclick=()=>{S.bg=p.bg; S.fg=p.fg; applySettings();}; return b; }));
 // Keep the reader's place when a layout-changing setting moves
-function keepPlace(fn){ const f = frac(); fn(); requestAnimationFrame(()=>setFrac(f)); }
+// Keep the reader's place when the layout changes: remember which paragraph (and how far into it) sits on the
+// reading guide, then put that same spot back on the guide afterwards. Falls back to the overall position.
+function placeAnchor(){
+  if(R.hidden) return null;
+  const sr = scroller.getBoundingClientRect(), pr = page.getBoundingClientRect(), y = sr.top + guideY() + 2;
+  const x = Math.min(Math.max(pr.left + pr.width / 2, sr.left + 4), sr.right - 4);
+  // best: the exact character on the reading line, which stays correct however the text reflows
+  try{
+    const c = document.caretPositionFromPoint ? document.caretPositionFromPoint(x, y) : document.caretRangeFromPoint ? document.caretRangeFromPoint(x, y) : null;
+    const node = c && (c.offsetNode || c.startContainer), off = c ? (c.offset ?? c.startOffset) : 0;
+    if(node && node.nodeType === 3 && node.length && page.contains(node)){
+      const o = Math.max(0, Math.min(off, node.length - 1)), rg = document.createRange(); rg.setStart(node, o); rg.setEnd(node, o + 1);
+      const rr = rg.getBoundingClientRect();
+      if(rr.height) return {node, off:o, dy: Math.max(0, Math.min(y - rr.top, rr.height))};
+    }
+  }catch(e){}
+  let el = document.elementFromPoint(x, y);
+  if(!el || !page.contains(el) || el === page) return null;
+  const BLOCK = 'p,h1,h2,h3,h4,h5,h6,li,blockquote,pre,img,.pdfpg,.gap';
+  const blk = el.closest(BLOCK);
+  if(blk && page.contains(blk)) el = blk;
+  else {
+    // the guide is between paragraphs: take the first block that ends below it (blocks are in reading order)
+    const list = el.querySelectorAll(BLOCK); let lo = 0, hi = list.length - 1, hit = null;
+    while(lo <= hi){ const mid = (lo + hi) >> 1; if(list[mid].getBoundingClientRect().bottom >= y){ hit = list[mid]; hi = mid - 1; } else lo = mid + 1; }
+    if(hit) el = hit;
+  }
+  const r = el.getBoundingClientRect();
+  return {el, rel: r.height ? (y - r.top) / r.height : 0};
+}
+function restoreAnchor(a, f){
+  if(a && a.node){
+    if(!a.node.isConnected || a.off >= a.node.length) return setFrac(f);
+    const rg = document.createRange(); rg.setStart(a.node, a.off); rg.setEnd(a.node, a.off + 1);
+    const rr = rg.getBoundingClientRect(), want = scroller.getBoundingClientRect().top + guideY() + 2;
+    scroller.scrollTop += (rr.top + Math.min(a.dy, rr.height)) - want; return;
+  }
+  if(!a || !a.el.isConnected) return setFrac(f);
+  const r = a.el.getBoundingClientRect(), want = scroller.getBoundingClientRect().top + guideY() + 2;
+  scroller.scrollTop += (r.top + a.rel * r.height) - want;
+}
+function keepPlace(fn){ const a = placeAnchor(), f = frac(); fn(); requestAnimationFrame(() => restoreAnchor(a, f)); }
+// the spot on the guide is noted as you read, so a resize noticed after the fact can still restore it
+let lastAnchor = null, lastFrac = 0, anchorRaf = 0, holdAnchor = 0, holdT = 0;
+const stageSize = () => stage.clientWidth + 'x' + stage.clientHeight;
+function noteAnchor(){ if(anchorRaf || performance.now() < holdAnchor) return; anchorRaf = requestAnimationFrame(() => { anchorRaf = 0; if(R.hidden) return;
+  // if the reading area has just changed size, the resize handler restores the old spot: don't overwrite it first
+  if(lastAnchor && lastAnchor.sz && lastAnchor.sz !== stageSize()) return;
+  const a = placeAnchor(); if(a){ a.sz = stageSize(); lastAnchor = a; lastFrac = frac(); } }); }
 const bind = (id, key, num=true, relayout=false) => $(id).addEventListener('input', e=>{ const v = num ? +e.target.value : e.target.value; relayout ? keepPlace(()=>{S[key]=v; applySettings();}) : (S[key]=v, applySettings()); });
 bind('#sSize','size',true,true); bind('#sLh','lh',true,true); bind('#sWidth','width',true,true);
 bind('#sBright','bright'); bind('#sGpos','gpos',true,true); bind('#sGh','gh');
@@ -2337,7 +2455,7 @@ async function openBook(b){
   const pr = progress[b.id] || {}, p = pr.p || 0;
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
     if(pdfDoc && pr.pg && pr.mode && pr.mode !== pdfMode) goTo('sec0-pg'+pr.pg); else setFrac(p);
-    ready = true; updateStatus();
+    ready = true; updateStatus(); lastAnchor = null; noteAnchor();
     // images can shift the layout as they load; re-apply the saved spot once they settle
     const imgs = [...page.querySelectorAll('img')].filter(i=>!i.complete);
     if(imgs.length && p > 0) Promise.all(imgs.map(i=>new Promise(r=>{ i.onload=i.onerror=r; }))).then(()=>{ if(cur && !playing && Math.abs(frac()-p) < 0.02) setFrac(p); });
@@ -2491,7 +2609,7 @@ function goTo(id){
 }
 function closeReader(){ popLayer('reader'); }
 function closeReaderNow(){
-  setLens(false);
+  setLens(false); setImmersive(false);
   if(R.hidden) return;
   pause(); hidePanels();
   if(!R.hidden && page.childNodes.length) saveCur(); ready = false;
@@ -2568,6 +2686,59 @@ $('#play').onclick = toggle;
 let drag = null, suppressClick = false, fling = 0;
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 function setHand(on){ S.hand = on; applySettings(); }
+/* ---------- Full screen and hiding the controls ---------- */
+const touchUI = () => matchMedia('(hover: none), (pointer: coarse)').matches;
+let immersive = false, realFs = false, hoverT = 0, fsTipShown = false;
+function setBars(top, bottom){ R.classList.toggle('show-top', top); R.classList.toggle('show-bottom', bottom); }
+function setMin(min){
+  R.classList.toggle('min', min); $('#ribUp').hidden = !min;
+  if(immersive) setBars(!min, !min);
+  if(min && R.contains(document.activeElement) && document.activeElement.closest('.chrome')) scroller.focus({preventScroll:true});
+}
+async function setImmersive(on){
+  if(on === immersive) return;
+  immersive = on; R.classList.toggle('immersive', on);
+  $('#icFs').toggleAttribute('hidden', on); $('#icFsOff').toggleAttribute('hidden', !on);
+  $('#fsBtn').setAttribute('aria-label', on ? 'Leave full screen' : 'Full screen'); $('#fsBtn').title = on ? 'Leave full screen (F)' : 'Full screen (F)';
+  if(on){
+    realFs = false;
+    try{ const el = document.documentElement; if(!document.fullscreenElement && el.requestFullscreen){ await el.requestFullscreen({navigationUI:'hide'}); realFs = true; } }catch(e){}
+    if(touchUI()) setMin(true);
+    else { setBars(true, true); clearTimeout(hoverT); hoverT = setTimeout(() => { if(immersive) setBars(false, false); }, 1600); }
+    if(!fsTipShown){ fsTipShown = true;
+      toast(touchUI() ? 'Tap the arrow at the bottom to show the controls.' : 'Move the pointer to the top or bottom edge to show the controls. Press F to leave full screen.', 4500); }
+  } else {
+    clearTimeout(hoverT); setBars(false, false); setMin(false);
+    if(document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
+    realFs = false;
+  }
+}
+$('#fsBtn').onclick = () => setImmersive(!immersive);
+$('#ribDown').onclick = () => setMin(true);
+$('#ribUp').onclick = () => setMin(false);
+// leaving the browser's full screen another way (Esc, the system back gesture) also leaves immersive mode
+document.addEventListener('fullscreenchange', () => { if(!document.fullscreenElement && immersive && realFs) setImmersive(false); });
+// with a mouse: the bars appear near the top and bottom edges, and while the pointer is over them or a panel is open
+R.addEventListener('mousemove', e => {
+  if(!immersive || touchUI()) return;
+  const h = innerHeight, topH = $('.r-top').offsetHeight, botH = $('.r-bottom').offsetHeight;
+  const panel = !$('#tocPanel').hidden || !$('#setPanel').hidden;
+  const wantTop = e.clientY < (R.classList.contains('show-top') ? topH + 24 : 64) || panel;
+  const wantBot = e.clientY > h - (R.classList.contains('show-bottom') ? botH + 24 : 84);
+  if(wantTop || wantBot){ clearTimeout(hoverT); setBars(wantTop, wantBot); }
+  else { clearTimeout(hoverT); hoverT = setTimeout(() => { if(immersive && !touchUI()) setBars(!$('#tocPanel').hidden || !$('#setPanel').hidden, false); }, 450); }
+});
+document.addEventListener('mouseleave', () => { if(immersive && !touchUI()){ clearTimeout(hoverT); hoverT = setTimeout(() => setBars(false, false), 300); } });
+R.addEventListener('focusin', e => { if(immersive && !touchUI() && e.target.closest('.chrome')){ const top = !!e.target.closest('.r-top'); setBars(top || R.classList.contains('show-top'), !top || R.classList.contains('show-bottom')); } });
+// the reading area changes size when bars hide or show: keep the reader's place
+let stageRO = 0;
+if(typeof ResizeObserver !== 'undefined') new ResizeObserver(() => { if(R.hidden) return; const a = lastAnchor, f = lastFrac;
+  // layout can settle over several steps (bars wrapping, text reflowing): keep using the spot from before the change
+  holdAnchor = performance.now() + 500; clearTimeout(holdT); holdT = setTimeout(noteAnchor, 520);
+  layoutGuide(); pgTops = null; pgLine = 0; if(pdfDoc && pdfMode === 'pages') refreshPdfPages();
+  if(ready && a){ restoreAnchor(a, f); a.sz = stageSize(); }
+  try{ lensRefresh(true); }catch(e){} }).observe(stage);
+
 /* ---------- Magnifier: a lens over a live copy of the page ---------- */
 const lensEl = $('#lens'), lensView = lensEl.querySelector('.lens-view'), lensContent = lensEl.querySelector('.lens-content');
 let lensOn = false, lx = 0, ly = 0, lensRange = null, lensDirty = true, lensRaf = 0, lensMO = null;
@@ -2732,9 +2903,10 @@ function updateStatus(){
   const now = Date.now(); if(ready && now - saveT > 1000){ saveT = now; saveCur(); }
 }
 scroller.addEventListener('scroll', updateStatus, {passive:true});
+scroller.addEventListener('scroll', noteAnchor, {passive:true});
 $('#seek').addEventListener('input', e=>{ seeking = true; setFrac(+e.target.value/1000); });
 $('#seek').addEventListener('change', ()=>{ seeking = false; });
-addEventListener('resize', ()=>{ if(!R.hidden) keepPlace(()=>{ layoutGuide(); pgTops = null; pgLine = 0; if(pdfDoc && pdfMode==='pages') refreshPdfPages(); }); });
+// window resizes are handled by the reading area's ResizeObserver above
 
 /* panels */
 function hidePanels(){ $('#tocPanel').hidden = true; $('#setPanel').hidden = true; }
@@ -2765,7 +2937,8 @@ addEventListener('keydown', e=>{
   else if(e.key==='['){ keepPlace(()=>{ S.size=Math.max(14,S.size-1); applySettings(); }); }
   else if((e.key==='h' || e.key==='H') && !e.ctrlKey && !e.metaKey && !e.altKey){ setHand(!S.hand); }
   else if((e.key==='m' || e.key==='M') && !e.ctrlKey && !e.metaKey && !e.altKey){ setLens(!lensOn); }
-  else if(e.key==='Escape'){ if(!$('#tocPanel').hidden || !$('#setPanel').hidden) closePanels(); else if(lensOn) setLens(false); else closeReader(); }
+  else if((e.key==='f' || e.key==='F') && !e.ctrlKey && !e.metaKey && !e.altKey){ setImmersive(!immersive); }
+  else if(e.key==='Escape'){ if(!$('#tocPanel').hidden || !$('#setPanel').hidden) closePanels(); else if(lensOn) setLens(false); else if(immersive) setImmersive(false); else closeReader(); }
 });
 document.addEventListener('visibilitychange', ()=>{ if(document.hidden){ pause(); saveCur(); } else if(!R.hidden) detectHz(); });
 addEventListener('pagehide', () => { saveCur(); syncFlush(); });
