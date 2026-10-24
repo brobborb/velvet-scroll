@@ -6,6 +6,6 @@
 // bitcoin: your Bitcoin address, for example "bc1q..." (an address used only for donations is best)
 
 window.VELVET_DONATE = {
-  paypal: "",
+  paypal: "https://paypal.me/brobborb",
   bitcoin: ""
 };
