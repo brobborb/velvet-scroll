@@ -54,6 +54,21 @@ main.wrap{padding-block:20px 48px;display:flex;flex-direction:column;gap:16px}
 .chip{border:1px solid var(--line);background:transparent;border-radius:999px;padding:5px 12px;cursor:pointer;font-size:14px;color:var(--muted)}
 .chip b{font-variant-numeric:tabular-nums;font-weight:400;opacity:.75;margin-left:4px}
 .chip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--fg)}
+.libtabs{display:flex;gap:4px;border-bottom:1px solid var(--line)}
+.libtabs[hidden]{display:none}
+.libtab{border:0;background:none;padding:8px 14px 9px;margin-bottom:-1px;border-bottom:2px solid transparent;cursor:pointer;font-size:15px;color:var(--muted)}
+.libtab b{font-variant-numeric:tabular-nums;font-weight:400;opacity:.75;margin-left:5px}
+.libtab[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent);font-weight:600}
+.libtab:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;border-radius:6px 6px 0 0}
+.fmts{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;font-size:14px;color:var(--muted)}
+.fmts[hidden]{display:none}
+.fmts>span{margin-right:2px}
+.fmt{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:4px 11px 4px 8px;cursor:pointer;user-select:none}
+.fmt input{accent-color:var(--accent);margin:0;width:15px;height:15px;cursor:pointer}
+.fmt b{font-variant-numeric:tabular-nums;font-weight:400;opacity:.75}
+.fmt:has(input:checked){background:var(--accent-soft);border-color:var(--accent);color:var(--fg)}
+.fmt:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:1px}
+.fmtclear{border:0;background:none;color:var(--accent);cursor:pointer;font-size:14px;padding:4px 6px;text-decoration:underline}
 .notice{border:1px dashed var(--line);border-radius:var(--radius);padding:12px 16px;color:var(--muted);background:var(--surface)}
 
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:28px 22px}
@@ -340,7 +355,12 @@ kbd{font-family:var(--f-ui);font-size:12px;border:1px solid var(--line);border-b
       <option value="year">Year published</option>
     </select>
   </div>
+  <div id="libTabs" class="libtabs" role="tablist" aria-label="Library sections" hidden>
+    <button id="tabBooks" class="libtab" role="tab" aria-selected="true" aria-controls="grid">Books<b></b></button>
+    <button id="tabArts" class="libtab" role="tab" aria-selected="false" aria-controls="grid">Saved articles<b></b></button>
+  </div>
   <div id="chips" class="chips" role="group" aria-label="Filter"></div>
+  <div id="fmts" class="fmts" role="group" aria-label="File formats" hidden></div>
   <div id="notice" class="notice" hidden></div>
   <section id="grid" class="grid" aria-label="Books"></section>
   <p class="foot"><a class="plink" href="https://velvetscroll.net/privacy.html" target="_blank" rel="noopener">Privacy</a> · Books stay in this browser on this device; nothing is uploaded. Opens EPUB, KEPUB, MOBI, AZW3, PDF, TXT, HTML, FB2 and CBZ comic files, including zipped ones. Drag them anywhere on the page to add them. DRM-protected and password-locked books, including Kindle store purchases, can't be opened.</p>
@@ -2162,6 +2182,31 @@ const SAMPLE_HTML = `
 
 /* ---------- Library UI ---------- */
 let filter = 'all';
+let libView = LS.get('libView', 'books');                  // 'books' or 'articles'
+let fmtSel = new Set(LS.get('libFormats', []));            // ticked formats; none ticked shows every format
+const FMT_LABEL = {epub:'EPUB', mobi:'MOBI', azw3:'AZW3', pdf:'PDF', txt:'TXT', html:'HTML', fb2:'FB2', comic:'Comics', zip:'ZIP'};
+const FMT_ORDER = Object.keys(FMT_LABEL);
+// the book's format: what it was when added, or else its file name
+function fmtOf(b){
+  if(b.kind === 'article') return 'article';
+  if(b.fmt) return b.fmt;
+  const ext = ((b.file || '').match(/\.([a-z0-9]+)$/i) || [,''])[1].toLowerCase();
+  return {epub:'epub', kepub:'epub', mobi:'mobi', prc:'mobi', azw:'mobi', azw3:'azw3', pdf:'pdf', txt:'txt', htm:'html', html:'html', xhtml:'html', fb2:'fb2', fbz:'fb2', cbz:'comic', zip:'zip'}[ext] || (b.sample ? 'epub' : 'zip');
+}
+function fmtFromSniff(kind, name){
+  if(kind === 'mobi') return /\.azw3$/i.test(name || '') ? 'azw3' : 'mobi';
+  return {epub:'epub', pdf:'pdf', txt:'txt', html:'html', htmlzip:'html', fb2:'fb2', cbz:'comic'}[kind] || '';
+}
+// books added as .zip files before formats were recorded: look inside once to see what they are
+let fmtChecked = false;
+async function backfillFormats(){
+  if(fmtChecked) return; fmtChecked = true; let changed = false;
+  for(const b of books.filter(b => b.kind !== 'article' && !b.fmt && fmtOf(b) === 'zip')){
+    try{ const buf = await dbGetFile(b.id); if(!buf) continue; const f = fmtFromSniff((await sniff(buf, b.file)).kind, b.file);
+      if(f){ b.fmt = f; await rq(DB.db.transaction('meta','readwrite').objectStore('meta').put(b)); changed = true; } }catch(e){}
+  }
+  if(changed) render();
+}
 function status(b){ const p = progress[b.id]?.p || 0; return p >= 0.985 ? 'finished' : p > 0.005 ? 'reading' : 'unread'; }
 function hue(s){ let h=0; for(const c of s) h=(h*31+c.charCodeAt(0))>>>0; return h%360; }
 let coverUrls = [];
@@ -2195,30 +2240,46 @@ function classicCover(b){
 }
 function render(){
   coverUrls.forEach(URL.revokeObjectURL); coverUrls = [];
-  const list0 = books.length ? books : [SAMPLE];
+  const all0 = books.length ? books : [SAMPLE];
+  // two sections: books and saved articles (the tabs appear once there are articles)
+  const nArts = books.filter(b => b.kind === 'article').length, nBooks = all0.length - nArts;
+  const view = nArts ? libView : 'books';   // the remembered tab, once there are articles to show
+  const tabs = $('#libTabs'); tabs.hidden = !nArts;
+  [['#tabBooks','books',nBooks],['#tabArts','articles',nArts]].forEach(([id,v,n]) => { const t = $(id); t.setAttribute('aria-selected', String(view === v)); t.tabIndex = view === v ? 0 : -1; t.querySelector('b').textContent = n; });
+  const list0 = all0.filter(b => (b.kind === 'article') === (view === 'articles'));
   // chips
-  const shelves = [...new Set(books.map(b=>b.shelf).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
-  $('#shelfList').replaceChildren(...shelves.map(s=>el('option',{value:s})));
+  const shelves = [...new Set(list0.map(b=>b.shelf).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  $('#shelfList').replaceChildren(...[...new Set(books.map(b=>b.shelf).filter(Boolean))].sort((a,b)=>a.localeCompare(b)).map(s=>el('option',{value:s})));
   const counts = {all:list0.length, reading:0, unread:0, finished:0}; list0.forEach(b=>counts[status(b)]++);
-  if(filter.startsWith('shelf:') && !shelves.includes(filter.slice(6))) filter='all';
-  counts.articles = books.filter(b => b.kind === 'article').length;
-  const defs = [['all','All'],['reading','Reading'],['unread','Unread'],['finished','Finished'], ...(counts.articles ? [['articles','Articles']] : []), ...shelves.map(s=>['shelf:'+s, s])];
-  $('#chips').replaceChildren(...defs.map(([k,l])=>{ const n = k.startsWith('shelf:') ? books.filter(b=>b.shelf===k.slice(6)).length : counts[k];
+  if(filter === 'articles' || (filter.startsWith('shelf:') && !shelves.includes(filter.slice(6)))) filter='all';
+  const defs = [['all','All'],['reading','Reading'],['unread','Unread'],['finished','Finished'], ...shelves.map(s=>['shelf:'+s, s])];
+  $('#chips').replaceChildren(...defs.map(([k,l])=>{ const n = k.startsWith('shelf:') ? list0.filter(b=>b.shelf===k.slice(6)).length : counts[k];
     return el('button',{class:'chip','aria-pressed':String(filter===k), onclick:()=>{filter=k; render()}}, l, el('b',{text:String(n)})); }));
+  // format tick boxes (books only, when there's more than one format)
+  const fcount = {}; if(view === 'books') list0.forEach(b => { const f = fmtOf(b); fcount[f] = (fcount[f] || 0) + 1; });
+  const present = FMT_ORDER.filter(f => fcount[f]);
+  const activeF = new Set([...fmtSel].filter(f => fcount[f]));
+  const fbox = $('#fmts'); fbox.hidden = present.length < 2;
+  if(!fbox.hidden) fbox.replaceChildren(el('span', {text:'Format:'}), ...present.map(f => {
+      const cb = el('input', {type:'checkbox'}); cb.checked = activeF.has(f);
+      cb.addEventListener('change', () => { cb.checked ? fmtSel.add(f) : fmtSel.delete(f); LS.set('libFormats', [...fmtSel]); render(); });
+      return el('label', {class:'fmt'}, cb, FMT_LABEL[f], el('b', {text:String(fcount[f])}));
+    }), ...(activeF.size ? [el('button', {class:'fmtclear', text:'Show all', onclick:() => { fmtSel.clear(); LS.set('libFormats', []); render(); }})] : []));
+  const fmtOk = b => view !== 'books' || fbox.hidden || !activeF.size || activeF.has(fmtOf(b));
   // filter & sort
   const q = $('#q').value.trim().toLowerCase();
   const qd = isbnClean(q).length >= 5 && /^[\d\sxX-]+$/.test(q) ? isbnClean(q) : '';
   const qd13 = qd.length === 10 && isbnValid(qd) ? isbnTo13(qd) : '';   // an ISBN-10 also finds the same book stored as ISBN-13
   const isbnHit = b => { if(!qd || !b.isbn) return false; const own = isbnValid(b.isbn) ? isbnTo13(b.isbn) : b.isbn;
     return b.isbn.includes(qd) || own.includes(qd) || (!!qd13 && own === qd13); };
-  let list = list0.filter(b => (!q || (b.title+' '+b.author).toLowerCase().includes(q) || isbnHit(b)) &&
-    (filter==='all' || (filter==='articles' ? b.kind==='article' : filter.startsWith('shelf:') ? b.shelf===filter.slice(6) : status(b)===filter)));
+  let list = list0.filter(b => (!q || (b.title+' '+b.author+' '+(b.site||'')).toLowerCase().includes(q) || isbnHit(b)) && fmtOk(b) &&
+    (filter==='all' || (filter.startsWith('shelf:') ? b.shelf===filter.slice(6) : status(b)===filter)));
   const s = $('#sort').value;
   list.sort((a,b)=> s==='title' ? a.title.localeCompare(b.title) : s==='author' ? (a.author||'').localeCompare(b.author||'') : s==='year' ? (a.year||9999)-(b.year||9999) :
     s==='added' ? b.added-a.added : ((progress[b.id]?.t||0)-(progress[a.id]?.t||0)) || b.added-a.added);
   const notice = $('#notice');
   if(!books.length){ notice.hidden=false; notice.textContent='Your library is empty. Open the sample to try the scroller, then add your own ebooks or comics.'; }
-  else if(!list.length){ notice.hidden=false; notice.textContent='No books match this search or filter.'; }
+  else if(!list.length){ notice.hidden=false; notice.textContent = view === 'articles' ? 'No saved articles match this search or filter.' : 'No books match this search or filter.'; }
   else notice.hidden=true;
   $('#grid').replaceChildren(...list.map(card));
   const lastB = books.filter(b=>{ const s=status(b); return s==='reading'; }).sort((a,b)=>(progress[b.id]?.t||0)-(progress[a.id]?.t||0))[0];
@@ -2267,6 +2328,7 @@ async function addFiles(files){
       const title = ep.title || f.name.replace(/(\.(fb2|txt|x?html?|kepub))?\.[a-z0-9]+$/i,'').replace(/[_-]+/g,' ').trim();
       if(books.some(b=>b.title===title && b.author===ep.author)){ dup++; continue; }
       const m = {id:uid(), title, author:ep.author, year:ep.year || null, isbn:ep.isbn || '', added:Date.now(), upd:Date.now(), shelf:'', file:f.name, size:buf.byteLength, fp: await fingerprint(buf)};
+      try{ const fm = fmtFromSniff((await sniff(buf, f.name)).kind, f.name); if(fm) m.fmt = fm; }catch(e){}
       if(m.fp && books.some(b => b.fp === m.fp)){ dup++; continue; }
       if(ep.coverBuf){ m.coverBuf = ep.coverBuf; m.coverType = ep.coverType; m.coverSrc = PDF.isPdf(new Uint8Array(buf)) ? 'page' : 'own'; }
       await dbPutFile(m.id, buf); await dbPutMeta(m); books.push(m); added++; fresh.push(m);
@@ -2285,6 +2347,10 @@ async function addFiles(files){
 }
 $('#file').addEventListener('change', e=>{ addFiles(e.target.files); e.target.value=''; });
 $('#q').addEventListener('input', render);
+function setView(v){ if(libView === v) return; libView = v; LS.set('libView', v); filter = 'all'; render(); }
+$('#tabBooks').addEventListener('click', () => setView('books'));
+$('#tabArts').addEventListener('click', () => setView('articles'));
+$('#libTabs').addEventListener('keydown', e => { if(e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'Home' || e.key === 'End'){ e.preventDefault(); setView(e.key === 'ArrowLeft' || e.key === 'Home' ? 'books' : 'articles'); $(libView === 'books' ? '#tabBooks' : '#tabArts').focus(); } });
 $('#sort').addEventListener('change', ()=>{ LS.set('sort', $('#sort').value); render(); });
 let dragN = 0;
 addEventListener('dragenter', e=>{ if(!$('#dlg').hidden) return; if([...e.dataTransfer.types].includes('Files')){ dragN++; document.body.classList.add('dragging'); } });
@@ -3164,6 +3230,7 @@ setupDonate();
   initSync();
   try{ navigator.storage?.persist?.(); }catch(e){}
   render();
+  backfillFormats();
   if(!ok){ $('#notice').hidden=false; }
 })();
 })();
