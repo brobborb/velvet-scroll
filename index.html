@@ -157,7 +157,6 @@ main.wrap{padding-block:20px 48px;display:flex;flex-direction:column;gap:16px}
 .swatch[aria-pressed="true"]::after{content:"";position:absolute;inset:0;margin:auto;width:10px;height:10px;border-radius:50%;background:var(--surface);box-shadow:0 0 0 1px var(--fg)}
 ::highlight(tts-word){background-color:color-mix(in srgb,var(--accent) 38%,transparent);color:inherit}
 .page .tts-cur{background:color-mix(in srgb,var(--accent) 9%,transparent);border-radius:4px;box-shadow:0 0 0 .25em color-mix(in srgb,var(--accent) 9%,transparent)}
-.kinfo{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px;font-size:14px;line-height:1.5}
 .isbnmsg{margin:-6px 0 0;min-height:1.2em;font-size:13px}
 .isbnmsg.bad{color:var(--danger)}
 .pwrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
@@ -268,7 +267,7 @@ body.dragging .drop{display:grid}
 .ctl.seek{flex:2 1 260px}
 .ctl label{font-weight:700;white-space:nowrap}
 .ctl input[type=range]{flex:1;min-width:80px;accent-color:var(--accent)}
-.ctl output,.ctl .num{font-variant-numeric:tabular-nums;white-space:nowrap;opacity:.85}
+.ctl output,.ctl .num{font-variant-numeric:tabular-nums;white-space:nowrap;opacity:.85;flex:none}
 .stepbtn{width:30px;height:30px;flex:none;border-radius:50%;border:1px solid color-mix(in srgb,var(--rfg) 22%,transparent);background:transparent;color:var(--rfg);cursor:pointer;font-weight:700}
 .rbtn.icon{padding:6px 9px;display:inline-grid;place-items:center}
 .rbtn.icon svg{width:18px;height:18px}
@@ -345,6 +344,53 @@ kbd{font-family:var(--f-ui);font-size:12px;border:1px solid var(--line);border-b
   .r-title{order:-1;flex-basis:100%}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+/* ---------- Accessibility ---------- */
+/* high contrast: solid colours, firm outlines, nothing faded */
+html.ax-hc :focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+html.ax-hc .btn,html.ax-hc .chip,html.ax-hc .search,html.ax-hc .sortsel,html.ax-hc .shelf,html.ax-hc .fmt,html.ax-hc .seg button,html.ax-hc .sw,html.ax-hc .hzsel,
+html.ax-hc .dfields input,html.ax-hc .urlrow input,html.ax-hc .pwrow input,html.ax-hc .results li,html.ax-hc .sheet,html.ax-hc .panel{border:2px solid var(--fg)}
+html.ax-hc .rbtn,html.ax-hc .stepbtn,html.ax-hc .toolseg,html.ax-hc .tool.solo,html.ax-hc .ribtog,html.ax-hc .ribup{border:2px solid var(--rfg)}
+html.ax-hc .chrome{background:var(--rbg);border-color:var(--rfg)}
+html.ax-hc .reader.playing .chrome{opacity:1}
+html.ax-hc .guide.band{background:color-mix(in srgb,var(--rguide) 38%,transparent);border-block:2px solid var(--rguide)}
+html.ax-hc .guide.under{border-bottom-width:4px}
+html.ax-hc .sweep-mark{height:3px}
+html.ax-hc .prog{background:transparent;box-shadow:inset 0 0 0 1px var(--fg)}
+html.ax-hc .cover{box-shadow:0 0 0 2px var(--fg)}
+html.ax-hc .page a{text-decoration-thickness:2px}
+html.ax-hc .chip,html.ax-hc .ghost,html.ax-hc .hint,html.ax-hc .muted{color:var(--fg)}
+/* cues that don't depend on colour */
+html.ax-cues .chip[aria-pressed="true"]::before,html.ax-cues .seg button[aria-pressed="true"]::before,html.ax-cues .sw[aria-pressed="true"]::before{content:"✓ "}
+html.ax-cues .libtab[aria-selected="true"]{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:7px}
+html.ax-cues .tool[aria-pressed="true"]{outline:2px solid currentColor;outline-offset:2px}
+html.ax-cues .ghost.confirm::before{content:"⚠ "}
+html.ax-cues .ctile[aria-pressed="true"] .th{outline:3px solid var(--fg);outline-offset:1px}
+html.ax-cues .isbnmsg.bad::before{content:"⚠ "}
+/* larger controls */
+html.ax-large body{font-size:17px}
+html.ax-large .btn{padding:12px 20px;font-size:16px}
+html.ax-large .chip,html.ax-large .fmt,html.ax-large .fmtclear{padding:8px 16px;font-size:16px}
+html.ax-large .libtab{font-size:17px;padding:10px 16px 11px}
+html.ax-large .search,html.ax-large .sortsel{padding:12px 18px;font-size:16px}
+html.ax-large .card h3{font-size:17px}
+html.ax-large .card .au,html.ax-large .status,html.ax-large .ghost,html.ax-large .shelf{font-size:15px}
+html.ax-large .rbtn{padding:10px 16px;font-size:16px}
+html.ax-large .tool{width:48px;height:48px}
+html.ax-large .tool svg{width:24px;height:24px}
+html.ax-large .play{width:62px;height:62px}
+html.ax-large .stepbtn{width:40px;height:40px;font-size:18px}
+html.ax-large .ribtog{width:46px;height:46px}
+html.ax-large .ctl.speed{flex:1 1 340px}
+html.ax-large .ctl.seek{flex:2 1 300px}
+html.ax-large .ctl,html.ax-large .field,html.ax-large .check,html.ax-large .seg button,html.ax-large .toc button{font-size:16px}
+html.ax-large .hint,html.ax-large .keys{font-size:15px}
+html.ax-large .check input,html.ax-large .fmt input{width:20px;height:20px}
+html.ax-large .lens-bar button{min-width:44px;height:42px;font-size:18px}
+html.ax-large .r-title span{font-size:15px}
+/* easier reading: wider letter and word spacing on the page */
+.reader.ax-easy .page{letter-spacing:.04em;word-spacing:.16em}
+/* less motion */
+html.ax-still *,html.ax-still *::before,html.ax-still *::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}
 </style>
 </head>
 <body>
@@ -358,6 +404,7 @@ kbd{font-family:var(--f-ui);font-size:12px;border:1px solid var(--line);border-b
     <button id="cont" class="btn" hidden></button>
     <button id="find" class="btn" hidden title="Look up titles, authors, dates and covers in public databases">Find details</button>
     <button id="artOpen" class="btn" hidden>Save article</button>
+    <button id="axOpen" class="btn">Accessibility</button>
     <button id="apOpen" class="btn">Appearance</button>
     <button id="bkOpen" class="btn">Backup</button>
     <label class="btn primary" for="file">
@@ -443,6 +490,8 @@ kbd{font-family:var(--f-ui);font-size:12px;border:1px solid var(--line);border-b
       <svg id="icPause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" hidden><rect x="5.5" y="4" width="4.5" height="16" rx="1"/><rect x="14" y="4" width="4.5" height="16" rx="1"/></svg>
     </button>
     <button id="ttsBtn" class="tool solo" aria-pressed="false" aria-label="Read aloud" title="Read aloud (R)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4.5 4.5 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg></button>
+    <button id="ttsPrev" class="tool solo" aria-label="Previous paragraph" title="Previous paragraph (←)" hidden><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="5" width="2.6" height="14" rx="1"/><path d="M19 5.5v13L9 12z"/></svg></button>
+    <button id="ttsNext" class="tool solo" aria-label="Next paragraph" title="Next paragraph (→)" hidden><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="16.4" y="5" width="2.6" height="14" rx="1"/><path d="M5 5.5v13L15 12z"/></svg></button>
     <button id="magBtn" class="tool solo" aria-pressed="false" aria-label="Magnifier" title="Magnifier (M)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21M8 10.5h5M10.5 8v5"/></svg></button>
     <div class="toolseg" role="group" aria-label="Pointer">
       <button id="toolArrow" class="tool" aria-pressed="true" aria-label="Pointer: select text" title="Pointer: select text (H to switch)">
@@ -476,6 +525,7 @@ kbd{font-family:var(--f-ui);font-size:12px;border:1px solid var(--line);border-b
 
   <aside id="setPanel" class="panel right" hidden aria-label="Display settings">
     <header><h2>Display</h2><button class="btn" data-close>Close</button></header>
+    <button class="btn" id="axFromReader" style="align-self:flex-start">Accessibility settings</button>
 
     <div class="grp">
       <span class="lbl">Text</span>
@@ -487,6 +537,7 @@ kbd{font-family:var(--f-ui);font-size:12px;border:1px solid var(--line);border-b
 
     <div class="grp">
       <span class="lbl">Colours</span>
+      <p class="hint" id="axColNote" hidden></p>
       <div class="swatches" id="swatches"></div>
       <div class="colors">
         <label>Background <input type="color" id="cBg"></label>
@@ -508,11 +559,8 @@ kbd{font-family:var(--f-ui);font-size:12px;border:1px solid var(--line);border-b
       <div class="field"><label for="ttsVoice">Voice</label><select id="ttsVoice" class="hzsel"></select><span></span></div>
       <div class="field"><label for="sTtsRate">Reading speed</label><input type="range" id="sTtsRate" min="0.5" max="2" step="0.05"><output id="oTtsRate"></output></div>
       <label class="check"><input type="checkbox" id="sTtsHl"> Highlight each word as it’s read</label>
-      <p class="hint" id="ttsHint">Starts from the line on the reading guide and keeps the spoken words on it. Uses the voices installed on your device.</p>
-      <div id="kRow" class="grp" hidden>
-        <p class="hint" id="kStatus" role="status"></p>
-        <div class="row" style="flex-wrap:wrap;gap:8px"><button class="btn" id="kAbout">About natural voices</button><button class="btn" id="kRemove" hidden>Remove the download</button></div>
-      </div>
+      <p class="hint" id="ttsHint">Starts from the line on the reading guide and keeps the spoken words on it. While it’s reading, tap any sentence to read from there, use the ⏮ ⏭ buttons (or ← →) to skip a paragraph, or pick a chapter from Contents. Uses the voices installed on your device.</p>
+      <p class="hint" id="ttsTip"></p>
     </div>
 
     <div class="grp">
@@ -560,6 +608,7 @@ kbd{font-family:var(--f-ui);font-size:12px;border:1px solid var(--line);border-b
         <kbd>H</kbd> switch between pointer and hand tool<br>
         <kbd>M</kbd> magnifier on / off<br>
         <kbd>R</kbd> read aloud on / off<br>
+        <kbd>←</kbd> <kbd>→</kbd> while reading aloud: previous / next paragraph<br>
         <kbd>F</kbd> full screen on / off<br>
         <kbd>Esc</kbd> close panel, then back to library
       </div>
@@ -604,6 +653,39 @@ kbd{font-family:var(--f-ui);font-size:12px;border:1px solid var(--line);border-b
   </div>
 </div>
 
+<div id="ax" class="modal side" hidden>
+  <div class="sheet" role="dialog" aria-modal="false" aria-labelledby="axH">
+    <header class="sh-head"><h2 id="axH">Accessibility</h2><button class="btn" id="axClose">Done</button></header>
+    <p class="hint">These settings apply everywhere: the library, the reader and every window.</p>
+    <div class="grp">
+      <span class="lbl" id="axHcL">High contrast</span>
+      <div class="seg" id="axHc" role="group" aria-labelledby="axHcL"><button data-v="auto">Match my device</button><button data-v="off">Off</button><button data-v="light">Black on white</button><button data-v="dark">White on black</button></div>
+      <p class="hint" id="axHcHint"></p>
+    </div>
+    <div class="grp">
+      <span class="lbl" id="axCvdL">Colour vision</span>
+      <div class="seg" id="axCvd" role="group" aria-labelledby="axCvdL"><button data-v="none">Standard</button><button data-v="redgreen">Red–green</button><button data-v="blueyellow">Blue–yellow</button><button data-v="mono">No colour</button></div>
+      <p class="hint">Red–green suits protanopia and deuteranopia (the most common kinds); blue–yellow suits tritanopia. The accent, reading guide, word highlight and progress bars switch to colours that stay distinct, and selected buttons and warnings get ✓ and ⚠ marks so nothing relies on colour alone.</p>
+    </div>
+    <div class="grp">
+      <span class="lbl">Size</span>
+      <label class="check"><input type="checkbox" id="axLarge"> Larger buttons and controls</label>
+      <p class="hint">Makes the buttons, menus and labels bigger and easier to tap. The book's own text size is under Display.</p>
+    </div>
+    <div class="grp">
+      <span class="lbl">Reading</span>
+      <label class="check"><input type="checkbox" id="axEasy"> Easier-to-read text</label>
+      <p class="hint">Switches the page to Atkinson Hyperlegible, a typeface designed for low vision, and adds a little space between letters and words, which some readers with dyslexia find helpful. Turning it off puts your typeface back.</p>
+    </div>
+    <div class="grp">
+      <span class="lbl" id="axMoL">Motion</span>
+      <div class="seg" id="axMotion" role="group" aria-labelledby="axMoL"><button data-v="auto">Match my device</button><button data-v="reduce">Reduce motion</button></div>
+      <p class="hint" id="axMoHint"></p>
+    </div>
+    <footer class="sh-foot"><button class="btn" id="axReset">Reset accessibility</button></footer>
+  </div>
+</div>
+
 <div id="ap" class="modal side" hidden>
   <div class="sheet" role="dialog" aria-modal="false" aria-labelledby="apH">
     <header class="sh-head"><h2 id="apH">Appearance</h2><button class="btn" id="apClose">Done</button></header>
@@ -634,26 +716,6 @@ kbd{font-family:var(--f-ui);font-size:12px;border:1px solid var(--line);border-b
     <div class="urlrow"><input id="artUrl" type="url" inputmode="url" placeholder="https://…" aria-label="Article web address" autocomplete="off"><button class="btn primary" id="artGo">Save</button></div>
     <p class="hint" id="artSt" role="status"></p>
     <p class="hint">On a page you’re reading, you can also save it with the Velvet Scroll button in the browser toolbar, or by right-clicking the page.</p>
-  </div>
-</div>
-
-<div id="kdlg" class="modal" hidden>
-  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="kH">
-    <header class="sh-head"><h2 id="kH">Natural voices</h2><button class="btn" id="kClose">Close</button></header>
-    <p>Natural voices use <strong>Kokoro</strong>, an open-source speech model, to read aloud in a much more lifelike voice than most built-in voices. It runs entirely on your device: nothing you read is sent anywhere.</p>
-    <div class="grp">
-      <span class="lbl">Before you turn it on</span>
-      <ul class="kinfo">
-        <li><strong>A one-off download of about 90 MB</strong> (plus about half a megabyte for each voice you try), from Hugging Face, where the model is published. Use Wi-Fi if your data is limited. Your browser keeps it, so it isn’t downloaded again unless you remove it or clear this site’s data.</li>
-        <li><strong>It works your device hard.</strong> Speech is made by your device’s processor as you listen. A recent computer usually keeps up. On phones, tablets and older computers it can pause before each sentence, use more battery and run warm. The first sentence each time takes a few seconds.</li>
-        <li><strong>English only</strong>, with American and British voices. Other languages are read with English pronunciation, so use a device voice for those.</li>
-        <li><strong>Word highlighting is estimated.</strong> These voices don’t report where each word starts, so the highlight can run slightly ahead or behind.</li>
-        <li><strong>Needs a modern browser</strong> (a recent Firefox, Chrome, Edge or Safari) with about 300 MB of free memory while it’s speaking.</li>
-      </ul>
-      <p class="hint">You can switch back to a device voice at any time under Display, and remove the download there. Kokoro-82M is by hexgrad and is free under the Apache 2.0 licence.</p>
-    </div>
-    <p class="hint" id="kDlgSt" role="status"></p>
-    <footer class="sh-foot"><button class="btn" id="kCancel">Not now</button><button class="btn primary" id="kGo">Download (about 90 MB)</button></footer>
   </div>
 </div>
 
@@ -1659,7 +1721,7 @@ function renderResults(){
 /* ---------- Back button: every open book, panel and window adds a history step, so Back closes it ---------- */
 const layers = [];
 function pushLayer(name){ try{ history.pushState({bookroll:true, depth:layers.length + 1}, ''); layers.push(name); }catch(e){} }
-function closeLayerNow(name){ ({reader:closeReaderNow, panel:hidePanels, details:closeDetailsNow, backup:closeBackupNow, ap:closeApNow, art:closeArtNow}[name] || (() => {}))(); }
+function closeLayerNow(name){ ({reader:closeReaderNow, panel:hidePanels, details:closeDetailsNow, backup:closeBackupNow, ap:closeApNow, ax:closeAxNow, art:closeArtNow}[name] || (() => {}))(); }
 // close a layer from a button: step history back to just below it, and popstate does the closing
 function popLayer(name){ const i = layers.lastIndexOf(name); if(i < 0){ closeLayerNow(name); return; } history.go(-(layers.length - i)); }
 addEventListener('popstate', e => { const d = e.state && e.state.bookroll ? e.state.depth : 0; while(layers.length > d) closeLayerNow(layers.pop()); });
@@ -2429,7 +2491,8 @@ const FONTS = [
   {n:'Lexend', v:'"Lexend", system-ui, sans-serif'}, {n:'Georgia', v:'Georgia, "Times New Roman", serif'}];
 const GMODES = [['band','Band'],['under','Underline'],['spot','Spotlight'],['off','Off']];
 const HOME_DEFAULT = {mode:'system', accent:null, bg:null};
-const S = Object.assign({ttsVoice:'', ttsRate:1, ttsHl:true, lensShape:'circle', lensSize:240, lensZoom:2, home:{...HOME_DEFAULT}, size:22, lh:1.6, width:62, font:'Literata', bg:'#fbfaf7', fg:'#1d1c1a', bright:100, gmode:'band', gpos:32, gh:1, guide:'#e0a72e', lpm:20, pgw:90, tint:true, hand:false, smooth:true, hz:'auto', style:'cinema', book:true}, LS.get('settings', {}));
+const AX_DEFAULT = {contrast:'auto', cvd:'none', large:false, easy:false, motion:'auto', prevFont:''};
+const S = Object.assign({ttsVoice:'', ttsRate:1, ttsHl:true, lensShape:'circle', lensSize:240, lensZoom:2, home:{...HOME_DEFAULT}, size:22, lh:1.6, width:62, font:'Literata', bg:'#fbfaf7', fg:'#1d1c1a', bright:100, gmode:'band', gpos:32, gh:1, guide:'#e0a72e', lpm:20, pgw:90, tint:true, hand:false, smooth:true, hz:'auto', style:'cinema', book:true, ax:{...AX_DEFAULT}}, LS.get('settings', {}));
 const R = $('#reader'), stage = $('#stage'), scroller = $('#scroller'), page = $('#page'), guide = $('#guide');
 const swNext = $('#sweepNext'), swClip = swNext.firstElementChild, swContent = swClip.firstElementChild, swLine = $('#sweepLine'), swMark = swLine.firstElementChild, swCover = $('#sweepCover'), swFoot = $('#sweepFoot'), swHead = $('#sweepHead');
 let sw = null, swMO = null;   // the page sweep in progress
@@ -2479,9 +2542,35 @@ function homePalette(dark, accentHex, bgHex){
     '--accent-soft':C.mix(surface, accent, dark ? 0.26 : 0.15), 'color-scheme': dark ? 'dark' : 'light'};
 }
 const TOKENS = ['--bg','--surface','--fg','--muted','--line','--accent','--accent-fg','--accent-soft','color-scheme'];
+/* ---------- Accessibility: contrast, colour vision, size, easier reading and motion ---------- */
+const mq = q => { try{ return matchMedia(q); }catch(e){ return {matches:false}; } };
+const AXMQ = {contrast: mq('(prefers-contrast: more)'), forced: mq('(forced-colors: active)'), motion: mq('(prefers-reduced-motion: reduce)')};
+const deviceContrast = () => AXMQ.contrast.matches || AXMQ.forced.matches;
+// 'off', 'light' or 'dark'
+function hcMode(){ const c = (S.ax || AX_DEFAULT).contrast;
+  if(c === 'light' || c === 'dark') return c;
+  return c === 'auto' && deviceContrast() ? (darkMQ.matches ? 'dark' : 'light') : 'off'; }
+function stillOn(){ return (S.ax || AX_DEFAULT).motion === 'reduce' || AXMQ.motion.matches; }
+const HC = {
+  dark: {'--bg':'#000000','--surface':'#000000','--fg':'#ffffff','--muted':'#ffffff','--line':'#ffffff','--accent':'#ffd60a','--accent-fg':'#000000','--accent-soft':'#3d3300','color-scheme':'dark', rbg:'#000000', rfg:'#ffffff', guide:'#ffd60a'},
+  light:{'--bg':'#ffffff','--surface':'#ffffff','--fg':'#000000','--muted':'#000000','--line':'#000000','--accent':'#0030b0','--accent-fg':'#ffffff','--accent-soft':'#dfe6ff','color-scheme':'light', rbg:'#ffffff', rfg:'#000000', guide:'#0030b0'}};
+// colours that stay distinct for each kind of colour blindness (based on the Okabe–Ito palette)
+const CVD = {redgreen:{light:'#0072b2', dark:'#56b4e9', guide:'#e69f00'}, blueyellow:{light:'#c2185b', dark:'#ff6e9c', guide:'#009e9e'}, mono:{light:'#262626', dark:'#e6e6e6', guide:'#8c8c8c'}};
+// the reading page's colours once accessibility settings are applied
+function readerCols(){ const hc = hcMode(); if(hc !== 'off') return {bg:HC[hc].rbg, fg:HC[hc].rfg, guide:HC[hc].guide};
+  const c = CVD[(S.ax || AX_DEFAULT).cvd]; return {bg:S.bg, fg:S.fg, guide: c ? c.guide : S.guide}; }
+function applyAx(){
+  S.ax = {...AX_DEFAULT, ...(S.ax || {})};
+  const hc = hcMode(), cl = document.documentElement.classList;
+  cl.toggle('ax-hc', hc !== 'off'); cl.toggle('ax-cues', hc !== 'off' || S.ax.cvd !== 'none');
+  cl.toggle('ax-large', !!S.ax.large); cl.toggle('ax-still', stillOn());
+  R.classList.toggle('ax-easy', !!S.ax.easy);
+}
 function applyHome(){
-  const h = S.home, st = document.documentElement.style;
-  if(h.mode === 'system' && !h.accent && !h.bg){ TOKENS.forEach(k => st.removeProperty(k)); }
+  const h = S.home, st = document.documentElement.style, hc = hcMode(), cvd = CVD[(S.ax || AX_DEFAULT).cvd];
+  if(hc !== 'off'){ for(const k of TOKENS) st.setProperty(k, HC[hc][k]); }
+  else if(cvd){ const dark = homeDark(), pal = homePalette(dark, dark ? cvd.dark : cvd.light, h.bg); for(const k of TOKENS) st.setProperty(k, pal[k]); }
+  else if(h.mode === 'system' && !h.accent && !h.bg){ TOKENS.forEach(k => st.removeProperty(k)); }
   else { const pal = homePalette(homeDark(), h.accent, h.bg); for(const k of TOKENS) st.setProperty(k, pal[k]); }
   if(!$('#ap').hidden) renderAppearance();
 }
@@ -2501,6 +2590,32 @@ function renderAppearance(){
 function setHome(patch){ S.home = {...S.home, ...patch}; applyHome(); renderAppearance(); LS.set('settings', S); LS.set('settingsT', Date.now()); syncSettings(); }
 function closeApNow(){ $('#ap').hidden = true; $('#apOpen').focus(); }
 function closeAp(){ popLayer('ap'); }
+function renderAx(){
+  const a = S.ax;
+  [['#axHc', a.contrast], ['#axCvd', a.cvd], ['#axMotion', a.motion]].forEach(([id, v]) => document.querySelectorAll(id + ' button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === v))));
+  $('#axLarge').checked = !!a.large; $('#axEasy').checked = !!a.easy;
+  $('#axHcHint').textContent = (a.contrast === 'auto' ? (deviceContrast() ? 'Your device asks for more contrast, so high contrast is on. ' : 'Your device isn’t asking for more contrast, so it’s off. ') : '') +
+    'High contrast uses pure black and white with bold outlines, keeps the reader’s controls fully visible, and pauses your chosen colours (they come back when you turn it off).';
+  $('#axMoHint').textContent = (AXMQ.motion.matches ? 'Your device asks for less motion, so motion is reduced. ' : '') +
+    'Reduces animation: panels appear without sliding, and the Page sweep band steps a line at a time instead of gliding. Scrolling itself is unchanged; pause it with Space or a tap.';
+}
+function setAx(patch, relayout){ const go = () => { S.ax = {...S.ax, ...patch}; applySettings(); renderAx(); }; relayout && !R.hidden ? keepPlace(go) : go(); }
+function closeAxNow(){ $('#ax').hidden = true; }
+function closeAx(){ popLayer('ax'); }
+function openAx(){ if($('#ax').hidden){ pushLayer('ax'); $('#ax').hidden = false; } renderAx(); $('#axClose').focus(); }
+$('#axOpen').onclick = openAx; $('#axFromReader').onclick = openAx; $('#axClose').onclick = closeAx;
+$('#axHc').addEventListener('click', e => { const b = e.target.closest('[data-v]'); if(b) setAx({contrast:b.dataset.v}); });
+$('#axCvd').addEventListener('click', e => { const b = e.target.closest('[data-v]'); if(b) setAx({cvd:b.dataset.v}); });
+$('#axMotion').addEventListener('click', e => { const b = e.target.closest('[data-v]'); if(b) setAx({motion:b.dataset.v}); });
+$('#axLarge').addEventListener('change', e => setAx({large:e.target.checked}, true));
+$('#axEasy').addEventListener('change', e => {
+  const on = e.target.checked, patch = {easy:on};
+  if(on){ patch.prevFont = S.font === 'Atkinson' ? (S.ax.prevFont || '') : S.font; }
+  const go = () => { if(on) S.font = 'Atkinson'; else if(S.ax.prevFont && S.font === 'Atkinson') S.font = S.ax.prevFont; S.ax = {...S.ax, ...patch}; applySettings(); renderAx(); };
+  R.hidden ? go() : keepPlace(go); });
+$('#axReset').onclick = () => { const go = () => { if(S.ax.easy && S.ax.prevFont && S.font === 'Atkinson') S.font = S.ax.prevFont; S.ax = {...AX_DEFAULT}; applySettings(); renderAx(); }; R.hidden ? go() : keepPlace(go); };
+// follow the device when its contrast, colour or motion settings change
+[AXMQ.contrast, AXMQ.forced, AXMQ.motion].forEach(m => { try{ m.addEventListener('change', () => applySettings(false)); }catch(e){} });
 $('#apOpen').onclick = () => { if($('#ap').hidden){ pushLayer('ap'); $('#ap').hidden = false; } renderAppearance(); $('#apClose').focus(); };
 $('#apClose').onclick = closeAp;
 $('#apReset').onclick = () => setHome({...HOME_DEFAULT});
@@ -2508,10 +2623,14 @@ $('#apAccentC').addEventListener('input', e => setHome({accent:e.target.value}))
 $('#apBgC').addEventListener('input', e => setHome({bg:e.target.value}));
 
 function applySettings(save=true){
-  S.home = {...HOME_DEFAULT, ...(S.home || {})}; applyHome();
+  S.home = {...HOME_DEFAULT, ...(S.home || {})}; applyAx(); applyHome();
   R.style.setProperty('--rsize', S.size+'px'); R.style.setProperty('--rlh', S.lh); R.style.setProperty('--measure', S.width+'ch');
   R.style.setProperty('--rfont', (FONTS.find(f=>f.n===S.font)||FONTS[0]).v);
-  R.style.setProperty('--rbg', S.bg); R.style.setProperty('--rfg', S.fg); R.style.setProperty('--rguide', S.guide);
+  const rc = readerCols(); R.style.setProperty('--rbg', rc.bg); R.style.setProperty('--rfg', rc.fg); R.style.setProperty('--rguide', rc.guide);
+  const hcNow = hcMode() !== 'off', note = $('#axColNote');
+  note.hidden = !hcNow && S.ax.cvd === 'none';
+  note.textContent = hcNow ? 'High contrast is on, so these colours are paused. You can change that under Accessibility.' : 'The reading guide uses a colour-vision-friendly colour while that setting is on under Accessibility.';
+  if(!$('#ax').hidden) renderAx();
   $('#dim').style.opacity = String((100-S.bright)/100*0.85);
   guide.className = 'guide ' + (comic || isSweep() ? 'off' : S.gmode);   // comics and page sweep have no guide band
   layoutGuide();
@@ -2532,8 +2651,8 @@ function applySettings(save=true){
   if(!S.smooth || isSweep()) clearShift(); else if(playing) page.style.willChange='transform';
   $('#sPgw').value=S.pgw; $('#oPgw').value=S.pgw+'%'; $('#sTint').checked=!!S.tint;
   R.style.setProperty('--pgw', S.pgw+'%');
-  page.classList.toggle('tint-light', !!(pdfDoc && pdfMode==='pages' && S.tint && !isDark(S.bg)));
-  page.classList.toggle('tint-dark', !!(pdfDoc && pdfMode==='pages' && S.tint && isDark(S.bg)));
+  page.classList.toggle('tint-light', !!(pdfDoc && pdfMode==='pages' && S.tint && !isDark(rc.bg)));
+  page.classList.toggle('tint-dark', !!(pdfDoc && pdfMode==='pages' && S.tint && isDark(rc.bg)));
   R.classList.toggle('hand', !!S.hand);
   $('#toolHand').setAttribute('aria-pressed', String(!!S.hand)); $('#toolArrow').setAttribute('aria-pressed', String(!S.hand));
   pgTops = null; pgLine = 0; if(pdfDoc && pdfMode==='pages') refreshPdfPages();
@@ -2693,7 +2812,7 @@ async function openBook(b){
   detectHz();
 }
 function buildToc(){
-  $('#toc').replaceChildren(...tocItems.map((t,i)=>{ const btn = el('button',{text:t.label, 'data-i':i, onclick:()=>{ goTo(t.target); closePanels(); }}); btn.style.paddingLeft = (10+t.depth*16)+'px'; return el('li',{},btn); }));
+  $('#toc').replaceChildren(...tocItems.map((t,i)=>{ const btn = el('button',{text:t.label, 'data-i':i, onclick:()=>{ ttsHold(); goTo(t.target); closePanels(); if(tts.on) requestAnimationFrame(ttsRestartHere); }}); btn.style.paddingLeft = (10+t.depth*16)+'px'; return el('li',{},btn); }));
 }
 function setLoading(msg){ const l = $('#loading'); l.textContent = msg; l.hidden = false; }
 
@@ -3026,7 +3145,8 @@ function sweepDraw(){
   if(!sw) return;
   // the next page is revealed smoothly down to the band's top edge, this page shows only below its lower edge,
   // and the band between them stays blank
-  const y = Math.max(0, Math.min(sw.y, sw.H + sw.lh)), top = y - Math.round(sw.lh);
+  let y = Math.max(0, Math.min(sw.y, sw.H + sw.lh)); if(stillOn()) y = Math.floor(y / sw.lh) * sw.lh;   // less motion: step a line at a time
+  const top = y - Math.round(sw.lh);
   const h = sw.last ? 0 : Math.max(0, Math.min(sw.H, top));
   const H = sw.H, Y = Math.round(y), hh = Math.round(h), T = Math.round(top);
   swCover.style.transform = `translate3d(0,${Y - H}px,0)`;    // blank from the top down to the line: hides this page above it
@@ -3065,27 +3185,33 @@ scroller.addEventListener('scroll', () => { if(sw && !playing && !tts.on && Math
 /* ---------- Read aloud (the browser's own speech voices) ---------- */
 const synth = window.speechSynthesis || null;
 const TTS_BLOCK = 'p,h1,h2,h3,h4,h5,h6,li,blockquote,pre,figcaption,dt,dd,td,th,.fb-v,div,section';
-const tts = {on:false, gen:0, block:null, map:[], text:'', chunks:[], ci:0, anim:0};
-
+const tts = {on:false, gen:0, block:null, map:[], text:'', chunks:[], ci:0, anim:0, userT:0, userTimer:0};
+if(!synth) $('#ttsBtn').hidden = true;
 function ttsVoices(){
   if(!synth) return [];
   const vs = synth.getVoices(), sel = $('#ttsVoice'), lang = (navigator.language || 'en').slice(0, 2);
   const list = [...vs].sort((a, b) => (b.lang.startsWith(lang) - a.lang.startsWith(lang)) || (b.localService - a.localService) || a.name.localeCompare(b.name));
-  const device = el('optgroup', {label:'Device voices'}, el('option', {value:'', text:'Default voice'}), ...list.map(v => el('option', {value:v.voiceURI, text:`${v.name} (${v.lang})${v.localService ? '' : ' · online'}`})));
-  const natural = KOK.available ? [el('optgroup', {label: KOK.ok ? 'Natural voices (Kokoro)' : 'Natural voices (Kokoro) · 90 MB download'},
-    ...KOK.voices.map(([id, name, acc, g]) => el('option', {value:'kokoro:' + id, text:`${name} (${acc}, ${g})`})))] : [];
-  sel.replaceChildren(device, ...natural);
-  sel.value = kokoroVoice() ? S.ttsVoice : S.ttsVoice && list.some(v => v.voiceURI === S.ttsVoice) ? S.ttsVoice : '';
+  // the most lifelike voices browsers offer: Edge's "Natural" voices, Apple's Enhanced and Premium voices, and other neural voices
+  const best = v => /\b(natural|neural|premium|enhanced)\b/i.test(v.name), opt = v => el('option', {value:v.voiceURI, text:`${v.name} (${v.lang})${v.localService ? '' : ' · online'}`});
+  const rec = list.filter(best), rest = list.filter(v => !best(v));
+  sel.replaceChildren(el('option', {value:'', text:'Default voice'}),
+    ...(rec.length ? [el('optgroup', {label:'Most natural'}, ...rec.map(opt)), el('optgroup', {label:'Other voices'}, ...rest.map(opt))] : rest.map(opt)));
+  $('#ttsTip').textContent = voiceTip(rec.length);
+  sel.value = S.ttsVoice && list.some(v => v.voiceURI === S.ttsVoice) ? S.ttsVoice : '';
   return vs;
 }
-if(synth){ synth.addEventListener ? synth.addEventListener('voiceschanged', ttsVoices) : (synth.onvoiceschanged = ttsVoices); }
-$('#ttsVoice').addEventListener('change', e => {
-  const v = e.target.value;
-  if(v.startsWith('kokoro:') && !KOK.ok){ e.target.value = S.ttsVoice; kokoroAsk(v); return; }   // ask first: it's a big download
-  if(tts.on) ttsStop();
-  S.ttsVoice = v; applySettings(); kokoroStatus();
-  if(kokoroVoice()) kokoroLoad().catch(() => {});
-});
+// where to find more lifelike voices on this device
+function voiceTip(haveBest){
+  const ua = navigator.userAgent, apple = /iPhone|iPad|Macintosh/.test(ua) && !/Edg\//.test(ua);
+  if(/Edg\//.test(ua)) return haveBest ? 'Tip: the voices under “Most natural” sound the most lifelike. Edge’s Natural voices are online, so the text being read is sent to Microsoft to be spoken.'
+    : 'Tip: Microsoft Edge usually offers lifelike “Natural” voices; they appear here once Edge has loaded them.';
+  if(/Android/.test(ua)) return 'Tip: for more lifelike voices, install high-quality voice data in your phone’s Settings → Accessibility → Text-to-speech output (Speech Services by Google), then choose them here.';
+  if(apple) return 'Tip: for more lifelike voices, download Enhanced or Premium voices in Settings → Accessibility → Spoken Content → Voices (iPhone and iPad) or System Settings → Accessibility → Spoken Content (Mac).';
+  if(/Windows/.test(ua)) return 'Tip: the most lifelike voices on Windows are the “Natural” voices in Microsoft Edge. Open Velvet Scroll in Edge to use them.';
+  return haveBest ? 'Tip: the voices under “Most natural” sound the most lifelike.' : '';
+}
+if(synth){ ttsVoices(); synth.addEventListener ? synth.addEventListener('voiceschanged', ttsVoices) : (synth.onvoiceschanged = ttsVoices); }
+$('#ttsVoice').addEventListener('change', e => { S.ttsVoice = e.target.value; applySettings(); });
 bind('#sTtsRate', 'ttsRate');
 $('#sTtsHl').addEventListener('change', e => { S.ttsHl = e.target.checked; applySettings(); if(!S.ttsHl) ttsClearWord(); });
 // the paragraph a piece of text belongs to, and that paragraph's text mapped back to its text nodes
@@ -3109,13 +3235,13 @@ function ttsChunks(from){
   // sentences, kept short so no voice cuts out part-way
   const t = tts.text, out = [], re = /[^.!?…]+[.!?…]+["'”’)\]]*\s*|[^.!?…]+$/g; let m;
   while((m = re.exec(t))){ if(m.index + m[0].length <= from) continue; let s = Math.max(m.index, from); const e = m.index + m[0].length;
-    const MAX = kokoroVoice() ? 150 : 240;   // natural voices start sooner on shorter pieces
-    while(e - s > MAX){ const cut = t.lastIndexOf(' ', s + MAX); const c = cut > s + 40 ? cut : s + MAX; out.push([s, c]); s = c; }
+    while(e - s > 240){ const cut = t.lastIndexOf(' ', s + 240); const c = cut > s + 40 ? cut : s + 240; out.push([s, c]); s = c; }
     if(t.slice(s, e).trim()) out.push([s, e]); }
   return out;
 }
 function ttsClearWord(){ try{ CSS.highlights && CSS.highlights.delete('tts-word'); }catch(e){} }
 function ttsFollow(range){
+  if(seeking || drag || performance.now() - (tts.userT || 0) < 1300) return;   // the reader is moving the page: follow them instead (read aloud restarts there)
   const r = range.getBoundingClientRect(); if(!r.height) return;
   if(isSweep()){
     // the line sits just above the words being spoken; past the bottom, the next page starts with them
@@ -3130,7 +3256,7 @@ function ttsFollow(range){
   }
   const target = scroller.scrollTop + (r.top - (scroller.getBoundingClientRect().top + guideY() + 2));
   if(Math.abs(target - scroller.scrollTop) < 3) return;
-  cancelAnimationFrame(tts.anim); const from = scroller.scrollTop, t0 = performance.now(), d = reduceMotion ? 1 : 260;
+  cancelAnimationFrame(tts.anim); const from = scroller.scrollTop, t0 = performance.now(), d = stillOn() ? 1 : 260;
   const step = now => { const k = Math.min(1, (now - t0) / d), e = 1 - Math.pow(1 - k, 3); scroller.scrollTop = from + (target - from) * e; if(k < 1) tts.anim = requestAnimationFrame(step); };
   tts.anim = requestAnimationFrame(step);
 }
@@ -3150,7 +3276,6 @@ function ttsSpeakNext(){
     ttsLoad(nb); nb.classList.add('tts-cur'); tts.chunks = ttsChunks(0); tts.ci = 0;
     if(!tts.chunks.length) return ttsSpeakNext();
   }
-  if(kokoroVoice()) return kokoroSpeak();
   const [s, e] = tts.chunks[tts.ci++], gen = tts.gen, u = new SpeechSynthesisUtterance(tts.text.slice(s, e));
   const v = S.ttsVoice && synth.getVoices().find(x => x.voiceURI === S.ttsVoice); if(v){ u.voice = v; u.lang = v.lang; }
   u.rate = +S.ttsRate || 1;
@@ -3163,148 +3288,80 @@ function ttsSpeakNext(){
     else ttsSpeakNext(); };
   synth.speak(u);
 }
-function ttsStart(){
-  if((!synth && !kokoroVoice()) || R.hidden) return;
-  if(comic || (pdfDoc && pdfMode === 'pages')){ toast(comic ? 'Comics have no text to read aloud.' : 'Read aloud needs text: switch this PDF to reflowed text first.', 5000); return; }
-  pause();
-  const a = placeAnchor(); let node = a && a.node;
-  if(!node){ const w = document.createTreeWalker(page, NodeFilter.SHOW_TEXT, {acceptNode: n => n.nodeValue.trim() ? 1 : 3}); node = w.nextNode(); }
-  const block = node && ttsBlockOf(node); if(!block){ toast('There’s no text here to read aloud.'); return; }
-  try{ synth && synth.cancel(); }catch(e){} tts.gen++; tts.on = true; $('#ttsBtn').setAttribute('aria-pressed', 'true');
-  if(kokoroVoice()){ try{ (KOK.ctx ||= new AudioContext()).resume(); }catch(e){} }   // sound must be unlocked by this tap or key press
-  ttsLoad(block); block.classList.add('tts-cur');
-  let from = 0;
-  if(a && a.node){ const m = tts.map.find(x => x.node === a.node); if(m){ from = m.start + a.off; while(from > 0 && /\S/.test(tts.text[from - 1])) from--; } }
-  tts.chunks = ttsChunks(from); tts.ci = 0;
-  ttsSpeakNext();
+// the first words on the reading line (or the top of the page in page sweep). Between paragraphs, or on a heading's
+// margin, browsers can't name the exact letter there, so take the first text at or below the line, never the book's start
+function ttsStartPoint(){
+  const a = placeAnchor(); if(a && a.node) return {node:a.node, off:a.off};
+  const y = scroller.getBoundingClientRect().top + readY(), H = scroller.clientHeight;
+  const w = document.createTreeWalker(page, NodeFilter.SHOW_TEXT, {acceptNode: n => n.nodeValue.trim() && ttsBlockOf(n) ? 1 : 3});
+  const near = a && a.el ? a.el : (blocksIn(scroller.scrollTop + readY() - 4, scroller.scrollTop + H)[0] || [])[0];
+  if(near) w.currentNode = near;
+  const rg = document.createRange(); let n, k = 0;
+  while((n = w.nextNode()) && k++ < 4000){ rg.selectNodeContents(n); const r = rg.getBoundingClientRect(); if(r.height && r.bottom >= y - 2) return {node:n, off:0}; }
+  return null;
 }
+// start (or restart) reading from a letter in the book: back to the start of its word
+function ttsBeginAt(p){
+  if(!p || !p.node) return false;
+  const block = ttsBlockOf(p.node); if(!block) return false;
+  pause(); try{ synth.cancel(); }catch(e){} cancelAnimationFrame(tts.anim);
+  page.querySelectorAll('.tts-cur').forEach(e => e.classList.remove('tts-cur'));
+  tts.gen++; tts.on = true; $('#ttsBtn').setAttribute('aria-pressed', 'true'); ttsButtons();
+  ttsLoad(block); block.classList.add('tts-cur');
+  let from = 0; const m = tts.map.find(x => x.node === p.node);
+  if(m){ from = m.start + (p.off || 0); while(from > 0 && /\S/.test(tts.text[from - 1])) from--; }
+  tts.chunks = ttsChunks(from); tts.ci = 0;
+  ttsSpeakNext(); return true;
+}
+function ttsStart(){
+  if(!synth || R.hidden) return;
+  if(comic || (pdfDoc && pdfMode === 'pages')){ toast(comic ? 'Comics have no text to read aloud.' : 'Read aloud needs text: switch this PDF to reflowed text first.', 5000); return; }
+  if(!ttsBeginAt(ttsStartPoint())) toast('There’s no text here to read aloud.');
+}
+// hush while the reader moves somewhere else, so the voice doesn't pull the page back (it carries on from the new place)
+function ttsHold(){ if(!tts.on) return; tts.gen++; try{ synth.cancel(); }catch(e){} cancelAnimationFrame(tts.anim); }
+// read from wherever the page now is (after Contents, the position bar or a drag)
+function ttsRestartHere(){ if(tts.on) ttsBeginAt(ttsStartPoint()); }
+// back to the start of the tapped sentence
+function ttsFromTap(node, off){
+  const block = ttsBlockOf(node); ttsLoad(block);
+  const m = tts.map.find(x => x.node === node); let i = m ? m.start + off : 0;
+  const t = tts.text; while(i > 0 && !/[.!?…]["'”’)\]]*\s$/.test(t.slice(Math.max(0, i - 4), i))) i--;
+  const p = ttsPos(i); ttsBeginAt(p || {node, off});
+}
+// scrolling by hand while it reads: let the reader move, then carry on from wherever they stop
+function ttsUserMoved(){ if(!tts.on) return; ttsHold(); tts.userT = performance.now(); clearTimeout(tts.userTimer); tts.userTimer = setTimeout(ttsRestartHere, 1200); }
+['wheel','touchmove'].forEach(t => scroller.addEventListener(t, ttsUserMoved, {passive:true}));
+function ttsButtons(){ $('#ttsPrev').hidden = $('#ttsNext').hidden = !tts.on; }
+// skip a paragraph: back to the start of this one if it's under way, otherwise the one before
+function ttsSkip(dir){
+  if(!tts.on || !tts.block) return;
+  let target = null;
+  if(dir > 0) target = ttsNextBlock();
+  else if(tts.ci > 1) target = tts.block;
+  else {
+    const first = tts.map.length ? tts.map[0].node : tts.block;
+    const w = document.createTreeWalker(page, NodeFilter.SHOW_TEXT, {acceptNode: n => n.nodeValue.trim() ? 1 : 3}); w.currentNode = first; let n;
+    while((n = w.previousNode())){ const b = ttsBlockOf(n); if(b && b !== tts.block){ target = b; break; } }
+    target ||= tts.block;
+  }
+  if(!target){ toast('That’s the end of the book.'); return; }
+  const w = document.createTreeWalker(target, NodeFilter.SHOW_TEXT, {acceptNode: n => n.nodeValue.trim() && ttsBlockOf(n) === target ? 1 : 3});
+  ttsBeginAt({node:w.nextNode(), off:0});
+}
+$('#ttsPrev').onclick = () => ttsSkip(-1);
+$('#ttsNext').onclick = () => ttsSkip(1);
 function ttsStop(){
-  if(!tts.on) return; tts.on = false; tts.gen++; try{ synth && synth.cancel(); }catch(e){} kokoroHalt();
+  if(!tts.on) return; tts.on = false; tts.gen++; ttsButtons(); try{ synth.cancel(); }catch(e){}
   cancelAnimationFrame(tts.anim); ttsClearWord(); tts.block?.classList.remove('tts-cur'); $('#ttsBtn').setAttribute('aria-pressed', 'false');
 }
 $('#ttsBtn').onclick = () => tts.on ? ttsStop() : ttsStart();
-addEventListener('pagehide', () => { try{ synth && synth.cancel(); }catch(e){} kokoroHalt(); });
+addEventListener('pagehide', () => { try{ synth && synth.cancel(); }catch(e){} });
 
-/* ---------- Natural voices: Kokoro, an open-source speech model run on this device ----------
-   The model runs in a worker. Sentences are made one ahead of the one being played, so speech flows without gaps
-   on a fast enough device. Word timings aren't known, so the highlight moves through each sentence by estimate. */
-const KOK = {
-  available: typeof WebAssembly === 'object' && typeof Worker === 'function' && typeof AudioContext === 'function' && (IS_EXT || !/claude|anthropic/i.test(location.hostname)),
-  // the better-rated voices, best first
-  voices: [['af_heart','Heart','American','female'],['af_bella','Bella','American','female'],['af_nicole','Nicole','American','female'],['bf_emma','Emma','British','female'],
-    ['am_fenrir','Fenrir','American','male'],['am_michael','Michael','American','male'],['am_puck','Puck','American','male'],['af_aoede','Aoede','American','female'],
-    ['af_kore','Kore','American','female'],['af_sarah','Sarah','American','female'],['bm_george','George','British','male'],['bm_fable','Fable','British','male'],
-    ['bf_isabella','Isabella','British','female'],['af_alloy','Alloy','American','female'],['af_nova','Nova','American','female']],
-  model: 'onnx-community/Kokoro-82M-v1.0-ONNX',
-  ok: !!LS.get('kokoro', false),   // agreed to the download on this device (not synced)
-  worker: null, ready: false, loading: null, ids: 0, waits: new Map(), ctx: null, src: null, hlRaf: 0, slowWarned: false, pct: -1
-};
-function kokoroVoice(){ return KOK.available && KOK.ok && String(S.ttsVoice || '').startsWith('kokoro:') ? S.ttsVoice.slice(7) : ''; }
-function kokoroStatus(msg){
-  const row = $('#kRow'); row.hidden = !KOK.available;
-  if(!KOK.available) return;
-  $('#kRemove').hidden = !KOK.ok;
-  $('#kStatus').textContent = msg != null ? msg
-    : !KOK.ok ? 'Natural voices sound more lifelike but need a one-off download of about 90 MB and a reasonably powerful device. Choose one from the Voice list to find out more.'
-    : KOK.ready ? 'Natural voice ready. It runs on this device; nothing you read is sent anywhere.'
-    : kokoroVoice() ? 'The natural voice loads when you start reading aloud.' : 'Natural voices are downloaded and can be chosen from the Voice list.';
-}
-function kokoroWorker(){
-  if(KOK.worker) return KOK.worker;
-  const w = KOK.worker = new Worker(IS_EXT ? 'kokoro-worker.js' : 'kokoro-worker.js', {type:'module'});
-  w.onmessage = e => {
-    const d = e.data;
-    if(d.type === 'progress'){ const p = d.total ? Math.floor(d.loaded / d.total * 100) : 0;
-      if(p !== KOK.pct){ KOK.pct = p; const t = `Downloading the natural voice… ${p}% of ${Math.round((d.total || 92e6) / 1e6)} MB`; kokoroStatus(t); if(!$('#kdlg').hidden) $('#kDlgSt').textContent = t; if(tts.on) toast(t, 4000); } return; }
-    const k = d.type === 'ready' || (d.type === 'error' && d.phase === 'load') ? 'load' : d.id;
-    const f = KOK.waits.get(k); if(f){ KOK.waits.delete(k); d.type === 'error' ? f.no(new Error(d.msg)) : f.ok(d); }
-  };
-  w.onerror = e => { const f = KOK.waits.get('load'); if(f){ KOK.waits.delete('load'); f.no(new Error(e.message || 'worker')); } };
-  return w;
-}
-function kokoroCall(key, msg){ return new Promise((ok, no) => { KOK.waits.set(key, {ok, no}); kokoroWorker().postMessage(msg); }); }
-function kokoroLoad(){
-  if(KOK.ready) return Promise.resolve();
-  if(KOK.loading) return KOK.loading;
-  const base = new URL('.', location.href).href;
-  const msg = {type:'load', model:KOK.model,
-    lib: IS_EXT ? base + 'lib/kokoro/kokoro.web.js' : 'https://cdn.jsdelivr.net/npm/kokoro-js@1.2.1/dist/kokoro.web.js',
-    wasm: IS_EXT ? base + 'lib/kokoro/' : ''};   // the website uses the speech engine files from jsDelivr
-  kokoroStatus('Loading the natural voice…');
-  KOK.loading = kokoroCall('load', msg).then(() => { KOK.ready = true; KOK.loading = null; kokoroStatus(); })
-    .catch(err => { KOK.loading = null; try{ KOK.worker.terminate(); }catch(e){} KOK.worker = null;
-      const offline = !navigator.onLine || /fetch|network|load/i.test(err.message);
-      kokoroStatus(offline ? 'The natural voice couldn’t be downloaded. Check your connection and try again.' : 'The natural voice couldn’t start in this browser. A device voice will still work.');
-      throw err; });
-  return KOK.loading;
-}
-function kokoroGen(text){ const id = ++KOK.ids; return kokoroCall(id, {type:'gen', id, text, voice:kokoroVoice(), speed:Math.min(2, Math.max(0.5, +S.ttsRate || 1))}); }
-function kokoroHalt(){ cancelAnimationFrame(KOK.hlRaf); if(KOK.src){ try{ KOK.src.onended = null; KOK.src.stop(); }catch(e){} KOK.src = null; } tts.kNext = null; }
-// the chunk after the current one, possibly the start of the next paragraph, so it can be made in advance
-function kokoroPeek(){
-  if(tts.ci < tts.chunks.length){ const [a, b] = tts.chunks[tts.ci]; return tts.text.slice(a, b); }
-  const nb = ttsNextBlock(); if(!nb) return '';
-  const saved = {block:tts.block, map:tts.map, text:tts.text}; ttsLoad(nb); const ch = ttsChunks(0), t = ch.length ? tts.text.slice(ch[0][0], ch[0][1]) : '';
-  tts.block = saved.block; tts.map = saved.map; tts.text = saved.text; return t;
-}
-async function kokoroSpeak(){
-  const gen = tts.gen;
-  try{
-    if(!KOK.ready){ toast('Loading the natural voice…', 4000); await kokoroLoad(); if(gen !== tts.gen) return; }
-    const [s, e] = tts.chunks[tts.ci++], text = tts.text.slice(s, e);
-    const job = tts.kNext && tts.kNext.text === text ? tts.kNext.p : kokoroGen(text);
-    const ahead = kokoroPeek(); tts.kNext = ahead ? {text:ahead, p:kokoroGen(ahead)} : null;   // start on the next one now
-    ttsWord(s + Math.max(0, text.search(/\S/)));
-    const d = await job; if(gen !== tts.gen || !tts.on) return;
-    const secs = d.pcm.length / d.rate;
-    if(!KOK.slowWarned && d.ms > secs * 1000 * 0.95 && secs > 1.5){ KOK.slowWarned = true;
-      toast('This device makes the natural voice more slowly than it speaks, so there may be pauses between sentences. A device voice will be smoother.', 8000); }
-    const ctx = KOK.ctx ||= new AudioContext(); if(ctx.state === 'suspended') await ctx.resume().catch(() => {});
-    const buf = ctx.createBuffer(1, d.pcm.length, d.rate); buf.copyToChannel(d.pcm, 0);
-    const src = KOK.src = ctx.createBufferSource(); src.buffer = buf; src.connect(ctx.destination);
-    // estimated word timings: share the sentence's time by word length, with a little more after punctuation
-    const words = [...text.matchAll(/[\p{L}\p{N}'’-]+[^\s\p{L}\p{N}]*/gu)], wts = words.map(w => w[0].length + (/[,;:]$/.test(w[0]) ? 3 : /[.!?…]$/.test(w[0]) ? 5 : 1));
-    const total = wts.reduce((a, b) => a + b, 0) || 1, lead = Math.min(0.15, secs * 0.05), span = Math.max(0.1, secs - lead * 2);
-    const starts = []; let acc = 0; for(const w of wts){ starts.push(lead + acc / total * span); acc += w; }
-    const t0 = ctx.currentTime; let shown = -1;
-    const follow = () => { if(gen !== tts.gen || KOK.src !== src) return; const t = ctx.currentTime - t0; let i = shown;
-      while(i + 1 < starts.length && starts[i + 1] <= t) i++;
-      if(i !== shown && i >= 0){ shown = i; const w = words[i]; ttsWord(s + w.index, w[0].replace(/[^\p{L}\p{N}'’-]+$/u, '').length); }
-      KOK.hlRaf = requestAnimationFrame(follow); };
-    src.onended = () => { if(KOK.src === src){ KOK.src = null; cancelAnimationFrame(KOK.hlRaf); if(gen === tts.gen) ttsSpeakNext(); } };
-    src.start(); KOK.hlRaf = requestAnimationFrame(follow);
-  }catch(err){
-    if(gen !== tts.gen) return;
-    ttsStop(); toast(KOK.ready ? 'The natural voice stopped unexpectedly. Try again, or choose a device voice under Display.' : 'The natural voice couldn’t load. Check your connection, or choose a device voice under Display.', 8000);
-  }
-}
-// asking before the download
-let kokoroPending = '';
-function kokoroAsk(v){ kokoroPending = v || ''; $('#kDlgSt').textContent = ''; $('#kGo').disabled = false; $('#kGo').hidden = KOK.ok; $('#kCancel').textContent = KOK.ok ? 'Close' : 'Not now';
-  $('#kdlg').hidden = false; (KOK.ok ? $('#kClose') : $('#kGo')).focus(); }
-function kokoroClose(){ $('#kdlg').hidden = true; kokoroPending = ''; }
-$('#kClose').onclick = kokoroClose; $('#kCancel').onclick = kokoroClose;
-$('#kAbout').onclick = () => kokoroAsk('');
-$('#kGo').onclick = async () => {
-  KOK.ok = true; LS.set('kokoro', true); if(kokoroPending) S.ttsVoice = kokoroPending; else if(!kokoroVoice()) S.ttsVoice = 'kokoro:' + KOK.voices[0][0];
-  applySettings(); ttsVoices(); $('#kGo').disabled = true; $('#kDlgSt').textContent = 'Starting the download…';
-  try{ await kokoroLoad(); $('#kDlgSt').textContent = 'Done. The natural voice is ready.'; setTimeout(kokoroClose, 900); }
-  catch(e){ $('#kDlgSt').textContent = $('#kStatus').textContent; $('#kGo').disabled = false; $('#kGo').hidden = false; }
-};
-$('#kRemove').onclick = async () => {
-  if(tts.on) ttsStop();
-  try{ KOK.worker && KOK.worker.terminate(); }catch(e){} KOK.worker = null; KOK.ready = false; KOK.loading = null;
-  try{ await caches.delete('transformers-cache'); await caches.delete('kokoro-voices'); }catch(e){}
-  KOK.ok = false; LS.set('kokoro', false); if(String(S.ttsVoice).startsWith('kokoro:')) S.ttsVoice = '';
-  applySettings(); ttsVoices(); kokoroStatus(); toast('The natural voice download was removed.');
-};
-ttsVoices(); kokoroStatus();
-
-if(!synth && !KOK.available) $('#ttsBtn').hidden = true;
 const toggle = () => { if(tts.on){ ttsStop(); return; } playing ? pause() : play(); };
 $('#play').onclick = toggle;
 let drag = null, suppressClick = false, fling = 0;
-const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
 function setHand(on){ S.hand = on; applySettings(); }
 /* ---------- Full screen and hiding the controls ---------- */
 const touchUI = () => matchMedia('(hover: none), (pointer: coarse)').matches;
@@ -3481,10 +3538,11 @@ function endDrag(e){
   R.classList.remove('grabbing'); try{ scroller.releasePointerCapture(e.pointerId); }catch(_){}
   const {moved, hist} = drag; drag = null; acc = 0; last = performance.now();
   if(!moved) return;
+  ttsUserMoved();
   suppressClick = true; setTimeout(() => suppressClick = false, 350);
   // a short glide after a quick flick
   const [t0,y0] = hist[0], [t1,y1] = hist[hist.length-1];
-  if(reduceMotion || t1 <= t0 || performance.now() - t1 > 90) return;
+  if(stillOn() || t1 <= t0 || performance.now() - t1 > 90) return;
   let v = -(y1 - y0) / (t1 - t0), lt = performance.now();
   if(Math.abs(v) < 0.15) return;
   const step = now => { const dt = now - lt; lt = now; scroller.scrollTop += v*dt; v *= Math.pow(0.996, dt); if(Math.abs(v) > 0.02 && !drag) fling = requestAnimationFrame(step); };
@@ -3494,9 +3552,14 @@ scroller.addEventListener('pointerup', endDrag);
 scroller.addEventListener('pointercancel', endDrag);
 scroller.addEventListener('click', e=>{
   if(suppressClick){ suppressClick = false; e.preventDefault(); return; }
-  const a = e.target.closest('[data-go]'); if(a){ e.preventDefault(); goTo(a.dataset.go); return; }
+  const a = e.target.closest('[data-go]'); if(a){ e.preventDefault(); ttsHold(); goTo(a.dataset.go); if(tts.on) requestAnimationFrame(ttsRestartHere); return; }
   if(e.target.closest('a[href]')) return;
   if(String(getSelection())) return;
+  // while reading aloud, a tap on the text reads from that sentence
+  if(tts.on){ try{ const c = document.caretPositionFromPoint ? document.caretPositionFromPoint(e.clientX, e.clientY) : document.caretRangeFromPoint(e.clientX, e.clientY);
+      const node = c && (c.offsetNode || c.startContainer), off = c ? (c.offset ?? c.startOffset) : 0;
+      if(node && node.nodeType === 3 && page.contains(node) && ttsBlockOf(node)){ ttsFromTap(node, off); return; } }catch(_){}
+    ttsStop(); return; }
   toggle();
 });
 
@@ -3535,8 +3598,8 @@ function updateStatus(){
 }
 scroller.addEventListener('scroll', updateStatus, {passive:true});
 scroller.addEventListener('scroll', noteAnchor, {passive:true});
-$('#seek').addEventListener('input', e=>{ seeking = true; setFrac(+e.target.value/1000); });
-$('#seek').addEventListener('change', ()=>{ seeking = false; });
+$('#seek').addEventListener('input', e=>{ if(!seeking) ttsHold(); seeking = true; setFrac(+e.target.value/1000); });
+$('#seek').addEventListener('change', ()=>{ seeking = false; if(tts.on) requestAnimationFrame(ttsRestartHere); });
 // window resizes are handled by the reading area's ResizeObserver above
 
 /* panels */
@@ -3553,9 +3616,9 @@ document.querySelectorAll('[data-close]').forEach(b=>b.onclick=closePanels);
 $('#rBack').onclick = closeReader;
 
 addEventListener('keydown', e=>{
-  if(!$('#kdlg').hidden){ if(e.key === 'Escape') kokoroClose(); return; }
   if(!$('#dlg').hidden){ if(e.key === 'Escape') closeDetails(); return; }
   if(!$('#bk').hidden){ if(e.key === 'Escape') closeBackup(); return; }
+  if(!$('#ax').hidden && e.key === 'Escape'){ closeAx(); return; }
   if(!$('#ap').hidden && e.key === 'Escape'){ closeAp(); return; }
   if(R.hidden) return;
   const t = e.target, tag = t.tagName;
@@ -3565,7 +3628,9 @@ addEventListener('keydown', e=>{
   else if(tag==='INPUT') return;
   else if(e.key==='PageDown' || e.key==='PageUp'){ e.preventDefault();
     if(e.key==='PageDown' && isSweep()){ if(!sw || Math.abs(scroller.scrollTop - sw.start) > 1) sweepBegin(); if(sw && !sw.last) sweepFlip(); }
-    else scroller.scrollTop += (e.key==='PageDown' ? 1 : -1) * Math.max(lineH(), scroller.clientHeight - lineH() * 2); }
+    else scroller.scrollTop += (e.key==='PageDown' ? 1 : -1) * Math.max(lineH(), scroller.clientHeight - lineH() * 2);
+    if(tts.on) ttsUserMoved(); }
+  else if((e.key==='ArrowLeft' || e.key==='ArrowRight') && tts.on){ e.preventDefault(); ttsSkip(e.key==='ArrowRight' ? 1 : -1); }
   else if(e.key==='ArrowUp'){ e.preventDefault(); S.lpm=Math.min(120,S.lpm+2); applySettings(); }
   else if(e.key==='ArrowDown'){ e.preventDefault(); S.lpm=Math.max(2,S.lpm-2); applySettings(); }
   else if(e.key===']'){ keepPlace(()=>{ S.size=Math.min(56,S.size+1); applySettings(); }); }
