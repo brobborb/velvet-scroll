@@ -6,16 +6,24 @@ let P = null, ORT = null, phonData = null, phon = null, session = null, config =
 const send = (m, t) => postMessage(m, t || []);
 const CACHE = 'velvet-voices';
 
+// a second place to keep downloads where the Cache API isn't available (some browsers and private windows)
+function idb(){ return new Promise((ok, no) => { const r = indexedDB.open(CACHE, 1); r.onupgradeneeded = () => r.result.createObjectStore('files'); r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error); }); }
+async function idbDo(mode, fn){ const db = await idb(); try{ return await new Promise((ok, no) => { const q = fn(db.transaction('files', mode).objectStore('files')); q.onsuccess = () => ok(q.result); q.onerror = () => no(q.error); }); } finally{ db.close(); } }
+
 // download with progress, keeping a copy in the browser's cache
 async function fetchCached(url, onBytes){
-  let cache = null;
+  let cache = null, useIdb = false;
   try{ cache = await caches.open(CACHE); const hit = await cache.match(url); if(hit){ const b = await hit.arrayBuffer(); onBytes(b.byteLength, b.byteLength); return b; } }catch(e){ cache = null; }
+  if(!cache && typeof indexedDB === 'object'){ useIdb = true;
+    try{ const b = await idbDo('readonly', st => st.get(url)); if(b){ onBytes(b.byteLength, b.byteLength); return b; } }catch(e){ useIdb = false; } }
   const r = await fetch(url); if(!r.ok) throw new Error('download failed (' + r.status + ')');
   const total = +r.headers.get('content-length') || 0, reader = r.body.getReader(), parts = []; let got = 0;
   for(;;){ const {done, value} = await reader.read(); if(done) break; parts.push(value); got += value.length; onBytes(got, total); }
   const blob = new Blob(parts);
+  const buf = await blob.arrayBuffer();
   if(cache){ try{ await cache.put(url, new Response(blob)); }catch(e){} }
-  return blob.arrayBuffer();
+  else if(useIdb){ try{ await idbDo('readwrite', st => st.put(buf, url)); }catch(e){} }
+  return buf;
 }
 
 async function engine(){

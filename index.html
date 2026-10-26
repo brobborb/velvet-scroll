@@ -3392,6 +3392,8 @@ function ttsVoices(){
     ...NV.voices.map(v => el('option', {value:'piper:' + v.id, text:`${v.name} (${v.acc}, ${v.g})`})))] : [];
   sel.replaceChildren(el('option', {value:'', text:'Default voice'}), ...natural,
     ...(rec.length ? [el('optgroup', {label:'Most natural'}, ...rec.map(opt)), el('optgroup', {label:'Other voices'}, ...rest.map(opt))] : rest.map(opt)));
+  // some phone browsers' pickers leave out grouped options, so on Android the groups become plain headings in the list
+  if(/Android/.test(navigator.userAgent)) sel.querySelectorAll('optgroup').forEach(g => g.replaceWith(el('option', {disabled:true, value:'', text:'— ' + g.label + ' —'}), ...g.children));
   $('#ttsTip').textContent = voiceTip(rec.length);
   sel.value = nvVoice() ? S.ttsVoice : S.ttsVoice && list.some(v => v.voiceURI === S.ttsVoice) ? S.ttsVoice : '';
   return vs;
@@ -3508,7 +3510,7 @@ function ttsBeginAt(p){
   if(!p || !p.node) return false;
   const block = ttsBlockOf(p.node); if(!block) return false;
   pause(); try{ synth && synth.cancel(); }catch(e){} nvHalt(); cancelAnimationFrame(tts.anim);
-  if(nvVoice()){ try{ (NV.ctx ||= new AudioContext()).resume(); }catch(e){} }   // sound is unlocked by this tap or key press
+  if(nvVoice()){ try{ (NV.ctx ||= new (window.AudioContext || window.webkitAudioContext)()).resume(); }catch(e){} }   // sound is unlocked by this tap or key press
   page.querySelectorAll('.tts-cur').forEach(e => e.classList.remove('tts-cur'));
   tts.gen++; tts.on = true; $('#ttsBtn').setAttribute('aria-pressed', 'true'); ttsButtons();
   ttsLoad(block); block.classList.add('tts-cur');
@@ -3566,7 +3568,10 @@ addEventListener('pagehide', () => { try{ synth && synth.cancel(); }catch(e){} n
    A worker turns each sentence into audio; the next sentence is made while this one plays, so speech flows.
    Word timings aren't reported, so the highlight moves through each sentence by estimate. */
 const NV = {
-  available: typeof WebAssembly === 'object' && typeof Worker === 'function' && typeof AudioContext === 'function' && typeof caches === 'object' && (IS_EXT || !/claude|anthropic/i.test(location.hostname)),
+  // what natural voices need from the browser; the first thing missing is shown in Display so it's clear why they're unavailable
+  why: typeof WebAssembly !== 'object' ? 'WebAssembly' : typeof Worker !== 'function' ? 'background workers'
+     : !(window.AudioContext || window.webkitAudioContext) ? 'Web Audio' : !(typeof caches === 'object' || typeof indexedDB === 'object') ? 'offline storage' : '',
+  get available(){ return !this.why && (IS_EXT || !/claude|anthropic/i.test(location.hostname)); },
   // only voices trained on public-domain recordings (no voices derived from restricted datasets)
   voices: [{id:'en_GB-cori-medium', name:'Cori', acc:'British', g:'female', path:'en/en_GB/cori/medium', size:63511038},
     {id:'en_US-ljspeech-medium', name:'Linda (LJ Speech)', acc:'American', g:'female', path:'en/en_US/ljspeech/medium', size:63201294},
@@ -3580,7 +3585,10 @@ const NV = {
 };
 function nvVoice(){ if(!NV.available || !NV.ok || !String(S.ttsVoice || '').startsWith('piper:')) return null; const id = S.ttsVoice.slice(6); return NV.voices.find(v => v.id === id) || null; }
 function nvStatus(msg){
-  const row = $('#nvRow'); row.hidden = !NV.available; if(!NV.available) return;
+  const row = $('#nvRow'), off = !NV.available && !!NV.why;
+  row.hidden = !NV.available && !off; $('#nvAbout').hidden = off;
+  if(off){ $('#nvRemove').hidden = true; $('#nvStatus').textContent = `Natural voices (Piper) can’t run in this browser because it doesn’t support ${NV.why}. Try another browser or update this one.`; return; }
+  if(!NV.available) return;
   $('#nvRemove').hidden = !NV.ok;
   const v = nvVoice();
   $('#nvStatus').textContent = msg != null ? msg
@@ -3646,7 +3654,7 @@ async function nvSpeak(){
     const secs = d.pcm.length / d.rate;
     if(!NV.slowWarned && d.ms > secs * 1000 && secs > 1.5){ NV.slowWarned = true;
       toast('This device makes the natural voice a little slower than it speaks, so there may be short pauses between sentences.', 7000); }
-    const ctx = NV.ctx ||= new AudioContext(); if(ctx.state === 'suspended') await ctx.resume().catch(() => {});
+    const ctx = NV.ctx ||= new (window.AudioContext || window.webkitAudioContext)(); if(ctx.state === 'suspended') await ctx.resume().catch(() => {});
     const buf = ctx.createBuffer(1, d.pcm.length, d.rate); buf.copyToChannel(d.pcm, 0);
     const src = NV.src = ctx.createBufferSource(); src.buffer = buf; src.connect(ctx.destination);
     // estimated word timings: share the sentence's time by word length, with a little more after punctuation
@@ -3687,6 +3695,7 @@ $('#nvRemove').onclick = async () => {
   if(tts.on) ttsStop();
   try{ NV.worker && NV.worker.terminate(); }catch(e){} NV.worker = null; NV.loaded = ''; NV.loading = null;
   try{ await caches.delete('velvet-voices'); }catch(e){}
+  try{ indexedDB.deleteDatabase('velvet-voices'); }catch(e){}
   NV.ok = false; LS.set('naturalVoices', false); if(String(S.ttsVoice).startsWith('piper:')) S.ttsVoice = '';
   applySettings(); ttsVoices(); nvStatus(); toast('The downloaded natural voices were removed.');
 };
