@@ -158,6 +158,10 @@ main.wrap{padding-block:20px 48px;display:flex;flex-direction:column;gap:16px}
 ::highlight(tts-word){background-color:color-mix(in srgb,var(--accent) 38%,transparent);color:inherit}
 .page .tts-cur{background:color-mix(in srgb,var(--accent) 9%,transparent);border-radius:4px;box-shadow:0 0 0 .25em color-mix(in srgb,var(--accent) 9%,transparent)}
 .nvinfo{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px;font-size:14px;line-height:1.5}
+.sccode{width:100%;min-width:0;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--bg);color:var(--fg);font:12px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;resize:vertical;word-break:break-all}
+.scqr{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.scqr canvas{width:150px;height:150px;background:#fff;border-radius:6px;image-rendering:pixelated;flex:none}
+.scqr .hint{flex:1 1 200px}
 .isbnmsg{margin:-6px 0 0;min-height:1.2em;font-size:13px}
 .isbnmsg.bad{color:var(--danger)}
 .pwrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
@@ -317,9 +321,17 @@ body.dragging .drop{display:grid}
 .panel h2{font-family:var(--f-display);font-weight:400;font-size:22px;margin:0}
 .grp{display:flex;flex-direction:column;gap:8px}
 .grp>.lbl{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
-.field{display:grid;grid-template-columns:96px 1fr 64px;align-items:center;gap:10px;font-size:14px}
+.field{display:grid;grid-template-columns:96px minmax(0,1fr) 64px;align-items:center;gap:10px;font-size:14px}
 .field input[type=range]{width:100%;accent-color:var(--accent)}
 .field output{font-variant-numeric:tabular-nums;text-align:right;color:var(--muted)}
+/* fine control: a − and + either side of each slider */
+.rng{display:flex;align-items:center;gap:6px;min-width:0}
+.rng input[type=range]{flex:1;min-width:0}
+.nudge{width:26px;height:26px;flex:none;display:grid;place-items:center;border:1px solid var(--line);border-radius:50%;background:transparent;color:var(--fg);cursor:pointer;font-weight:700;font-size:15px;line-height:1;padding:0;touch-action:manipulation;user-select:none}
+.nudge:hover{border-color:var(--accent)}
+.nudge:disabled{opacity:.35;cursor:default}
+html.ax-large .nudge{width:38px;height:38px;font-size:19px}
+html.ax-hc .nudge{border:2px solid var(--fg)}
 .seg{display:flex;flex-wrap:wrap;gap:6px}
 .seg button{border:1px solid var(--line);background:transparent;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:14px}
 .seg button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
@@ -552,7 +564,7 @@ html.ax-still *,html.ax-still *::before,html.ax-still *::after{transition:none!i
       <div class="seg" id="gmodes" role="group" aria-label="Guide style"></div>
       <div class="field"><label for="sGpos">Position</label><input type="range" id="sGpos" min="8" max="85" step="1"><output id="oGpos"></output></div>
       <div class="field"><label for="sGh">Height</label><input type="range" id="sGh" min="1" max="5" step="0.5"><output id="oGh"></output></div>
-      <div class="colors"><label>Guide colour <input type="color" id="cGuide"></label></div>
+      <div class="colors"><label>Guide colour <input type="color" id="cGuide"></label><label class="check"><input type="checkbox" id="sGuideAuto"> Match the accent colour</label></div>
     </div>
 
     <div class="grp">
@@ -768,6 +780,30 @@ html.ax-still *,html.ax-still *::before,html.ax-still *::after{transition:none!i
         <div class="row end"><button class="btn primary" id="bkUnlock">Restore</button></div>
       </div>
       <p class="hint" id="bkLoadSt" role="status"></p>
+    </div>
+    <div class="grp" id="scGrp">
+      <span class="lbl">Sync code</span>
+      <p class="hint">Copy your reading places, shelves, book details and settings to another browser or device, with no account. The code is encrypted with a passphrase you choose. Books themselves aren’t included: copy them once with a backup, then use a sync code whenever you switch devices.</p>
+      <div class="pwrow">
+        <label for="scPw">Passphrase (at least 8 characters)<input type="password" id="scPw" autocomplete="new-password"></label>
+        <div class="row end"><button class="btn primary" id="scMake">Create sync code</button></div>
+      </div>
+      <div id="scOut" class="grp" hidden>
+        <textarea id="scCode" class="sccode" rows="3" readonly aria-label="Sync code"></textarea>
+        <div class="row" style="flex-wrap:wrap;gap:8px"><button class="btn" id="scCopy">Copy code</button><button class="btn" id="scShare" hidden>Share…</button></div>
+        <div class="scqr"><canvas id="scQr" width="232" height="232" aria-label="QR code of the sync code" hidden></canvas><p class="hint" id="scQrHint"></p></div>
+      </div>
+      <p class="hint" id="scSt" role="status"></p>
+      <span class="lbl" style="margin-top:6px">Use a sync code</span>
+      <textarea id="scIn" class="sccode" rows="3" placeholder="Paste a sync code here" aria-label="Sync code to use" spellcheck="false"></textarea>
+      <div class="pwrow">
+        <label for="scInPw">Its passphrase<input type="password" id="scInPw" autocomplete="current-password"></label>
+        <div class="row end"><button class="btn primary" id="scApply">Use code</button></div>
+      </div>
+      <label class="check"><input type="checkbox" id="scSettings" checked> Also use its display, appearance and accessibility settings</label>
+      <p class="hint" id="scInSt" role="status"></p>
+      <div id="scMissing" hidden><p class="hint">In the code but not in this library (add them with a backup or the original files):</p><ul class="missing" id="scList"></ul></div>
+      <p class="hint">Keep the passphrase separate from the code: anyone with both can see your reading list. A code is a snapshot, so make a new one each time you want to sync.</p>
     </div>
     <div class="grp" id="syncGrp" hidden>
       <span class="lbl" id="syncLbl">Browser sync</span>
@@ -1932,7 +1968,7 @@ async function openBackup(){
   $('#bk').hidden = false; $('#bkSaveSt').textContent = ''; $('#bkLoadSt').textContent = ''; $('#bkPwIn').hidden = true;
   $('#bkPw').value = ''; $('#bkPw2').value = ''; $('#bkSave').focus();
   $('#syncGrp').hidden = !SY; if(SY){ $('#syncOn').checked = syncOn; showSyncStatus(); }
-  $('#bkSize').textContent = '';
+  $('#bkSize').textContent = ''; $('#scSt').textContent = ''; $('#scInSt').textContent = ''; $('#scOut').hidden = true; $('#scPw').value = '';
   for(const b of books) if(!b.size){ const f = await dbGetFile(b.id); if(f){ b.size = f.byteLength; await dbPutMeta(b); } }
   const total = books.reduce((a, b) => a + (b.size || 0), 0);
   $('#bkSize').textContent = books.length ? `(${books.length} book${books.length===1?'':'s'}, about ${fmtMB(total)})` : '';
@@ -2010,6 +2046,111 @@ async function restore(zip){
   render();
   st.textContent = [added ? `Added ${added} book${added===1?'':'s'}.` : '', merged ? `Updated ${merged} you already had.` : '',
     skipped ? `${skipped} weren’t restored because this backup was saved without the books.` : '', wasEmpty && lib.settings ? 'Your reading settings were restored too.' : ''].filter(Boolean).join(' ') || 'Nothing new in that backup.';
+}
+
+/* ---------- Sync code: positions, shelves, details and settings as a passphrase-encrypted code (no server) ----------
+   Format: "VS1-" + base64url( encrypted( [1] + deflate(JSON) ) ), using the same AES-256 encryption as backups. */
+const b64u = {
+  enc(u8){ let s = ''; for(let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); },
+  dec(t){ t = t.replace(/-/g, '+').replace(/_/g, '/'); while(t.length % 4) t += '='; const s = atob(t), u = new Uint8Array(s.length); for(let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u; }
+};
+async function squeeze(u8, inflate){
+  if(typeof CompressionStream !== 'function') throw new Error('nocompress');
+  const st = new Blob([u8]).stream().pipeThrough(inflate ? new DecompressionStream('deflate-raw') : new CompressionStream('deflate-raw'));
+  return new Uint8Array(await new Response(st).arrayBuffer());
+}
+async function makeSyncCode(pw){
+  for(const b of books) await ensureFp(b);
+  const {hz, ttsVoice, ...settings} = S;   // the refresh rate and voice belong to each device
+  const data = {app:'VS', v:1, t:Date.now(), st:LS.get('settingsT', 0), s:settings, m:pdfModes,
+    b: books.filter(b => !b.sample && b.fp).map(b => { const pr = progress[b.id] || {};
+      return [b.fp, (b.title || '').slice(0, 90), (b.author || '').slice(0, 60), b.year || 0, b.isbn || '', b.shelf || '', b.upd || b.added || 0, +(pr.p || 0).toFixed(5), pr.t || 0, pr.pg || 0, pr.mode || '']; })};
+  const json = new TextEncoder().encode(JSON.stringify(data));
+  let body; try{ const z = await squeeze(json); body = new Uint8Array(z.length + 1); body[0] = 1; body.set(z, 1); }
+  catch(e){ body = new Uint8Array(json.length + 1); body[0] = 0; body.set(json, 1); }
+  return 'VS1-' + b64u.enc(await encryptBytes(body, pw));
+}
+async function readSyncCode(code, pw){
+  const m = /VS1-([A-Za-z0-9_-]+)/.exec(String(code).replace(/\s+/g, '')); if(!m) throw new Error('notcode');
+  let raw; try{ raw = b64u.dec(m[1]); }catch(e){ throw new Error('notcode'); }
+  const body = await decryptBytes(raw, pw);   // throws 'badpw' or 'invalid'
+  const json = body[0] === 1 ? await squeeze(body.subarray(1), true) : body.subarray(1);
+  const data = JSON.parse(new TextDecoder().decode(json));
+  if(data.app !== 'VS' || !Array.isArray(data.b)) throw new Error('notcode');
+  return data;
+}
+async function applySyncCode(data, useSettings){
+  for(const b of books) await ensureFp(b);
+  let places = 0, details = 0; const missing = [];
+  for(const [fp, title, author, year, isbn, shelf, upd, p, pt, pg, mode] of data.b){
+    const b = books.find(x => x.fp === fp) || books.find(x => x.title === title && (x.author || '') === (author || ''));
+    if(!b){ missing.push(title + (author ? ' · ' + author : '')); continue; }
+    // newer details win; so do any details at all when this copy has never been edited (it was only just added here)
+    const untouched = (b.upd || 0) - (b.added || 0) < 5000, differs = b.title !== title || (b.author || '') !== (author || '') || (b.year || 0) !== (year || 0) || (b.isbn || '') !== (isbn || '') || (b.shelf || '') !== (shelf || '');
+    if(differs && ((upd || 0) > (b.upd || 0) || untouched)){ Object.assign(b, {title, author, year: year || null, isbn: isbn || b.isbn || '', shelf, upd: Math.max(upd || 0, b.upd || 0)}); await dbPutMeta(b); details++; }
+    const lp = progress[b.id];
+    if(pt && (!lp || pt > (lp.t || 0)) && !(cur && cur.id === b.id)){ setProgressRec(b.id, {p, t:pt, pg: pg || undefined, mode: mode || undefined}); places++; }
+  }
+  if(data.m) for(const [k, v] of Object.entries(data.m)) if(!pdfModes[k]) pdfModes[k] = v;
+  LS.set('pdfmode', pdfModes);
+  let settings = false;
+  if(useSettings && data.s){ const keep = {hz:S.hz, ttsVoice:S.ttsVoice}; Object.assign(S, data.s, keep); applySettings(); settings = true; }
+  render();
+  return {places, details, missing, settings};
+}
+function drawQr(cv, text){
+  const go = () => { if(typeof qrcode !== 'function') return false;
+    let q; try{ q = qrcode(0, 'L'); q.addData(text); q.make(); }catch(e){ return false; }
+    const n = q.getModuleCount(), m = 2, sc = Math.max(1, Math.floor(cv.width / (n + m*2))), off = Math.floor((cv.width - sc*n)/2), ctx = cv.getContext('2d');
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height); ctx.fillStyle = '#000';
+    for(let r = 0; r < n; r++) for(let c = 0; c < n; c++) if(q.isDark(r, c)) ctx.fillRect(off + c*sc, off + r*sc, sc, sc);
+    return true; };
+  return new Promise(res => { if(typeof qrcode === 'function') return res(go());
+    const sc = document.createElement('script'); sc.src = 'lib/qrcode.js'; sc.onload = () => res(go()); sc.onerror = () => res(false); document.head.appendChild(sc); });
+}
+$('#scMake').onclick = async () => {
+  const st = $('#scSt'), pw = $('#scPw').value;
+  if(!books.length){ st.textContent = 'Your library is empty, so there’s nothing to sync yet.'; return; }
+  if(pw.length < 8){ st.textContent = 'Choose a passphrase of at least 8 characters.'; $('#scPw').focus(); return; }
+  $('#scMake').disabled = true; st.textContent = 'Creating the code…';
+  try{
+    const code = await makeSyncCode(pw);
+    $('#scOut').hidden = false; $('#scCode').value = code; $('#scShare').hidden = !navigator.share;
+    // a QR code opens velvetscroll.net with the code filled in, when it's short enough to scan
+    const url = 'https://velvetscroll.net/#sync=' + code.slice(4), cv = $('#scQr');
+    const shown = url.length <= 2200 && await drawQr(cv, url);
+    cv.hidden = !shown;
+    $('#scQrHint').textContent = shown ? 'Or scan this with your phone’s camera: it opens velvetscroll.net with the code filled in. You’ll still need the passphrase.'
+      : url.length > 2200 ? 'Your library is too large for a QR code, so copy or share the code instead.' : '';
+    st.textContent = `Sync code created for ${books.filter(b => !b.sample).length} book${books.length === 1 ? '' : 's'} (${code.length.toLocaleString()} characters).`;
+  }catch(e){ st.textContent = 'Couldn’t create the code. Please try again.'; }
+  finally{ $('#scMake').disabled = false; }
+};
+$('#scCopy').onclick = async () => { const t = $('#scCode');
+  try{ await navigator.clipboard.writeText(t.value); toast('Sync code copied.'); }
+  catch(e){ t.focus(); t.select(); toast('Code selected. Copy it with your device’s Copy command.'); } };
+$('#scShare').onclick = () => { navigator.share({title:'Velvet Scroll sync code', text:$('#scCode').value}).catch(() => {}); };
+$('#scApply').onclick = async () => {
+  const st = $('#scInSt'), code = $('#scIn').value.trim(), pw = $('#scInPw').value;
+  if(!code){ st.textContent = 'Paste a sync code first.'; $('#scIn').focus(); return; }
+  if(!pw){ st.textContent = 'Enter the passphrase used to create the code.'; $('#scInPw').focus(); return; }
+  $('#scApply').disabled = true; st.textContent = 'Unlocking…';
+  try{
+    const data = await readSyncCode(code, pw), r = await applySyncCode(data, $('#scSettings').checked);
+    const when = new Date(data.t).toLocaleString([], {day:'numeric', month:'short', hour:'numeric', minute:'2-digit'});
+    st.textContent = [`Code from ${when}.`, r.places ? `Updated your place in ${r.places} book${r.places === 1 ? '' : 's'}.` : 'Your places were already up to date.',
+      r.details ? `Updated details or shelves for ${r.details}.` : '', r.settings ? 'Settings applied.' : ''].filter(Boolean).join(' ');
+    $('#scMissing').hidden = !r.missing.length; $('#scList').replaceChildren(...r.missing.slice(0, 50).map(t => el('li', {text:t})));
+    $('#scInPw').value = '';
+  }catch(e){
+    st.textContent = e.message === 'badpw' ? 'That passphrase isn’t right, or the code wasn’t copied in full.' : e.message === 'nocompress' ? 'This browser is too old to read sync codes. Update it and try again.' : 'That doesn’t look like a complete Velvet Scroll sync code. Check it was copied in full.';
+  }finally{ $('#scApply').disabled = false; }
+};
+// a sync code arriving in the address (from the QR code): open Backup with it filled in, then tidy the address
+function syncCodeFromAddress(){
+  const m = /^#sync=([A-Za-z0-9_-]+)$/.exec(location.hash); if(!m) return;
+  try{ history.replaceState(history.state, '', location.pathname + location.search); }catch(e){}
+  openBackup().then(() => { $('#scIn').value = 'VS1-' + m[1]; $('#scInSt').textContent = 'A sync code was opened from a QR code. Enter its passphrase, then choose Use code.'; $('#scInPw').focus(); });
 }
 
 /* ---------- Firefox Sync (extension only): positions, shelves, details and settings, never the books ---------- */
@@ -2518,6 +2659,8 @@ const GMODES = [['band','Band'],['under','Underline'],['spot','Spotlight'],['off
 const HOME_DEFAULT = {mode:'system', accent:null, bg:null};
 const AX_DEFAULT = {contrast:'auto', cvd:'none', large:false, easy:false, motion:'auto', prevFont:''};
 const S = Object.assign({ttsVoice:'', ttsRate:1, ttsHl:true, lensShape:'circle', lensSize:240, lensZoom:2, home:{...HOME_DEFAULT}, size:22, lh:1.6, width:62, font:'Literata', bg:'#fbfaf7', fg:'#1d1c1a', bright:100, gmode:'band', gpos:32, gh:1, guide:'#e0a72e', lpm:20, pgw:90, tint:true, hand:false, smooth:true, hz:'auto', style:'cinema', book:true, ax:{...AX_DEFAULT}}, LS.get('settings', {}));
+// the reading guide follows the accent colour unless a guide colour was chosen (older settings with a changed colour keep it)
+if(S.guideAuto === undefined) S.guideAuto = S.guide === '#e0a72e';
 const R = $('#reader'), stage = $('#stage'), scroller = $('#scroller'), page = $('#page'), guide = $('#guide');
 const swNext = $('#sweepNext'), swClip = swNext.firstElementChild, swContent = swClip.firstElementChild, swLine = $('#sweepLine'), swMark = swLine.firstElementChild, swCover = $('#sweepCover'), swFoot = $('#sweepFoot'), swHead = $('#sweepHead');
 let sw = null, swMO = null;   // the page sweep in progress
@@ -2583,7 +2726,9 @@ const HC = {
 const CVD = {redgreen:{light:'#0072b2', dark:'#56b4e9', guide:'#e69f00'}, blueyellow:{light:'#c2185b', dark:'#ff6e9c', guide:'#009e9e'}, mono:{light:'#262626', dark:'#e6e6e6', guide:'#8c8c8c'}};
 // the reading page's colours once accessibility settings are applied
 function readerCols(){ const hc = hcMode(); if(hc !== 'off') return {bg:HC[hc].rbg, fg:HC[hc].rfg, guide:HC[hc].guide};
-  const c = CVD[(S.ax || AX_DEFAULT).cvd]; return {bg:S.bg, fg:S.fg, guide: c ? c.guide : S.guide}; }
+  const c = CVD[(S.ax || AX_DEFAULT).cvd]; return {bg:S.bg, fg:S.fg, guide: c ? c.guide : S.guideAuto !== false ? accentFor(isDark(S.bg)) : S.guide}; }
+// the library's accent colour, in the shade that suits a light or dark page
+function accentFor(dark){ const h = S.home || HOME_DEFAULT; return homePalette(dark, h.accent || null, h.bg)['--accent']; }
 function applyAx(){
   S.ax = {...AX_DEFAULT, ...(S.ax || {})};
   const hc = hcMode(), cl = document.documentElement.classList;
@@ -2612,7 +2757,7 @@ function renderAppearance(){
   $('#apAccentC').value = h.accent || (dark ? '#6dbea2' : '#2c6a57');
   $('#apBgC').value = h.bg || (dark ? '#101715' : '#eef2f0');
 }
-function setHome(patch){ S.home = {...S.home, ...patch}; applyHome(); renderAppearance(); LS.set('settings', S); LS.set('settingsT', Date.now()); syncSettings(); }
+function setHome(patch){ S.home = {...S.home, ...patch}; applySettings(); renderAppearance(); }   // applySettings saves, and updates the reading guide when it follows the accent
 function closeApNow(){ $('#ap').hidden = true; $('#apOpen').focus(); }
 function closeAp(){ popLayer('ap'); }
 function renderAx(){
@@ -2665,7 +2810,7 @@ function applySettings(save=true){
   $('#sBright').value=S.bright; $('#oBright').value=S.bright+'%';
   $('#sGpos').value=S.gpos; $('#oGpos').value=S.gpos+'%';
   $('#sGh').value=S.gh; $('#oGh').value=S.gh+(S.gh==1?' line':' lines');
-  $('#cBg').value=S.bg; $('#cFg').value=S.fg; $('#cGuide').value=S.guide;
+  $('#cBg').value=S.bg; $('#cFg').value=S.fg; $('#cGuide').value=rc.guide; $('#sGuideAuto').checked = S.guideAuto !== false;
   $('#speed').value=S.lpm; $('#speedOut').value=S.lpm+' lines/min';
   $('#sSmooth').checked=!!S.smooth; $('#sHz').value=String(S.hz);
   document.querySelectorAll('#styles button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === (S.style || 'cinema'))));
@@ -2690,6 +2835,7 @@ function applySettings(save=true){
   document.querySelectorAll('#lensShapes button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === S.lensShape)));
   try{ lensRefresh(true); }catch(e){}   // the magnifier may not be set up yet on first load
   if(sw && !playing && sw.sig !== sweepSig()) sweepEnd();
+  document.querySelectorAll('.rng input[type=range]').forEach(r => r._nudgeSync && r._nudgeSync());
   if(save){ LS.set('settings', S); LS.set('settingsT', Date.now()); syncSettings(); }
   updateStatus();
 }
@@ -2759,7 +2905,9 @@ function noteAnchor(){ if(anchorRaf || performance.now() < holdAnchor) return; a
 const bind = (id, key, num=true, relayout=false) => $(id).addEventListener('input', e=>{ const v = num ? +e.target.value : e.target.value; relayout ? keepPlace(()=>{S[key]=v; applySettings();}) : (S[key]=v, applySettings()); });
 bind('#sSize','size',true,true); bind('#sLh','lh',true,true); bind('#sWidth','width',true,true);
 bind('#sBright','bright'); bind('#sGpos','gpos',true,true); bind('#sGh','gh');
-bind('#cBg','bg',false); bind('#cFg','fg',false); bind('#cGuide','guide',false);
+bind('#cBg','bg',false); bind('#cFg','fg',false);
+$('#cGuide').addEventListener('input', e => { S.guide = e.target.value; S.guideAuto = false; applySettings(); });
+$('#sGuideAuto').addEventListener('change', e => { S.guideAuto = e.target.checked; applySettings(); });
 bind('#speed','lpm'); bind('#sPgw','pgw',true,true);
 $('#sBook').addEventListener('change', e => { keepPlace(() => { S.book = e.target.checked; applySettings(); }); });
 $('#styles').addEventListener('click', e => { const b = e.target.closest('[data-v]'); if(!b || b.dataset.v === S.style) return;
@@ -2767,6 +2915,28 @@ $('#styles').addEventListener('click', e => { const b = e.target.closest('[data-
 $('#sSmooth').addEventListener('change', e=>{ S.smooth = e.target.checked; applySettings(); });
 $('#sHz').addEventListener('change', e=>{ S.hz = e.target.value === 'auto' ? 'auto' : +e.target.value; applySettings(); });
 $('#sTint').addEventListener('change', e=>{ S.tint = e.target.checked; applySettings(); });
+// a − and + either side of every slider in the panels: one step per tap, repeating while held
+function addNudges(root){
+  root.querySelectorAll('.field input[type=range]').forEach(r => {
+    if(r.parentElement.classList.contains('rng')) return;
+    const name = (root.querySelector(`label[for="${r.id}"]`) || {}).textContent || 'value';
+    const wrap = el('span', {class:'rng'}); r.replaceWith(wrap);
+    const mk = (dir, sym) => {
+      const b = el('button', {class:'nudge', type:'button', text:sym, 'aria-label':(dir < 0 ? 'Less ' : 'More ') + name.toLowerCase(), title:(dir < 0 ? 'Less' : 'More')});
+      const step = () => { const before = r.value; dir < 0 ? r.stepDown() : r.stepUp(); if(r.value !== before){ r.dispatchEvent(new Event('input', {bubbles:true})); r.dispatchEvent(new Event('change', {bubbles:true})); } sync(); };
+      let hold = 0, rep = 0; const stop = () => { clearTimeout(hold); clearInterval(rep); };
+      b.addEventListener('pointerdown', e => { if(e.button) return; e.preventDefault(); step(); hold = setTimeout(() => { rep = setInterval(step, 90); }, 420); });
+      ['pointerup','pointerleave','pointercancel'].forEach(t => b.addEventListener(t, stop));
+      b.addEventListener('click', e => { if(e.detail === 0) step(); });   // keyboard: Enter or Space
+      return b;
+    };
+    const minus = mk(-1, '−'), plus = mk(1, '+');
+    const sync = () => { minus.disabled = +r.value <= +r.min; plus.disabled = +r.value >= +r.max; };
+    r.addEventListener('input', sync); wrap.append(minus, r, plus); sync();
+    r._nudgeSync = sync;
+  });
+}
+addNudges($('#setPanel'));
 $('#slower').onclick=()=>{ S.lpm=Math.max(2,S.lpm-2); applySettings(); };
 $('#faster').onclick=()=>{ S.lpm=Math.min(120,S.lpm+2); applySettings(); };
 
@@ -3842,6 +4012,7 @@ setupDonate();
   if(!ok){ const n=$('#notice'); n.hidden=false; n.textContent='This browser isn’t allowing storage here, so books you add will only last until you close the page.'; }
   books = await dbAll(); await loadProgress();
   initSync();
+  syncCodeFromAddress();
   try{ navigator.storage?.persist?.(); }catch(e){}
   render();
   backfillFormats();
