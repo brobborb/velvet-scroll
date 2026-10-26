@@ -157,6 +157,7 @@ main.wrap{padding-block:20px 48px;display:flex;flex-direction:column;gap:16px}
 .swatch[aria-pressed="true"]::after{content:"";position:absolute;inset:0;margin:auto;width:10px;height:10px;border-radius:50%;background:var(--surface);box-shadow:0 0 0 1px var(--fg)}
 ::highlight(tts-word){background-color:color-mix(in srgb,var(--accent) 38%,transparent);color:inherit}
 .page .tts-cur{background:color-mix(in srgb,var(--accent) 9%,transparent);border-radius:4px;box-shadow:0 0 0 .25em color-mix(in srgb,var(--accent) 9%,transparent)}
+.nvinfo{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px;font-size:14px;line-height:1.5}
 .isbnmsg{margin:-6px 0 0;min-height:1.2em;font-size:13px}
 .isbnmsg.bad{color:var(--danger)}
 .pwrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
@@ -435,7 +436,7 @@ html.ax-still *,html.ax-still *::before,html.ax-still *::after{transition:none!i
   <div id="fmts" class="fmts" role="group" aria-label="File formats" hidden></div>
   <div id="notice" class="notice" hidden></div>
   <section id="grid" class="grid" aria-label="Books"></section>
-  <p class="foot"><a class="plink" href="https://velvetscroll.net/privacy.html" target="_blank" rel="noopener">Privacy</a> · Books stay in this browser on this device; nothing is uploaded. Opens EPUB, KEPUB, MOBI, AZW3, PDF, TXT, HTML, FB2 and CBZ comic files, including zipped ones. Drag them anywhere on the page to add them. DRM-protected and password-locked books, including Kindle store purchases, can't be opened.</p>
+  <p class="foot"><a class="plink" href="https://velvetscroll.net/privacy.html" target="_blank" rel="noopener">Privacy</a> · <a class="plink" href="https://velvetscroll.net/licences.html" target="_blank" rel="noopener">Licences</a> · Books stay in this browser on this device; nothing is uploaded. Opens EPUB, KEPUB, MOBI, AZW3, PDF, TXT, HTML, FB2 and CBZ comic files, including zipped ones. Drag them anywhere on the page to add them. DRM-protected and password-locked books, including Kindle store purchases, can't be opened.</p>
   <section id="donate" class="donate" hidden aria-labelledby="donH">
     <div class="don-text"><h2 id="donH">Support Velvet Scroll</h2><p>Velvet Scroll is free. If you enjoy it, you can help keep it going.</p></div>
     <div class="don-ways">
@@ -561,6 +562,10 @@ html.ax-still *,html.ax-still *::before,html.ax-still *::after{transition:none!i
       <label class="check"><input type="checkbox" id="sTtsHl"> Highlight each word as it’s read</label>
       <p class="hint" id="ttsHint">Starts from the line on the reading guide and keeps the spoken words on it. While it’s reading, tap any sentence to read from there, use the ⏮ ⏭ buttons (or ← →) to skip a paragraph, or pick a chapter from Contents. Uses the voices installed on your device.</p>
       <p class="hint" id="ttsTip"></p>
+      <div id="nvRow" class="grp" hidden>
+        <p class="hint" id="nvStatus" role="status"></p>
+        <div class="row" style="flex-wrap:wrap;gap:8px"><button class="btn" id="nvAbout">About natural voices</button><button class="btn" id="nvRemove" hidden>Remove downloaded voices</button><a class="btn" href="licences.html" target="_blank" rel="noopener">Licences</a></div>
+      </div>
     </div>
 
     <div class="grp">
@@ -716,6 +721,26 @@ html.ax-still *,html.ax-still *::before,html.ax-still *::after{transition:none!i
     <div class="urlrow"><input id="artUrl" type="url" inputmode="url" placeholder="https://…" aria-label="Article web address" autocomplete="off"><button class="btn primary" id="artGo">Save</button></div>
     <p class="hint" id="artSt" role="status"></p>
     <p class="hint">On a page you’re reading, you can also save it with the Velvet Scroll button in the browser toolbar, or by right-clicking the page.</p>
+  </div>
+</div>
+
+<div id="nvdlg" class="modal" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="nvH">
+    <header class="sh-head"><h2 id="nvH">Natural voices</h2><button class="btn" id="nvClose">Close</button></header>
+    <p>Natural voices use <strong>Piper</strong>, an open-source speech system, to read aloud in a more lifelike voice than many built-in voices. It runs entirely on your device: nothing you read is sent anywhere.</p>
+    <div class="grp">
+      <span class="lbl">Before you turn it on</span>
+      <ul class="nvinfo">
+        <li><strong>Downloads:</strong> about <span class="nvFirst">20</span> MB the first time (the pronunciation dictionary<span class="nvEng"> and the speech engine</span>), plus about 63 MB for each voice you choose, from jsDelivr and Hugging Face. Use Wi-Fi if your data is limited. Your browser keeps them, so they aren’t downloaded again unless you remove them or clear this site’s data.</li>
+        <li><strong>Uses your device’s processor.</strong> Speech is made as you listen. On most computers and recent phones it’s made faster than it’s spoken. Older phones may pause briefly between sentences and use more battery.</li>
+        <li><strong>English only</strong>, with British and American voices. Use a device voice for other languages.</li>
+        <li><strong>Word highlighting is estimated</strong>, so it can run slightly ahead or behind the voice.</li>
+        <li><strong>Openly licensed.</strong> The voices were trained on public-domain recordings. Pronunciation uses eSpeak NG, which is free software under the GPL 3.0 licence. See Licences for details and source code.</li>
+      </ul>
+      <p class="hint">You can switch back to a device voice at any time under Display, and remove the downloads there.</p>
+    </div>
+    <p class="hint" id="nvDlgSt" role="status"></p>
+    <footer class="sh-foot"><a class="btn" href="licences.html" target="_blank" rel="noopener">Licences</a><button class="btn" id="nvCancel">Not now</button><button class="btn primary" id="nvGo">Download</button></footer>
   </div>
 </div>
 
@@ -3185,19 +3210,20 @@ scroller.addEventListener('scroll', () => { if(sw && !playing && !tts.on && Math
 /* ---------- Read aloud (the browser's own speech voices) ---------- */
 const synth = window.speechSynthesis || null;
 const TTS_BLOCK = 'p,h1,h2,h3,h4,h5,h6,li,blockquote,pre,figcaption,dt,dd,td,th,.fb-v,div,section';
-const tts = {on:false, gen:0, block:null, map:[], text:'', chunks:[], ci:0, anim:0, userT:0, userTimer:0};
-if(!synth) $('#ttsBtn').hidden = true;
+const tts = {on:false, gen:0, block:null, map:[], text:'', chunks:[], ci:0, anim:0, userT:0, userTimer:0, nvNext:null};
+
 function ttsVoices(){
-  if(!synth) return [];
-  const vs = synth.getVoices(), sel = $('#ttsVoice'), lang = (navigator.language || 'en').slice(0, 2);
+  const vs = synth ? synth.getVoices() : [], sel = $('#ttsVoice'), lang = (navigator.language || 'en').slice(0, 2);
   const list = [...vs].sort((a, b) => (b.lang.startsWith(lang) - a.lang.startsWith(lang)) || (b.localService - a.localService) || a.name.localeCompare(b.name));
   // the most lifelike voices browsers offer: Edge's "Natural" voices, Apple's Enhanced and Premium voices, and other neural voices
   const best = v => /\b(natural|neural|premium|enhanced)\b/i.test(v.name), opt = v => el('option', {value:v.voiceURI, text:`${v.name} (${v.lang})${v.localService ? '' : ' · online'}`});
   const rec = list.filter(best), rest = list.filter(v => !best(v));
-  sel.replaceChildren(el('option', {value:'', text:'Default voice'}),
+  const natural = NV.available ? [el('optgroup', {label: NV.ok ? 'Natural voices (Piper, on this device)' : 'Natural voices (Piper) · download'},
+    ...NV.voices.map(v => el('option', {value:'piper:' + v.id, text:`${v.name} (${v.acc}, ${v.g})`})))] : [];
+  sel.replaceChildren(el('option', {value:'', text:'Default voice'}), ...natural,
     ...(rec.length ? [el('optgroup', {label:'Most natural'}, ...rec.map(opt)), el('optgroup', {label:'Other voices'}, ...rest.map(opt))] : rest.map(opt)));
   $('#ttsTip').textContent = voiceTip(rec.length);
-  sel.value = S.ttsVoice && list.some(v => v.voiceURI === S.ttsVoice) ? S.ttsVoice : '';
+  sel.value = nvVoice() ? S.ttsVoice : S.ttsVoice && list.some(v => v.voiceURI === S.ttsVoice) ? S.ttsVoice : '';
   return vs;
 }
 // where to find more lifelike voices on this device
@@ -3210,8 +3236,14 @@ function voiceTip(haveBest){
   if(/Windows/.test(ua)) return 'Tip: the most lifelike voices on Windows are the “Natural” voices in Microsoft Edge. Open Velvet Scroll in Edge to use them.';
   return haveBest ? 'Tip: the voices under “Most natural” sound the most lifelike.' : '';
 }
-if(synth){ ttsVoices(); synth.addEventListener ? synth.addEventListener('voiceschanged', ttsVoices) : (synth.onvoiceschanged = ttsVoices); }
-$('#ttsVoice').addEventListener('change', e => { S.ttsVoice = e.target.value; applySettings(); });
+if(synth){ synth.addEventListener ? synth.addEventListener('voiceschanged', ttsVoices) : (synth.onvoiceschanged = ttsVoices); }
+$('#ttsVoice').addEventListener('change', e => {
+  const v = e.target.value;
+  if(v.startsWith('piper:') && !NV.ok){ e.target.value = S.ttsVoice; nvAsk(v); return; }   // ask first: it's a download
+  if(tts.on) ttsStop();
+  S.ttsVoice = v; applySettings(); nvStatus();
+  if(nvVoice()) nvLoad().catch(() => {});
+});
 bind('#sTtsRate', 'ttsRate');
 $('#sTtsHl').addEventListener('change', e => { S.ttsHl = e.target.checked; applySettings(); if(!S.ttsHl) ttsClearWord(); });
 // the paragraph a piece of text belongs to, and that paragraph's text mapped back to its text nodes
@@ -3276,6 +3308,7 @@ function ttsSpeakNext(){
     ttsLoad(nb); nb.classList.add('tts-cur'); tts.chunks = ttsChunks(0); tts.ci = 0;
     if(!tts.chunks.length) return ttsSpeakNext();
   }
+  if(nvVoice()) return nvSpeak();
   const [s, e] = tts.chunks[tts.ci++], gen = tts.gen, u = new SpeechSynthesisUtterance(tts.text.slice(s, e));
   const v = S.ttsVoice && synth.getVoices().find(x => x.voiceURI === S.ttsVoice); if(v){ u.voice = v; u.lang = v.lang; }
   u.rate = +S.ttsRate || 1;
@@ -3304,7 +3337,8 @@ function ttsStartPoint(){
 function ttsBeginAt(p){
   if(!p || !p.node) return false;
   const block = ttsBlockOf(p.node); if(!block) return false;
-  pause(); try{ synth.cancel(); }catch(e){} cancelAnimationFrame(tts.anim);
+  pause(); try{ synth && synth.cancel(); }catch(e){} nvHalt(); cancelAnimationFrame(tts.anim);
+  if(nvVoice()){ try{ (NV.ctx ||= new AudioContext()).resume(); }catch(e){} }   // sound is unlocked by this tap or key press
   page.querySelectorAll('.tts-cur').forEach(e => e.classList.remove('tts-cur'));
   tts.gen++; tts.on = true; $('#ttsBtn').setAttribute('aria-pressed', 'true'); ttsButtons();
   ttsLoad(block); block.classList.add('tts-cur');
@@ -3314,12 +3348,12 @@ function ttsBeginAt(p){
   ttsSpeakNext(); return true;
 }
 function ttsStart(){
-  if(!synth || R.hidden) return;
+  if((!synth && !nvVoice()) || R.hidden) return;
   if(comic || (pdfDoc && pdfMode === 'pages')){ toast(comic ? 'Comics have no text to read aloud.' : 'Read aloud needs text: switch this PDF to reflowed text first.', 5000); return; }
   if(!ttsBeginAt(ttsStartPoint())) toast('There’s no text here to read aloud.');
 }
 // hush while the reader moves somewhere else, so the voice doesn't pull the page back (it carries on from the new place)
-function ttsHold(){ if(!tts.on) return; tts.gen++; try{ synth.cancel(); }catch(e){} cancelAnimationFrame(tts.anim); }
+function ttsHold(){ if(!tts.on) return; tts.gen++; try{ synth && synth.cancel(); }catch(e){} nvHalt(); cancelAnimationFrame(tts.anim); }
 // read from wherever the page now is (after Contents, the position bar or a drag)
 function ttsRestartHere(){ if(tts.on) ttsBeginAt(ttsStartPoint()); }
 // back to the start of the tapped sentence
@@ -3352,11 +3386,142 @@ function ttsSkip(dir){
 $('#ttsPrev').onclick = () => ttsSkip(-1);
 $('#ttsNext').onclick = () => ttsSkip(1);
 function ttsStop(){
-  if(!tts.on) return; tts.on = false; tts.gen++; ttsButtons(); try{ synth.cancel(); }catch(e){}
+  if(!tts.on) return; tts.on = false; tts.gen++; ttsButtons(); try{ synth && synth.cancel(); }catch(e){} nvHalt();
   cancelAnimationFrame(tts.anim); ttsClearWord(); tts.block?.classList.remove('tts-cur'); $('#ttsBtn').setAttribute('aria-pressed', 'false');
 }
 $('#ttsBtn').onclick = () => tts.on ? ttsStop() : ttsStart();
-addEventListener('pagehide', () => { try{ synth && synth.cancel(); }catch(e){} });
+addEventListener('pagehide', () => { try{ synth && synth.cancel(); }catch(e){} nvHalt(); });
+
+/* ---------- Natural voices: Piper, run on this device ----------
+   A worker turns each sentence into audio; the next sentence is made while this one plays, so speech flows.
+   Word timings aren't reported, so the highlight moves through each sentence by estimate. */
+const NV = {
+  available: typeof WebAssembly === 'object' && typeof Worker === 'function' && typeof AudioContext === 'function' && typeof caches === 'object' && (IS_EXT || !/claude|anthropic/i.test(location.hostname)),
+  // only voices trained on public-domain recordings (no voices derived from restricted datasets)
+  voices: [{id:'en_GB-cori-medium', name:'Cori', acc:'British', g:'female', path:'en/en_GB/cori/medium', size:63511038},
+    {id:'en_US-ljspeech-medium', name:'Linda (LJ Speech)', acc:'American', g:'female', path:'en/en_US/ljspeech/medium', size:63201294},
+    {id:'en_US-kristin-medium', name:'Kristin', acc:'American', g:'female', path:'en/en_US/kristin/medium', size:63201294},
+    {id:'en_US-john-medium', name:'John', acc:'American', g:'male', path:'en/en_US/john/medium', size:63201294},
+    {id:'en_US-norman-medium', name:'Norman', acc:'American', g:'male', path:'en/en_US/norman/medium', size:63201294},
+    {id:'en_US-bryce-medium', name:'Bryce', acc:'American', g:'male', path:'en/en_US/bryce/medium', size:63201294}],
+  hub: 'https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/',
+  ok: !!LS.get('naturalVoices', false),   // agreed to the downloads on this device (never synced)
+  worker: null, loaded: '', loading: null, ids: 0, waits: new Map(), ctx: null, src: null, hlRaf: 0, slowWarned: false, pct: -1
+};
+function nvVoice(){ if(!NV.available || !NV.ok || !String(S.ttsVoice || '').startsWith('piper:')) return null; const id = S.ttsVoice.slice(6); return NV.voices.find(v => v.id === id) || null; }
+function nvStatus(msg){
+  const row = $('#nvRow'); row.hidden = !NV.available; if(!NV.available) return;
+  $('#nvRemove').hidden = !NV.ok;
+  const v = nvVoice();
+  $('#nvStatus').textContent = msg != null ? msg
+    : !NV.ok ? 'Natural voices (Piper) sound more lifelike than many built-in voices and run on your device. They need a one-off download; choose one from the Voice list to find out more.'
+    : v && NV.loaded === v.id ? `${v.name} is ready. It runs on this device; nothing you read is sent anywhere.`
+    : v ? `${v.name} loads when you start reading aloud (about 63 MB the first time).` : 'Natural voices can be chosen from the Voice list.';
+}
+function nvPaths(){
+  const base = new URL('.', location.href).href, cdn = 'https://cdn.jsdelivr.net/npm/';
+  return IS_EXT
+    ? {ortJs: base + 'lib/piper/ort.wasm.min.js', ortBase: base + 'lib/piper/', phonJs: base + 'lib/piper/piper_phonemize.js', phonWasm: base + 'lib/piper/piper_phonemize.wasm',
+       phonData: cdn + '@diffusionstudio/piper-wasm@1.0.0/build/piper_phonemize.data'}   // dictionary data only; all code is packaged
+    : {ortJs: cdn + 'onnxruntime-web@1.20.1/dist/ort.wasm.min.js', ortBase: cdn + 'onnxruntime-web@1.20.1/dist/', phonJs: cdn + '@diffusionstudio/piper-wasm@1.0.0/build/piper_phonemize.js',
+       phonWasm: cdn + '@diffusionstudio/piper-wasm@1.0.0/build/piper_phonemize.wasm', phonData: cdn + '@diffusionstudio/piper-wasm@1.0.0/build/piper_phonemize.data'};
+}
+function nvWorker(){
+  if(NV.worker) return NV.worker;
+  const w = NV.worker = new Worker('piper-worker.js');
+  w.onmessage = e => {
+    const d = e.data;
+    if(d.type === 'progress'){ const p = d.total ? Math.min(100, Math.floor(d.loaded / d.total * 100)) : 0;
+      if(p !== NV.pct){ NV.pct = p; const t = `Downloading the natural voice… ${p}% of ${Math.round(d.total / 1e6)} MB`; nvStatus(t); if(!$('#nvdlg').hidden) $('#nvDlgSt').textContent = t; if(tts.on) toast(t, 4000); } return; }
+    const k = d.type === 'ready' || (d.type === 'error' && d.phase === 'load') ? 'load' : d.id;
+    const f = NV.waits.get(k); if(f){ NV.waits.delete(k); d.type === 'error' ? f.no(new Error(d.msg)) : f.ok(d); }
+  };
+  w.onerror = e => { for(const [k, f] of NV.waits){ f.no(new Error(e.message || 'worker')); } NV.waits.clear(); try{ w.terminate(); }catch(_){} NV.worker = null; NV.loaded = ''; };
+  return w;
+}
+function nvCall(key, msg){ return new Promise((ok, no) => { NV.waits.set(key, {ok, no}); nvWorker().postMessage(msg); }); }
+function nvLoad(){
+  const v = nvVoice(); if(!v) return Promise.reject(new Error('no voice'));
+  if(NV.loaded === v.id) return Promise.resolve();
+  if(NV.loading && NV.loading.id === v.id) return NV.loading.p;
+  nvStatus(`Loading ${v.name}…`); NV.pct = -1;
+  const p = nvCall('load', {type:'load', paths:nvPaths(), voice:{id:v.id, size:v.size, onnx:NV.hub + v.path + '/' + v.id + '.onnx', json:NV.hub + v.path + '/' + v.id + '.onnx.json'}})
+    .then(() => { NV.loaded = v.id; NV.loading = null; nvStatus(); })
+    .catch(err => { NV.loading = null;
+      nvStatus(!navigator.onLine || /download|fetch|network|load/i.test(err.message) ? 'The natural voice couldn’t be downloaded. Check your connection and try again.' : 'The natural voice couldn’t start in this browser. A device voice will still work.');
+      throw err; });
+  NV.loading = {id:v.id, p}; return p;
+}
+function nvGen(text){ const id = ++NV.ids; return nvCall(id, {type:'gen', id, text, speed:+S.ttsRate || 1}); }
+function nvHalt(){ cancelAnimationFrame(NV.hlRaf); if(NV.src){ try{ NV.src.onended = null; NV.src.stop(); }catch(e){} NV.src = null; } tts.nvNext = null; }
+// the piece after the current one (possibly the next paragraph's first sentence), so it can be made in advance
+function nvPeek(){
+  if(tts.ci < tts.chunks.length){ const [a, b] = tts.chunks[tts.ci]; return tts.text.slice(a, b); }
+  const nb = ttsNextBlock(); if(!nb) return '';
+  const saved = {block:tts.block, map:tts.map, text:tts.text}; ttsLoad(nb); const ch = ttsChunks(0), t = ch.length ? tts.text.slice(ch[0][0], ch[0][1]) : '';
+  tts.block = saved.block; tts.map = saved.map; tts.text = saved.text; return t;
+}
+async function nvSpeak(){
+  const gen = tts.gen;
+  try{
+    const v = nvVoice();
+    if(NV.loaded !== v.id){ toast(`Loading ${v.name}…`, 4000); await nvLoad(); if(gen !== tts.gen) return; }
+    const [s, e] = tts.chunks[tts.ci++], text = tts.text.slice(s, e);
+    if(!text.trim()) return ttsSpeakNext();
+    const job = tts.nvNext && tts.nvNext.text === text ? tts.nvNext.p : nvGen(text);
+    const ahead = nvPeek(); tts.nvNext = ahead ? {text:ahead, p:nvGen(ahead)} : null;
+    tts.nvNext?.p.catch(() => {});
+    ttsWord(s + Math.max(0, text.search(/\S/)));
+    const d = await job; if(gen !== tts.gen || !tts.on) return;
+    const secs = d.pcm.length / d.rate;
+    if(!NV.slowWarned && d.ms > secs * 1000 && secs > 1.5){ NV.slowWarned = true;
+      toast('This device makes the natural voice a little slower than it speaks, so there may be short pauses between sentences.', 7000); }
+    const ctx = NV.ctx ||= new AudioContext(); if(ctx.state === 'suspended') await ctx.resume().catch(() => {});
+    const buf = ctx.createBuffer(1, d.pcm.length, d.rate); buf.copyToChannel(d.pcm, 0);
+    const src = NV.src = ctx.createBufferSource(); src.buffer = buf; src.connect(ctx.destination);
+    // estimated word timings: share the sentence's time by word length, with a little more after punctuation
+    const words = [...text.matchAll(/[\p{L}\p{N}'’-]+[^\s\p{L}\p{N}]*/gu)], wts = words.map(w => w[0].length + (/[,;:]$/.test(w[0]) ? 3 : /[.!?…]$/.test(w[0]) ? 5 : 1));
+    const total = wts.reduce((a, b) => a + b, 0) || 1, lead = Math.min(0.12, secs * 0.04), span = Math.max(0.1, secs - lead * 2);
+    const starts = []; let acc = 0; for(const w of wts){ starts.push(lead + acc / total * span); acc += w; }
+    const t0 = ctx.currentTime; let shown = -1;
+    const follow = () => { if(gen !== tts.gen || NV.src !== src) return; const t = ctx.currentTime - t0; let i = shown;
+      while(i + 1 < starts.length && starts[i + 1] <= t) i++;
+      if(i !== shown && i >= 0){ shown = i; const w = words[i]; ttsWord(s + w.index, w[0].replace(/[^\p{L}\p{N}'’-]+$/u, '').length); }
+      NV.hlRaf = requestAnimationFrame(follow); };
+    src.onended = () => { if(NV.src === src){ NV.src = null; cancelAnimationFrame(NV.hlRaf); if(gen === tts.gen) ttsSpeakNext(); } };
+    src.start(); NV.hlRaf = requestAnimationFrame(follow);
+  }catch(err){
+    if(gen !== tts.gen) return;
+    ttsStop(); toast(NV.loaded ? 'The natural voice stopped unexpectedly. Try again, or choose a device voice under Display.' : 'The natural voice couldn’t load. Check your connection, or choose a device voice under Display.', 8000);
+  }
+}
+// asking before anything downloads
+let nvPending = '';
+function nvAsk(v){
+  nvPending = v || ''; $('#nvDlgSt').textContent = ''; $('#nvGo').disabled = false; $('#nvGo').hidden = NV.ok; $('#nvCancel').textContent = NV.ok ? 'Close' : 'Not now';
+  document.querySelectorAll('#nvdlg .nvFirst').forEach(e => e.textContent = IS_EXT ? '18' : '30'); document.querySelectorAll('#nvdlg .nvEng').forEach(e => e.hidden = IS_EXT);
+  const pick = NV.voices.find(x => 'piper:' + x.id === nvPending); $('#nvGo').textContent = pick ? `Download ${pick.name}` : 'Download';
+  $('#nvdlg').hidden = false; (NV.ok ? $('#nvClose') : $('#nvGo')).focus();
+}
+function nvClose(){ $('#nvdlg').hidden = true; nvPending = ''; }
+$('#nvClose').onclick = nvClose; $('#nvCancel').onclick = nvClose;
+$('#nvAbout').onclick = () => nvAsk('');
+$('#nvGo').onclick = async () => {
+  NV.ok = true; LS.set('naturalVoices', true);
+  if(nvPending) S.ttsVoice = nvPending; else if(!nvVoice()) S.ttsVoice = 'piper:' + NV.voices[0].id;
+  applySettings(); ttsVoices(); $('#nvGo').disabled = true; $('#nvDlgSt').textContent = 'Starting the download…';
+  try{ await nvLoad(); $('#nvDlgSt').textContent = 'Done. The natural voice is ready.'; setTimeout(nvClose, 900); }
+  catch(e){ $('#nvDlgSt').textContent = $('#nvStatus').textContent; $('#nvGo').disabled = false; $('#nvGo').hidden = false; }
+};
+$('#nvRemove').onclick = async () => {
+  if(tts.on) ttsStop();
+  try{ NV.worker && NV.worker.terminate(); }catch(e){} NV.worker = null; NV.loaded = ''; NV.loading = null;
+  try{ await caches.delete('velvet-voices'); }catch(e){}
+  NV.ok = false; LS.set('naturalVoices', false); if(String(S.ttsVoice).startsWith('piper:')) S.ttsVoice = '';
+  applySettings(); ttsVoices(); nvStatus(); toast('The downloaded natural voices were removed.');
+};
+ttsVoices(); nvStatus();
+if(!synth && !NV.available) $('#ttsBtn').hidden = true;
 
 const toggle = () => { if(tts.on){ ttsStop(); return; } playing ? pause() : play(); };
 $('#play').onclick = toggle;
@@ -3616,6 +3781,7 @@ document.querySelectorAll('[data-close]').forEach(b=>b.onclick=closePanels);
 $('#rBack').onclick = closeReader;
 
 addEventListener('keydown', e=>{
+  if(!$('#nvdlg').hidden){ if(e.key === 'Escape') nvClose(); return; }
   if(!$('#dlg').hidden){ if(e.key === 'Escape') closeDetails(); return; }
   if(!$('#bk').hidden){ if(e.key === 'Escape') closeBackup(); return; }
   if(!$('#ax').hidden && e.key === 'Escape'){ closeAx(); return; }
