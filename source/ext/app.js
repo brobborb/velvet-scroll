@@ -511,8 +511,12 @@ const PDF = (() => {
   }
   async function load(buf){
     const L = await lib();
-    const opts = {data: new Uint8Array(buf.slice(0)), isEvalSupported:false, disableFontFace:!inExt, useSystemFonts:true};
-    if(inExt){ opts.cMapUrl = 'lib/cmaps/'; opts.cMapPacked = true; opts.standardFontDataUrl = 'lib/standard_fonts/'; }
+    // the website draws text as shapes (no font loading), so it needs pdf.js's own copies of the standard fonts rather than system fonts
+    const opts = {data: new Uint8Array(buf.slice(0)), isEvalSupported:false, disableFontFace:!inExt, useSystemFonts:inExt};
+    // the character maps (for Chinese, Japanese and Korean text) and the 14 standard PDF fonts (Times, Helvetica, Courier…),
+    // which many PDFs use without including them: packaged with the extension, from jsDelivr on the website
+    const base = inExt ? 'lib/' : 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/';
+    opts.cMapUrl = base + 'cmaps/'; opts.cMapPacked = true; opts.standardFontDataUrl = base + 'standard_fonts/';
     let pdf;
     try{ pdf = await L.getDocument(opts).promise; }
     catch(e){
@@ -554,6 +558,27 @@ const PDF = (() => {
   // the page numbers printed in the book (i, ii … 1, 2 …), when the PDF records them and they differ from plain counting
   async function labels(pdf){
     try{ const l = await pdf.getPageLabels(); return l && l.length === pdf.numPages && l.some((x, i) => x && x !== String(i + 1)) ? l.map(x => (x || '').trim()) : null; }catch(e){ return null; }
+  }
+
+  // boxes (in viewport pixels) where a page paints pictures, from its drawing operations
+  async function imageBoxes(pg, vp){
+    const O = globalThis.pdfjsLib.OPS, ops = await pg.getOperatorList(), out = [];
+    const mul = (m, n) => [m[0]*n[0]+m[2]*n[1], m[1]*n[0]+m[3]*n[1], m[0]*n[2]+m[2]*n[3], m[1]*n[2]+m[3]*n[3], m[0]*n[4]+m[2]*n[5]+m[4], m[1]*n[4]+m[3]*n[5]+m[5]];
+    let ctm = vp.transform.slice(); const stack = [];
+    for(let i = 0; i < ops.fnArray.length; i++){
+      const f = ops.fnArray[i], a = ops.argsArray[i];
+      if(f === O.save) stack.push(ctm);
+      else if(f === O.restore) ctm = stack.pop() || ctm;
+      else if(f === O.transform) ctm = mul(ctm, a);
+      else if(f === O.paintFormXObjectBegin){ stack.push(ctm); if(a && Array.isArray(a[0]) && a[0].length === 6) ctm = mul(ctm, a[0]); }
+      else if(f === O.paintFormXObjectEnd) ctm = stack.pop() || ctm;
+      else if(f === O.paintImageXObject || f === O.paintInlineImageXObject || f === O.paintJpegXObject){
+        const pts = [[0,0],[1,0],[0,1],[1,1]].map(([x, y]) => [ctm[0]*x + ctm[2]*y + ctm[4], ctm[1]*x + ctm[3]*y + ctm[5]]);
+        const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+        out.push([Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)]);
+      }
+    }
+    return out;
   }
 
   async function extractLines(pdf, progress){
@@ -638,7 +663,7 @@ const PDF = (() => {
     out += anchorsTo(pages.length);
     return {html:out, chars};
   }
-  return {isPdf, load, info, outline, labels, extractLines, build};
+  return {isPdf, load, info, outline, labels, imageBoxes, extractLines, build};
 })();
 
 /* ---------- Book details from public databases (Open Library, Wikidata/Wikimedia Commons, Project Gutenberg) ---------- */
@@ -2013,6 +2038,8 @@ function applySettings(save=true){
   R.classList.toggle('hand', !!S.hand);
   $('#toolHand').setAttribute('aria-pressed', String(!!S.hand)); $('#toolArrow').setAttribute('aria-pressed', String(!S.hand));
   pgTops = null; pgLine = 0; if(pdfDoc && pdfMode==='pages') refreshPdfPages();
+  if(R.classList.contains('has-pages')) railUpdate();
+  modeShow();
   document.querySelectorAll('#fonts button').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.v===S.font)));
   document.querySelectorAll('#gmodes button').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.v===S.gmode)));
   document.querySelectorAll('#swatches button').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.bg===S.bg && b.dataset.fg===S.fg)));
@@ -2251,7 +2278,9 @@ async function renderPdfPages(){
 }
 function stopPdfPages(){ pdfNear?.disconnect(); pdfFar?.disconnect(); pdfNear = pdfFar = null; pdfQueue = []; }
 function nearView(d){ const r = d.getBoundingClientRect(), s = stage.getBoundingClientRect(); return r.bottom > s.top - s.height*1.5 && r.top < s.bottom + s.height*1.5; }
-function queuePage(d){ if(d.dataset.r === String(d.clientWidth) || pdfQueue.includes(d)) return; pdfQueue.push(d); pumpPages(); }
+const smartDark = () => page.classList.contains('tint-dark') && 'filter' in CanvasRenderingContext2D.prototype;
+const renderKey = d => d.clientWidth + (smartDark() ? 'd' : '');
+function queuePage(d){ if(d.dataset.r === renderKey(d) || pdfQueue.includes(d)) return; pdfQueue.push(d); pumpPages(); }
 function refreshPdfPages(){ page.querySelectorAll('.pdfpg').forEach(d => { if(nearView(d)) queuePage(d); }); }
 async function pumpPages(){
   if(pdfBusy) return; pdfBusy = true;
@@ -2260,7 +2289,7 @@ async function pumpPages(){
     const mid = stage.getBoundingClientRect().top + stage.clientHeight/2;
     pdfQueue.sort((a,b) => Math.abs(a.getBoundingClientRect().top - mid) - Math.abs(b.getBoundingClientRect().top - mid));
     const d = pdfQueue.shift();
-    if(!d.isConnected || !nearView(d) || d.dataset.r === String(d.clientWidth)) continue;
+    if(!d.isConnected || !nearView(d) || d.dataset.r === renderKey(d)) continue;
     try{
       const w = d.clientWidth; if(!w) continue;
       const pg = await doc.getPage(+d.dataset.n), v1 = pg.getViewport({scale:1}), dpr = Math.min(2, devicePixelRatio || 1);
@@ -2268,7 +2297,17 @@ async function pumpPages(){
       const cv = document.createElement('canvas'); cv.width = Math.floor(vp.width); cv.height = Math.floor(vp.height);
       const ctx = cv.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0,0,cv.width,cv.height);
       await pg.render({canvasContext:ctx, viewport:vp}).promise;
-      if(doc === pdfDoc && d.isConnected){ d.replaceChildren(cv); d.dataset.r = String(w); }
+      const dark = smartDark(); let out = cv;
+      if(dark){
+        // turn the page dark (white paper becomes dark, black text becomes light), then put the pictures back as they were;
+        // a picture filling most of the page is a scan of text, so it is darkened too
+        const boxes = (await PDF.imageBoxes(pg, vp).catch(() => [])).filter(([x0,y0,x1,y1]) => (x1-x0)*(y1-y0) < cv.width*cv.height*0.6 && x1-x0 > 8 && y1-y0 > 8);
+        out = document.createElement('canvas'); out.width = cv.width; out.height = cv.height;
+        const o = out.getContext('2d'); o.filter = 'invert(1) hue-rotate(180deg)'; o.drawImage(cv, 0, 0); o.filter = 'none';
+        for(const [x0,y0,x1,y1] of boxes){ const x = Math.max(0, Math.floor(x0)), y = Math.max(0, Math.floor(y0)), ww = Math.min(cv.width, Math.ceil(x1)) - x, hh = Math.min(cv.height, Math.ceil(y1)) - y; if(ww > 0 && hh > 0) o.drawImage(cv, x, y, ww, hh, x, y, ww, hh); }
+        out.className = 'smart';
+      }
+      if(doc === pdfDoc && d.isConnected){ d.replaceChildren(out); d.dataset.r = w + (dark ? 'd' : ''); }
     }catch(e){}
   }
   pdfBusy = false;
@@ -2348,7 +2387,7 @@ function closeReaderNow(){
   if(!R.hidden && page.childNodes.length) saveCur(); ready = false;
   stopComic(); stopPdfPages(); try{ pdfDoc?.destroy(); }catch(e){} pdfDoc = null; pdfLabels = null; pdfSizes = null; pgTops = null; pgLine = 0;
   R.classList.remove('is-pdf','pdf-pages'); page.classList.remove('pdfmode','tint-light','tint-dark');
-  $('#rMode').hidden = true; $('#pdfGroup').hidden = true; $('#goPage').hidden = true; R.classList.remove('has-pages');
+  $('#rMode').hidden = true; $('#pdfGroup').hidden = true; $('#goPage').hidden = true; R.classList.remove('has-pages','rail-on'); $('#pdfRail').hidden = true; $('#railShow').hidden = true;
   R.hidden = true; document.body.classList.remove('locked');
   page.replaceChildren(); urls.forEach(URL.revokeObjectURL); urls = []; cur = null;
   render();
@@ -3113,6 +3152,7 @@ function updateStatus(){
     const lab = curIdx >= 0 && !/^Page \d+$/.test(tocItems[curIdx].label) ? tocItems[curIdx].label + ' · ' : '';
     const nm = pageName(n);
     $('#rChap').textContent = `${lab}Page ${nm}` + (nm !== String(n) ? ` (${n} of ${total})` : ` of ${total}`);
+    railUpdate();
     document.querySelectorAll('#toc button').forEach(b=>b.classList.toggle('cur', +b.dataset.i===curIdx));
     const now = Date.now(); if(ready && now - saveT > 1000){ saveT = now; saveCur(); }
     return;
@@ -3145,7 +3185,7 @@ function togglePanel(id, other){
 }
 /* Go to page (PDFs and comics): accepts the number printed in the book ("87", "xii") or the plain page count */
 function goPageSetup(total){
-  $('#goPage').hidden = false; R.classList.add('has-pages');
+  $('#goPage').hidden = false; R.classList.add('has-pages'); railPinned = S.mode !== 'relax'; railApply();
   $('#goPageIn').value = ''; $('#goPageIn').placeholder = pdfLabels ? `e.g. ${pdfLabels[Math.min(total - 1, Math.floor(total / 3))]}` : `1 to ${total}`;
   $('#goPageHint').textContent = pdfLabels ? `${total} pages. Type the number printed on the page (like ${pdfLabels[0]} or ${pageName(total)}), or put # in front to count from the start of the file (#${Math.min(12, total)}).` : `${total} pages.`;
 }
@@ -3160,10 +3200,78 @@ function findPage(q, total){
 function goToPage(n){
   // reflowed text may have no marker for a page without text: use the nearest page before it
   let k = n; while(k > 1 && !page.querySelector('#sec0-pg' + k)) k--;
-  ttsHold(); goTo('sec0-pg' + k); pgTops = null;
+  ttsHold();
+  if(imagePages()){ const t = page.querySelector('#sec0-pg' + k); if(t){ pause(); sweepEnd(); scroller.scrollTop = t.getBoundingClientRect().top - page.getBoundingClientRect().top - 10; } }
+  else goTo('sec0-pg' + k);
+  pgTops = null;
   if(tts.on) requestAnimationFrame(ttsRestartHere);
   requestAnimationFrame(() => { updateStatus(); saveCur(); });
 }
+/* the page tool rail (PDFs and comics, wider screens) */
+const pageTotal = () => pdfDoc ? pdfDoc.numPages : comic ? comic.pages.length : 0;
+let railPinned = true;
+function railApply(){
+  const on = R.classList.contains('has-pages'), pinned = railPinned;
+  $('#pdfRail').hidden = !(on && pinned); $('#railShow').hidden = !(on && !pinned);
+  R.classList.toggle('rail-on', on && pinned);
+  railUpdate();
+}
+function railUpdate(){
+  if($('#pdfRail').hidden) return;
+  const n = currentPage(), total = pageTotal();
+  if(document.activeElement !== $('#railPage')) $('#railPage').value = pageName(n);
+  $('#railTotal').textContent = (pdfLabels && pageName(n) !== String(n)) ? `${n} / ${total}` : `/ ${total}`;
+  $('#railTotal').title = `Page ${n} of ${total} in the file`;
+  $('#railFirst').disabled = $('#railPrev').disabled = n <= 1;
+  $('#railNext').disabled = $('#railLast').disabled = n >= total;
+  $('#railZoom').value = Math.round(S.pgw) + '%';
+  $('#railIn').disabled = S.pgw >= 100; $('#railOut').disabled = S.pgw <= 30;
+  $('#railDark').setAttribute('aria-pressed', String(page.classList.contains('tint-dark')));
+}
+// change the page size but stay on the same spot of the same page
+function keepPagePlace(fn){
+  const n = currentPage(), d = page.querySelector('#sec0-pg' + n), st = stage.getBoundingClientRect().top;
+  const f = d ? (st + readY() - d.getBoundingClientRect().top) / Math.max(1, d.offsetHeight) : 0;
+  fn();
+  requestAnimationFrame(() => { const e = page.querySelector('#sec0-pg' + n); if(e) scroller.scrollTop += e.getBoundingClientRect().top + f * e.offsetHeight - (stage.getBoundingClientRect().top + readY()); pgTops = null; updateStatus(); });
+}
+const setPgw = v => { S.pgw = Math.max(30, Math.min(100, Math.round(v))); applySettings(); };
+$('#railPin').onclick = () => { railPinned = false; railApply(); };
+$('#railShow').onclick = () => { railPinned = true; railApply(); };
+/* reading modes: Study shows the page tools for PDFs and comics; Relaxed keeps them tucked away behind a small tab */
+function modeShow(){ $('#modeStudy').setAttribute('aria-pressed', String(S.mode !== 'relax')); $('#modeRelax').setAttribute('aria-pressed', String(S.mode === 'relax')); }
+$('#modeStudy').onclick = () => { S.mode = 'study'; applySettings(); modeShow(); toast('Study mode: PDFs and comics open with the page tools on the right.'); };
+$('#modeRelax').onclick = () => { S.mode = 'relax'; applySettings(); modeShow(); toast('Relaxed mode: the page tools stay tucked away. Use the small tab on the right if you need them.'); };
+modeShow();
+$('#railFirst').onclick = () => goToPage(1);
+$('#railPrev').onclick = () => goToPage(Math.max(1, currentPage() - 1));
+$('#railNext').onclick = () => goToPage(Math.min(pageTotal(), currentPage() + 1));
+$('#railLast').onclick = () => goToPage(pageTotal());
+$('#railToc').onclick = () => $('#rToc').click();
+$('#railPage').addEventListener('keydown', e => {
+  if(e.key === 'Escape'){ e.target.value = pageName(currentPage()); e.target.blur(); return; }
+  if(e.key !== 'Enter') return;
+  e.preventDefault(); const n = findPage(e.target.value, pageTotal());
+  if(n){ e.target.blur(); goToPage(n); } else { toast(`There’s no page “${e.target.value.trim()}”. This ${comic ? 'comic' : 'PDF'} has ${pageTotal()} pages.`); e.target.select(); }
+});
+$('#railPage').addEventListener('focus', e => e.target.select());
+$('#railPage').addEventListener('blur', e => { e.target.value = pageName(currentPage()); });
+$('#railIn').onclick = () => keepPagePlace(() => setPgw(S.pgw + 10));
+$('#railOut').onclick = () => keepPagePlace(() => setPgw(S.pgw - 10));
+$('#railFitW').onclick = () => keepPagePlace(() => setPgw(100));
+$('#railFitP').onclick = () => {
+  const n = currentPage(), d = page.querySelector('#sec0-pg' + n); if(!d) return;
+  const cs = getComputedStyle(page), avail = page.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  setPgw((stage.clientHeight - 24) * (d.offsetWidth / d.offsetHeight) / avail * 100);
+  requestAnimationFrame(() => goToPage(n));
+};
+// dark pages: on a light page colour, switches the reader to Night for this and puts the colours back afterwards
+$('#railDark').onclick = () => {
+  const on = page.classList.contains('tint-dark');
+  if(on){ S.tint = false; if(S.pdfLight){ S.bg = S.pdfLight.bg; S.fg = S.pdfLight.fg; delete S.pdfLight; } }
+  else { if(!isDark(S.bg)){ S.pdfLight = {bg:S.bg, fg:S.fg}; S.bg = '#141414'; S.fg = '#cdc9c0'; } S.tint = true; }
+  applySettings();
+};
 $('#goPage').addEventListener('submit', e => {
   e.preventDefault();
   const total = pdfDoc ? pdfDoc.numPages : comic ? comic.pages.length : 0, q = $('#goPageIn').value, n = findPage(q, total);

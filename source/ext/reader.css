@@ -29,6 +29,11 @@ button,input,select{font:inherit;color:inherit}
 .btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 16px;cursor:pointer;font-weight:700;white-space:nowrap}
 .btn:hover{border-color:var(--accent)}
 .btn.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.modeseg{display:inline-flex;padding:3px;gap:2px;border-radius:999px;border:1px solid var(--line);background:var(--surface)}
+.modeseg button{display:inline-flex;align-items:center;gap:6px;border:0;border-radius:999px;padding:6px 12px;background:transparent;color:var(--fg);font:inherit;font-weight:600;font-size:14px;cursor:pointer}
+.modeseg button svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.modeseg button:hover{background:var(--accent-soft)}
+.modeseg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg)}
 .btn.primary:hover{filter:brightness(1.08)}
 .btn svg{width:18px;height:18px}
 
@@ -216,7 +221,29 @@ body.dragging .drop{display:grid}
 .page.tint-light .pdfpg,.page.tint-dark .pdfpg{background:var(--rbg);box-shadow:0 0 0 1px color-mix(in srgb,var(--rfg) 15%,transparent)}
 .page.tint-light .pdfpg canvas{mix-blend-mode:multiply}
 .page.tint-dark .pdfpg canvas{filter:invert(1) hue-rotate(180deg);mix-blend-mode:screen}
+.page.tint-dark .pdfpg canvas.smart{filter:none}
 .tool.solo{border:1px solid color-mix(in srgb,var(--rfg) 22%,transparent)}
+/* page tools for PDFs and comics on wider screens, pinned to the right */
+.rail{position:absolute;z-index:4;top:12px;right:12px;max-height:calc(100% - 24px);overflow-y:auto;scrollbar-width:none;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px;border-radius:14px;
+  background:color-mix(in srgb,var(--rbg) 88%,var(--rfg));border:1px solid color-mix(in srgb,var(--rfg) 16%,transparent);box-shadow:0 6px 22px rgb(0 0 0 / .18)}
+.rail[hidden],.rail-show[hidden]{display:none!important}
+.rtool{width:38px;height:38px;flex:none;border:0;border-radius:10px;background:transparent;color:var(--rfg);display:grid;place-items:center;cursor:pointer}
+.rtool svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.rtool:hover{background:color-mix(in srgb,var(--rfg) 10%,transparent)}
+.rtool:disabled{opacity:.35;cursor:default;background:transparent}
+.rtool[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg)}
+.rail-sep{width:24px;height:1px;flex:none;background:color-mix(in srgb,var(--rfg) 18%,transparent);margin:3px 0}
+.rail-page{width:44px;flex:none;text-align:center;font:600 14px/1 var(--f-ui);padding:7px 2px;border-radius:8px;border:1px solid color-mix(in srgb,var(--rfg) 22%,transparent);background:color-mix(in srgb,var(--rbg) 70%,transparent);color:var(--rfg)}
+.rail-total,.rail-zoom{font:12px/1.2 var(--f-ui);opacity:.75;font-variant-numeric:tabular-nums;text-align:center;max-width:46px;overflow:hidden;text-overflow:ellipsis}
+.rail-total{margin-bottom:2px}
+.reader:not(.pdf-pages):not(.is-comic) .rail-pages,.reader.is-comic .rail-pdf{display:none}
+.rail-show{position:absolute;z-index:4;top:12px;right:0;width:28px;height:48px;border:1px solid color-mix(in srgb,var(--rfg) 16%,transparent);border-right:0;border-radius:12px 0 0 12px;
+  background:color-mix(in srgb,var(--rbg) 88%,var(--rfg));color:var(--rfg);display:grid;place-items:center;cursor:pointer;padding:0}
+.rail-show svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+@media (min-width:760px){ .reader.rail-on .page.pdfmode{padding-left:84px;padding-right:84px} }
+@media (max-width:759px){ .rail,.rail-show{display:none!important} }
+html.ax-large .rtool{width:46px;height:46px}
+html.ax-hc .rail,html.ax-hc .rail-show{border:2px solid var(--rfg)}
 .lens{position:absolute;z-index:3;left:0;top:0;pointer-events:none;--rim:16px}
 @media (pointer:coarse){ .lens{--rim:26px} }
 .lens-view{position:absolute;inset:var(--rim);overflow:hidden;background:var(--rbg);border-radius:var(--lr)}
