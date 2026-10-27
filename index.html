@@ -1329,10 +1329,17 @@ const PDF = (() => {
     if(!globalThis.pdfjsWorker && !L.GlobalWorkerOptions.workerSrc) L.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
     return L;
   }
+  // if the standard font files can't be fetched (offline, or jsDelivr blocked), pdf.js can't read text that uses them,
+  // so the website then goes back to system fonts: text still reflows and searches, though original pages may show less of it
+  let stdFonts = null;
+  function stdFontsReachable(){
+    return stdFonts ||= fetch('https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/standard_fonts/FoxitSerif.pfb', {method:'HEAD'}).then(r => r.ok, () => false)
+      .then(ok => { if(!ok) stdFonts = null; return ok; });
+  }
   async function load(buf){
     const L = await lib();
     // the website draws text as shapes (no font loading), so it needs pdf.js's own copies of the standard fonts rather than system fonts
-    const opts = {data: new Uint8Array(buf.slice(0)), isEvalSupported:false, disableFontFace:!inExt, useSystemFonts:inExt};
+    const opts = {data: new Uint8Array(buf.slice(0)), isEvalSupported:false, disableFontFace:!inExt, useSystemFonts:inExt || !(await stdFontsReachable())};
     // the character maps (for Chinese, Japanese and Korean text) and the 14 standard PDF fonts (Times, Helvetica, Courier…),
     // which many PDFs use without including them: packaged with the extension, from jsDelivr on the website
     const base = inExt ? 'lib/' : 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/';
