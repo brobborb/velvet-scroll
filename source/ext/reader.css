@@ -191,6 +191,11 @@ body.dragging .drop{display:grid}
 .chrome{background:color-mix(in srgb,var(--rbg) 90%,var(--rfg));border-color:color-mix(in srgb,var(--rfg) 14%,transparent);transition:opacity .4s;position:relative;z-index:3}
 .r-top{display:flex;align-items:center;gap:8px;border-bottom:1px solid;padding-top:max(8px,env(safe-area-inset-top,0px));padding-bottom:8px;padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px))}
 .r-title{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.25;text-align:center}
+.r-spacer{display:none}
+/* wider windows: the title centred on the window, not just in the space between the buttons */
+.r-top.tcenter{position:relative}
+.r-top.tcenter .r-title{position:absolute;left:50%;transform:translateX(-50%);width:max-content}
+.r-top.tcenter .r-spacer{display:block;flex:1}
 .r-title strong{font-family:var(--f-read);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .r-title span{font-size:13px;opacity:.7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rbtn{border:1px solid color-mix(in srgb,var(--rfg) 20%,transparent);background:transparent;color:var(--rfg);border-radius:999px;padding:7px 13px;cursor:pointer;font-weight:700;font-size:14px;white-space:nowrap}

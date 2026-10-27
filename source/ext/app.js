@@ -2215,7 +2215,7 @@ async function openBook(b){
   if(!R.hidden) return;
   pushLayer('reader');
   cur = b; document.body.classList.add('locked');
-  R.hidden = false; $('#rTitle').textContent = b.title; $('#rChap').textContent = b.author || '';
+  R.hidden = false; requestAnimationFrame(titleCentre); $('#rTitle').textContent = b.title; $('#rChap').textContent = b.author || '';
   page.replaceChildren(); setLoading('Opening book…'); $('#toc').replaceChildren();
   ready = false; hidePanels(); sweepEnd(); applySettings(false); tocItems = [];
   try{
@@ -2311,6 +2311,7 @@ async function showPdf(mode){
   tocItems = pdfOutline.filter(o => o.page <= pdfDoc.numPages).map(o => ({label:o.label || `Page ${o.page}`, target:'sec0-pg'+o.page, sec:0, depth:o.depth, page:o.page}));
   if(!tocItems.length && mode === 'pages') tocItems = Array.from({length:Math.min(pdfDoc.numPages, 3000)}, (_,i) => ({label:`Page ${pageName(i+1)}`, target:'sec0-pg'+(i+1), sec:0, depth:0, page:i+1}));
   applySettings(false);
+  requestAnimationFrame(titleCentre);
   if(find.q) setTimeout(() => findRun(find.q), 300);   // search again in the new view
   notesTm = null; setTimeout(notesPaint, 350);
 }
@@ -2515,6 +2516,19 @@ $('#findPrev').onclick = () => findGo(find.idx - 1);
 $('#findClose').onclick = findClose;
 $('#findBtn').onclick = () => $('#findBar').hidden ? findOpen() : findClose();
 $('#railFind').onclick = () => findOpen();
+/* centre the title on the window when the buttons either side leave room; otherwise it fills the space between them */
+function titleCentre(){
+  const t = document.querySelector('.r-title'), bar = t.parentElement; if(R.hidden) return;
+  bar.classList.remove('tcenter'); t.style.maxWidth = '';
+  if(innerWidth <= 560) return;
+  const br = bar.getBoundingClientRect(), mid = br.left + br.width / 2; let lEnd = br.left, rStart = br.right;
+  for(const k of bar.children){ if(k === t || !k.offsetWidth || k.classList.contains('r-spacer')) continue;
+    const r = k.getBoundingClientRect(); if(r.right <= mid) lEnd = Math.max(lEnd, r.right); else if(r.left >= mid) rStart = Math.min(rStart, r.left); else return; }
+  const half = Math.min(mid - lEnd, rStart - mid) - 12;
+  if(half < 120) return;
+  bar.classList.add('tcenter'); t.style.maxWidth = half * 2 + 'px';
+}
+new ResizeObserver(() => titleCentre()).observe(document.querySelector('.r-top'));
 
 /* ---------- highlights and notes (saved per book; found again from the quoted text and the words around it) ---------- */
 const NOTE_COLS = {y:'yellow', g:'green', b:'blue', p:'pink'};
