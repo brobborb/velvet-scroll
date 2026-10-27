@@ -92,6 +92,11 @@
     <div id="sweepCover" class="sweep-cover" hidden></div>
     <div id="sweepNext" class="sweep-next" hidden><div class="sweep-clip"><div class="page lens-content sweep-content" aria-hidden="true"></div></div></div>
     <div id="guide" class="guide band"></div>
+  <div id="selBar" class="selbar" hidden role="toolbar" aria-label="Highlight">
+    <button class="hlc" data-c="y" aria-label="Yellow highlight" title="Yellow"></button><button class="hlc" data-c="g" aria-label="Green highlight" title="Green"></button><button class="hlc" data-c="b" aria-label="Blue highlight" title="Blue"></button><button class="hlc" data-c="p" aria-label="Pink highlight" title="Pink"></button>
+    <span class="selsep"></span>
+    <button class="seltxt" id="selNote">Note</button><button class="seltxt" id="selCopy">Copy</button><button class="seltxt" id="selDel" hidden>Delete</button>
+  </div>
   <form id="findBar" class="findbar" hidden role="search" autocomplete="off">
     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.4-4.4"/></svg>
     <input id="findIn" type="search" placeholder="Search this book" aria-label="Search this book" enterkeyhint="search" spellcheck="false">
@@ -185,9 +190,14 @@
       <div class="row"><input id="goPageIn" type="text" inputmode="text" enterkeyhint="go" spellcheck="false" aria-describedby="goPageHint"><button class="btn primary" type="submit">Go</button></div>
       <p class="hint" id="goPageHint" role="status"></p>
     </form>
-    <div id="tocTabs" class="seg toctabs" hidden role="tablist"><button data-t="toc" aria-pressed="true">Contents</button><button data-t="thumbs" aria-pressed="false">Pages</button></div>
+    <div id="tocTabs" class="seg toctabs" role="tablist"><button data-t="toc" aria-pressed="true">Contents</button><button data-t="thumbs" aria-pressed="false" id="tabThumbs" hidden>Pages</button><button data-t="notes" aria-pressed="false">Notes</button></div>
     <ul id="toc" class="toc"></ul>
     <div id="thumbs" class="thumbs" hidden></div>
+    <div id="notesBox" class="notesbox" hidden>
+      <ul id="notesList" class="noteslist"></ul>
+      <p class="hint" id="notesEmpty">No highlights yet. Select some text, then pick a colour to highlight it or Note to add a note.</p>
+      <div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn" id="notesExport">Export notes</button></div>
+    </div>
   </aside>
 
   <aside id="setPanel" class="panel right" hidden aria-label="Display settings">
@@ -326,6 +336,15 @@
   </div>
 </div>
 
+<div id="noteDlg" class="modal" hidden>
+  <div class="sheet notesheet" role="dialog" aria-modal="true" aria-labelledby="noteH">
+    <header class="sh-head"><h2 id="noteH">Note</h2></header>
+    <blockquote id="noteQuote" class="notequote"></blockquote>
+    <label for="noteText" class="lbl">Your note</label>
+    <textarea id="noteText" rows="5" placeholder="Write a note about this passage"></textarea>
+    <footer class="sh-foot"><button class="btn" id="noteDel">Delete highlight</button><button class="btn" id="noteCancel">Cancel</button><button class="btn primary" id="noteSave">Save</button></footer>
+  </div>
+</div>
 <div id="pinfo" class="modal side" hidden>
   <div class="sheet" role="dialog" aria-modal="false" aria-labelledby="pinfoH">
     <header class="sh-head"><h2 id="pinfoH">Document details</h2><button class="btn" id="pinfoClose">Done</button></header>
