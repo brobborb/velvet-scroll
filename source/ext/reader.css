@@ -270,6 +270,27 @@ html.ax-hc .findbar{border:2px solid var(--rfg)}
 .rail-total,.rail-zoom{font:12px/1.2 var(--f-ui);opacity:.75;font-variant-numeric:tabular-nums;text-align:center;max-width:46px;overflow:hidden;text-overflow:ellipsis}
 .rail-total{margin-bottom:2px}
 .reader:not(.pdf-pages):not(.is-comic) .rail-pages,.reader.is-comic .rail-pdf{display:none}
+.railmenu{position:absolute;z-index:6;right:64px;width:230px;display:flex;flex-direction:column;padding:6px;border-radius:12px;background:var(--surface);color:var(--fg);
+  border:1px solid var(--line);box-shadow:0 12px 34px rgb(0 0 0 / .28);font:14px var(--f-ui)}
+.railmenu[hidden]{display:none}
+.railmenu button{display:flex;align-items:center;gap:10px;border:0;background:none;color:inherit;font:inherit;text-align:left;padding:9px 10px;border-radius:8px;cursor:pointer}
+.railmenu button:hover,.railmenu button:focus-visible{background:var(--accent-soft)}
+.railmenu button:disabled{opacity:.45;cursor:default;background:none}
+.railmenu svg{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.railmenu [aria-checked="true"]{font-weight:700}
+.railmenu [aria-checked="true"] svg{color:var(--accent)}
+.pinfo{display:grid;grid-template-columns:auto 1fr;gap:8px 14px;margin:0;font-size:14px}
+.pinfo dt{color:var(--muted);white-space:nowrap}
+.pinfo dd{margin:0;overflow-wrap:anywhere}
+.pdfpg .pgin{position:absolute;left:0;top:0;width:100%;height:100%}
+.pdfpages.trimmed .pdfpg{overflow:hidden}
+#printBox{display:none}
+@media print{
+  body.printing > *:not(#printBox){display:none!important}
+  body.printing #printBox{display:block!important}
+  #printBox img{display:block;width:100%;height:auto;break-after:page;page-break-after:always;margin:0}
+  @page{margin:0}
+}
 .rail-show{position:absolute;z-index:4;top:12px;right:0;width:28px;height:48px;border:1px solid color-mix(in srgb,var(--rfg) 16%,transparent);border-right:0;border-radius:12px 0 0 12px;
   background:color-mix(in srgb,var(--rbg) 88%,var(--rfg));color:var(--rfg);display:grid;place-items:center;cursor:pointer;padding:0}
 .rail-show svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
