@@ -115,8 +115,11 @@
     <button class="rtool rail-pages" id="railIn" title="Zoom in" aria-label="Zoom in"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.4-4.4M8 11h6M11 8v6"/></svg></button>
     <output id="railZoom" class="rail-zoom rail-pages" title="Page width"></output>
     <button class="rtool rail-pages" id="railOut" title="Zoom out" aria-label="Zoom out"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.4-4.4M8 11h6"/></svg></button>
+    <button class="rtool rail-pages" id="railSpread" aria-pressed="false" title="Two pages side by side" aria-label="Two pages side by side"><svg viewBox="0 0 24 24"><rect x="2.5" y="5" width="8.5" height="14" rx="1.5"/><rect x="13" y="5" width="8.5" height="14" rx="1.5"/></svg></button>
+    <button class="rtool rail-pages rail-pdf" id="railRot" title="Rotate pages" aria-label="Rotate pages clockwise"><svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg></button>
     <div class="rail-sep rail-pages rail-pdf"></div>
     <button class="rtool rail-pages rail-pdf" id="railDark" aria-pressed="false" title="Dark pages: dark paper and light text, pictures keep their colours" aria-label="Dark pages"><svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg></button>
+    <button class="rtool rail-pdf" id="railThumbs" title="Page thumbnails" aria-label="Page thumbnails"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="6.5" height="8" rx="1"/><rect x="13.5" y="3" width="6.5" height="8" rx="1"/><rect x="4" y="13" width="6.5" height="8" rx="1"/><rect x="13.5" y="13" width="6.5" height="8" rx="1"/></svg></button>
     <button class="rtool" id="railFind" title="Search (Ctrl+F)" aria-label="Search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.4-4.4"/></svg></button>
     <button class="rtool" id="railToc" title="Contents and Go to page" aria-label="Contents"><svg viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/></svg></button>
   </nav>
@@ -175,7 +178,9 @@
       <div class="row"><input id="goPageIn" type="text" inputmode="text" enterkeyhint="go" spellcheck="false" aria-describedby="goPageHint"><button class="btn primary" type="submit">Go</button></div>
       <p class="hint" id="goPageHint" role="status"></p>
     </form>
+    <div id="tocTabs" class="seg toctabs" hidden role="tablist"><button data-t="toc" aria-pressed="true">Contents</button><button data-t="thumbs" aria-pressed="false">Pages</button></div>
     <ul id="toc" class="toc"></ul>
+    <div id="thumbs" class="thumbs" hidden></div>
   </aside>
 
   <aside id="setPanel" class="panel right" hidden aria-label="Display settings">

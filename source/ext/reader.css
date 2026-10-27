@@ -215,6 +215,10 @@ body.dragging .drop{display:grid}
 .comicpg{background:color-mix(in srgb,var(--rfg) 6%,transparent);box-shadow:none;margin-bottom:10px}
 .comicpg img{display:block;width:100%;height:100%;margin:0;max-width:none}
 .pdfpages.strip .comicpg{margin-bottom:0}
+/* two pages side by side (optionally with the cover on its own, like a printed book) */
+.page.pdfmode .pdfpages.spread{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:10px;align-items:start;width:var(--pgw,90%);max-width:100%;margin:0 auto}
+.pdfpages.spread .pdfpg{width:100%;margin:0 0 16px}
+.pdfpages.spread.solo1 .pdfpg:first-child{grid-column:2}
 .page p.verse{padding-left:1.2em}
 .page .gap{height:1em}
 .page .fb-poem{margin:1em 0 1em 1.5em}
@@ -251,15 +255,17 @@ body.dragging .drop{display:grid}
 @media (max-width:480px){ .findbar .rtool{width:34px;height:34px} .findbar output{font-size:12px} }
 html.ax-hc .findbar{border:2px solid var(--rfg)}
 /* page tools for PDFs and comics on wider screens, pinned to the right */
-.rail{position:absolute;z-index:4;top:12px;right:12px;max-height:calc(100% - 24px);overflow-y:auto;scrollbar-width:none;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px;border-radius:14px;
+.rail{position:absolute;z-index:4;top:12px;right:12px;max-height:calc(100% - 24px);overflow-y:auto;scrollbar-width:none;display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px;border-radius:14px;
   background:color-mix(in srgb,var(--rbg) 88%,var(--rfg));border:1px solid color-mix(in srgb,var(--rfg) 16%,transparent);box-shadow:0 6px 22px rgb(0 0 0 / .18)}
 .rail[hidden],.rail-show[hidden]{display:none!important}
-.rtool{width:38px;height:38px;flex:none;border:0;border-radius:10px;background:transparent;color:var(--rfg);display:grid;place-items:center;cursor:pointer}
+.rtool{width:36px;height:36px;flex:none;border:0;border-radius:10px;background:transparent;color:var(--rfg);display:grid;place-items:center;cursor:pointer}
 .rtool svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .rtool:hover{background:color-mix(in srgb,var(--rfg) 10%,transparent)}
 .rtool:disabled{opacity:.35;cursor:default;background:transparent}
 .rtool[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg)}
 .rail-sep{width:24px;height:1px;flex:none;background:color-mix(in srgb,var(--rfg) 18%,transparent);margin:3px 0}
+@media (max-height:860px){ #railFirst,#railLast,.rail-zoom{display:none!important} .rtool{width:34px;height:34px} }
+@media (max-height:640px){ #railFitP,#railRot{display:none!important} }
 .rail-page{width:44px;flex:none;text-align:center;font:600 14px/1 var(--f-ui);padding:7px 2px;border-radius:8px;border:1px solid color-mix(in srgb,var(--rfg) 22%,transparent);background:color-mix(in srgb,var(--rbg) 70%,transparent);color:var(--rfg)}
 .rail-total,.rail-zoom{font:12px/1.2 var(--f-ui);opacity:.75;font-variant-numeric:tabular-nums;text-align:center;max-width:46px;overflow:hidden;text-overflow:ellipsis}
 .rail-total{margin-bottom:2px}
@@ -385,6 +391,16 @@ html.ax-hc .nudge{border:2px solid var(--fg)}
 .keys{font-size:13px;color:var(--muted);line-height:1.8}
 kbd{font-family:var(--f-ui);font-size:12px;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 5px;color:var(--fg)}
 .toc{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.toctabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:0 0 4px}
+.toctabs button{font-weight:600}
+.thumbs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 12px;padding-bottom:20px}
+.thumbs[hidden]{display:none}
+.thumbs button{border:0;background:none;padding:0;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;color:inherit;font:12px var(--f-ui)}
+.thumbs .tpg{width:100%;background:#fff;box-shadow:0 1px 3px rgb(0 0 0 / .25);border-radius:2px;outline:3px solid transparent;outline-offset:2px;overflow:hidden}
+.thumbs .tpg canvas{display:block;width:100%;height:100%}
+.thumbs button:hover .tpg{outline-color:color-mix(in srgb,var(--accent) 45%,transparent)}
+.thumbs button.cur .tpg{outline-color:var(--accent)}
+.thumbs button.cur span{font-weight:700}
 .gopage{display:flex;flex-direction:column;gap:6px;margin:0 0 14px;padding:0 0 14px;border-bottom:1px solid var(--line)}
 .gopage label{font-size:13px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;opacity:.75}
 .gopage .row{display:flex;gap:8px}
