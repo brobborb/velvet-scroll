@@ -136,6 +136,11 @@
 
   <aside id="tocPanel" class="panel left" hidden aria-label="Contents">
     <header><h2>Contents</h2><button class="btn" data-close>Close</button></header>
+    <form id="goPage" class="gopage" hidden autocomplete="off">
+      <label for="goPageIn">Go to page</label>
+      <div class="row"><input id="goPageIn" type="text" inputmode="text" enterkeyhint="go" spellcheck="false" aria-describedby="goPageHint"><button class="btn primary" type="submit">Go</button></div>
+      <p class="hint" id="goPageHint" role="status"></p>
+    </form>
     <ul id="toc" class="toc"></ul>
   </aside>
 

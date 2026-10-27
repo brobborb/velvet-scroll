@@ -551,6 +551,11 @@ const PDF = (() => {
     return out;
   }
 
+  // the page numbers printed in the book (i, ii … 1, 2 …), when the PDF records them and they differ from plain counting
+  async function labels(pdf){
+    try{ const l = await pdf.getPageLabels(); return l && l.length === pdf.numPages && l.some((x, i) => x && x !== String(i + 1)) ? l.map(x => (x || '').trim()) : null; }catch(e){ return null; }
+  }
+
   async function extractLines(pdf, progress){
     const L = await lib(), pages = [];
     for(let n=1;n<=pdf.numPages;n++){
@@ -633,7 +638,7 @@ const PDF = (() => {
     out += anchorsTo(pages.length);
     return {html:out, chars};
   }
-  return {isPdf, load, info, outline, extractLines, build};
+  return {isPdf, load, info, outline, labels, extractLines, build};
 })();
 
 /* ---------- Book details from public databases (Open Library, Wikidata/Wikimedia Commons, Project Gutenberg) ---------- */
@@ -1850,7 +1855,9 @@ function sweepPad(){ return Math.max(10, Math.round(lineH() * 0.4)); }
 function readY(){ if(!isSweep()) return guideY(); return Math.round(Math.max(sw && Math.abs(scroller.scrollTop - sw.start) <= 1 ? sw.y : 0, sweepPad())); }
 function topY(){ return isSweep() ? sweepPad() : guideY(); }
 
-let pdfDoc = null, pdfMode = 'text', pdfOutline = [], pgTops = null, pgLine = 0;
+let pdfDoc = null, pdfMode = 'text', pdfOutline = [], pdfLabels = null, pgTops = null, pgLine = 0;
+// a page's name as printed in the book ("xii", "87"), or its plain number when the PDF doesn't say
+const pageName = n => (pdfLabels && pdfLabels[n - 1]) || String(n);
 const pdfModes = LS.get('pdfmode', {});
 const pdfTextCache = new Map();
 // in page view, one "line" is estimated from the page width (about 14pt leading on a letter-size page)
@@ -2141,7 +2148,7 @@ async function openBook(b){
       const buf = await dbGetFile(b.id); if(!buf) throw new Error('missing');
       if(PDF.isPdf(new Uint8Array(buf))){
         pdfDoc = await PDF.load(buf); R.classList.add('is-pdf');
-        pdfOutline = await PDF.outline(pdfDoc);
+        pdfOutline = await PDF.outline(pdfDoc); pdfLabels = await PDF.labels(pdfDoc);
         await showPdf(pdfModes[b.id] || 'text');
       } else if(MOBI.isMobi(new Uint8Array(buf))){
         const res = await renderMobi(MOBI.open(buf), page); urls = res.urls;
@@ -2221,10 +2228,10 @@ async function showPdf(mode){
   mb.textContent = mode === 'text' ? 'Original pages' : 'Reflow text';
   mb.disabled = mode === 'pages' && (!pdfDoc.textAllowed || pdfTextCache.get(cur.id) === null);
   mb.title = mb.disabled ? 'This PDF can only be shown as original pages' : '';
-  $('#pdfGroup').hidden = false;
+  $('#pdfGroup').hidden = false; goPageSetup(pdfDoc.numPages);
   pgTops = null; pgLine = 0;
   tocItems = pdfOutline.filter(o => o.page <= pdfDoc.numPages).map(o => ({label:o.label || `Page ${o.page}`, target:'sec0-pg'+o.page, sec:0, depth:o.depth, page:o.page}));
-  if(!tocItems.length && mode === 'pages') tocItems = Array.from({length:Math.min(pdfDoc.numPages, 3000)}, (_,i) => ({label:`Page ${i+1}`, target:'sec0-pg'+(i+1), sec:0, depth:0, page:i+1}));
+  if(!tocItems.length && mode === 'pages') tocItems = Array.from({length:Math.min(pdfDoc.numPages, 3000)}, (_,i) => ({label:`Page ${pageName(i+1)}`, target:'sec0-pg'+(i+1), sec:0, depth:0, page:i+1}));
   applySettings(false);
 }
 let pdfSizes = null, pdfQueue = [], pdfBusy = false, pdfNear = null, pdfFar = null;
@@ -2312,6 +2319,7 @@ async function showComic(sn){
   comicFar = new IntersectionObserver(es => { for(const e of es) if(!e.isIntersecting && e.target.firstChild){ e.target.replaceChildren(); const u = c.urls.get(e.target.dataset.n); if(u){ URL.revokeObjectURL(u); c.urls.delete(e.target.dataset.n); } } }, {root:scroller, rootMargin:'600% 0px'});
   sec.querySelectorAll('.comicpg').forEach(d => { comicNear.observe(d); comicFar.observe(d); });
   tocItems = pages.map((_, i) => ({label:`Page ${i+1}`, target:'sec0-pg' + (i+1), sec:0, depth:0, page:i+1}));
+  goPageSetup(pages.length);
   $('#pdfGroup').hidden = false; $('#pgLbl').textContent = 'Comic pages'; $('#tintRow').hidden = true; $('#pgHint').hidden = true;
   applySettings(false);
 }
@@ -2338,9 +2346,9 @@ function closeReaderNow(){
   if(R.hidden) return;
   pause(); hidePanels(); sweepEnd();
   if(!R.hidden && page.childNodes.length) saveCur(); ready = false;
-  stopComic(); stopPdfPages(); try{ pdfDoc?.destroy(); }catch(e){} pdfDoc = null; pdfSizes = null; pgTops = null; pgLine = 0;
+  stopComic(); stopPdfPages(); try{ pdfDoc?.destroy(); }catch(e){} pdfDoc = null; pdfLabels = null; pdfSizes = null; pgTops = null; pgLine = 0;
   R.classList.remove('is-pdf','pdf-pages'); page.classList.remove('pdfmode','tint-light','tint-dark');
-  $('#rMode').hidden = true; $('#pdfGroup').hidden = true;
+  $('#rMode').hidden = true; $('#pdfGroup').hidden = true; $('#goPage').hidden = true; R.classList.remove('has-pages');
   R.hidden = true; document.body.classList.remove('locked');
   page.replaceChildren(); urls.forEach(URL.revokeObjectURL); urls = []; cur = null;
   render();
@@ -3103,7 +3111,8 @@ function updateStatus(){
     const n = currentPage(), total = pdfDoc ? pdfDoc.numPages : comic.pages.length;
     for(let i=0;i<tocItems.length;i++) if(tocItems[i].page <= n) curIdx = i;
     const lab = curIdx >= 0 && !/^Page \d+$/.test(tocItems[curIdx].label) ? tocItems[curIdx].label + ' · ' : '';
-    $('#rChap').textContent = `${lab}Page ${n} of ${total}`;
+    const nm = pageName(n);
+    $('#rChap').textContent = `${lab}Page ${nm}` + (nm !== String(n) ? ` (${n} of ${total})` : ` of ${total}`);
     document.querySelectorAll('#toc button').forEach(b=>b.classList.toggle('cur', +b.dataset.i===curIdx));
     const now = Date.now(); if(ready && now - saveT > 1000){ saveT = now; saveCur(); }
     return;
@@ -3134,6 +3143,39 @@ function togglePanel(id, other){
   $(other).hidden = true; $(id).hidden = false;
   if(!layers.includes('panel')) pushLayer('panel');
 }
+/* Go to page (PDFs and comics): accepts the number printed in the book ("87", "xii") or the plain page count */
+function goPageSetup(total){
+  $('#goPage').hidden = false; R.classList.add('has-pages');
+  $('#goPageIn').value = ''; $('#goPageIn').placeholder = pdfLabels ? `e.g. ${pdfLabels[Math.min(total - 1, Math.floor(total / 3))]}` : `1 to ${total}`;
+  $('#goPageHint').textContent = pdfLabels ? `${total} pages. Type the number printed on the page (like ${pdfLabels[0]} or ${pageName(total)}), or put # in front to count from the start of the file (#${Math.min(12, total)}).` : `${total} pages.`;
+}
+function findPage(q, total){
+  q = q.trim().replace(/^(page|p\.?|pg\.?)\s*/i, ''); if(!q) return 0;
+  const counted = /^#\s*(\d+)$/.exec(q);   // "#12": the 12th page of the file, whatever is printed on it
+  if(counted) return +counted[1] >= 1 && +counted[1] <= total ? +counted[1] : 0;
+  if(pdfLabels){ const lq = q.toLowerCase(), i = pdfLabels.findIndex(l => l.toLowerCase() === lq); if(i >= 0) return i + 1; }
+  if(/^\d+$/.test(q) && +q >= 1 && +q <= total) return +q;
+  return 0;
+}
+function goToPage(n){
+  // reflowed text may have no marker for a page without text: use the nearest page before it
+  let k = n; while(k > 1 && !page.querySelector('#sec0-pg' + k)) k--;
+  ttsHold(); goTo('sec0-pg' + k); pgTops = null;
+  if(tts.on) requestAnimationFrame(ttsRestartHere);
+  requestAnimationFrame(() => { updateStatus(); saveCur(); });
+}
+$('#goPage').addEventListener('submit', e => {
+  e.preventDefault();
+  const total = pdfDoc ? pdfDoc.numPages : comic ? comic.pages.length : 0, q = $('#goPageIn').value, n = findPage(q, total);
+  if(!n){ $('#goPageHint').textContent = q.trim() ? `There’s no page “${q.trim()}” in this ${comic ? 'comic' : 'PDF'}. It has ${total} pages${pdfLabels ? `, numbered ${pdfLabels[0]} to ${pageName(total)}` : ''}.` : 'Type a page number.'; $('#goPageIn').select(); return; }
+  goToPage(n); $('#goPageIn').blur(); closePanels();
+});
+// tapping "Page 12 of 300" in the title bar opens Go to page
+document.querySelector('.r-title').addEventListener('click', () => {
+  if(!R.classList.contains('has-pages')) return;
+  if($('#tocPanel').hidden) $('#rToc').click();
+  setTimeout(() => { $('#goPageIn').focus(); $('#goPageIn').select(); }, 50);
+});
 $('#rToc').onclick = ()=>{ togglePanel('#tocPanel', '#setPanel'); const c = $('#toc .cur'); if(!$('#tocPanel').hidden && c) c.scrollIntoView({block:'center'}); };
 $('#rSet').onclick = ()=>{ togglePanel('#setPanel', '#tocPanel'); };
 document.querySelectorAll('[data-close]').forEach(b=>b.onclick=closePanels);
