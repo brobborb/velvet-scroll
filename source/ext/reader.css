@@ -146,6 +146,10 @@ main.wrap{padding-block:20px 48px;display:flex;flex-direction:column;gap:16px}
 .swatch.bgsw{border-radius:10px;background:linear-gradient(135deg,var(--c) 50%,var(--d) 50%)}
 .swatch[aria-pressed="true"]{border-color:var(--fg);box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--accent)}
 .swatch[aria-pressed="true"]::after{content:"";position:absolute;inset:0;margin:auto;width:10px;height:10px;border-radius:50%;background:var(--surface);box-shadow:0 0 0 1px var(--fg)}
+::highlight(vs-find){background-color:rgb(255 200 0 / .45);color:inherit}
+::highlight(vs-find-cur){background-color:rgb(255 120 0 / .8);color:inherit}
+.textLayer span::highlight(vs-find){background-color:rgb(255 200 0 / .35)}
+.textLayer span::highlight(vs-find-cur){background-color:rgb(255 110 0 / .42);outline:2px solid rgb(255 110 0)}
 ::highlight(tts-word){background-color:color-mix(in srgb,var(--accent) 38%,transparent);color:inherit}
 .page .tts-cur{background:color-mix(in srgb,var(--accent) 9%,transparent);border-radius:4px;box-shadow:0 0 0 .25em color-mix(in srgb,var(--accent) 9%,transparent)}
 .nvinfo{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px;font-size:14px;line-height:1.5}
@@ -223,6 +227,29 @@ body.dragging .drop{display:grid}
 .page.tint-dark .pdfpg canvas{filter:invert(1) hue-rotate(180deg);mix-blend-mode:screen}
 .page.tint-dark .pdfpg canvas.smart{filter:none}
 .tool.solo{border:1px solid color-mix(in srgb,var(--rfg) 22%,transparent)}
+/* PDF text and link layers over each page (from pdf.js's viewer styles): invisible text that can be selected, copied and searched */
+.textLayer{position:absolute;inset:0;overflow:hidden;line-height:1;text-align:initial;-webkit-text-size-adjust:none;text-size-adjust:none;forced-color-adjust:none;transform-origin:0 0;z-index:2;caret-color:CanvasText}
+.textLayer :is(span,br){color:transparent;position:absolute;white-space:pre;cursor:text;transform-origin:0% 0%}
+.textLayer span.markedContent{top:0;height:0}
+.textLayer .endOfContent{display:block;position:absolute;inset:100% 0 0;z-index:-1;cursor:default;user-select:none}
+.textLayer.nosel{user-select:none}
+.textLayer ::selection{background:color-mix(in srgb,var(--accent) 35%,transparent)}
+.textLayer br::selection{background:transparent}
+.reader.hand .textLayer :is(span,br){cursor:inherit}
+.linkLayer{position:absolute;inset:0;z-index:3;pointer-events:none}
+.linkLayer a{position:absolute;pointer-events:auto;border-radius:3px;cursor:pointer}
+.linkLayer a:hover,.linkLayer a:focus-visible{background:color-mix(in srgb,var(--accent) 22%,transparent);outline:2px solid color-mix(in srgb,var(--accent) 60%,transparent)}
+/* search */
+.findbar{position:absolute;z-index:5;top:12px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:4px;padding:4px 4px 4px 12px;width:min(520px,calc(100% - 24px));border-radius:14px;
+  background:color-mix(in srgb,var(--rbg) 92%,var(--rfg));border:1px solid color-mix(in srgb,var(--rfg) 18%,transparent);box-shadow:0 8px 26px rgb(0 0 0 / .2)}
+.findbar[hidden]{display:none}
+.findbar > svg{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;opacity:.6}
+.findbar input{flex:1;min-width:0;border:0;background:transparent;color:var(--rfg);font:16px var(--f-ui);padding:8px 4px;outline:none}
+.findbar input::-webkit-search-cancel-button{display:none}
+.findbar output{font:13px var(--f-ui);opacity:.75;white-space:nowrap;font-variant-numeric:tabular-nums;padding:0 4px}
+@media (min-width:760px){ .reader.rail-on .findbar{max-width:calc(100% - 150px)} }
+@media (max-width:480px){ .findbar .rtool{width:34px;height:34px} .findbar output{font-size:12px} }
+html.ax-hc .findbar{border:2px solid var(--rfg)}
 /* page tools for PDFs and comics on wider screens, pinned to the right */
 .rail{position:absolute;z-index:4;top:12px;right:12px;max-height:calc(100% - 24px);overflow-y:auto;scrollbar-width:none;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px;border-radius:14px;
   background:color-mix(in srgb,var(--rbg) 88%,var(--rfg));border:1px solid color-mix(in srgb,var(--rfg) 16%,transparent);box-shadow:0 6px 22px rgb(0 0 0 / .18)}
@@ -288,6 +315,7 @@ html.ax-hc .rail,html.ax-hc .rail-show{border:2px solid var(--rfg)}
 .ctl output,.ctl .num{font-variant-numeric:tabular-nums;white-space:nowrap;opacity:.85;flex:none}
 .stepbtn{width:30px;height:30px;flex:none;border-radius:50%;border:1px solid color-mix(in srgb,var(--rfg) 22%,transparent);background:transparent;color:var(--rfg);cursor:pointer;font-weight:700}
 .rbtn.icon{padding:6px 9px;display:inline-grid;place-items:center}
+.rbtn .sht{display:none}
 .rbtn.icon svg{width:18px;height:18px}
 .ribtog{display:none;width:36px;height:36px;flex:none;margin-left:auto;border-radius:50%;border:1px solid color-mix(in srgb,var(--rfg) 22%,transparent);background:transparent;color:var(--rfg);place-items:center;cursor:pointer}
 .ribtog svg,.ribup svg{width:20px;height:20px}
@@ -371,7 +399,11 @@ kbd{font-family:var(--f-ui);font-size:12px;border:1px solid var(--line);border-b
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:max(20px,calc(env(safe-area-inset-bottom,0px) + 12px));z-index:90;background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:8px;font-size:14px;max-width:min(520px,calc(100vw - 32px));box-shadow:0 8px 24px rgb(0 0 0 / .25)}
 @media (max-width:560px){
   .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 14px}
-  .r-top .rbtn{padding:6px 10px;font-size:13px}
+  .r-top .rbtn{padding:6px 8px;font-size:13px}
+  .r-top .lng{display:none} .r-top .sht{display:inline}
+  .r-top{gap:6px}
+  .r-top .rbtn.icon{padding:6px 8px}
+  .r-top .rlbl{display:none}
   .ctl.seek .num#eta{display:none}
   .r-top{flex-wrap:wrap;row-gap:6px}
   .r-title{order:-1;flex-basis:100%}

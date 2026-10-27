@@ -76,11 +76,12 @@
 
 <div id="reader" class="reader" hidden>
   <div class="r-top chrome">
-    <button id="rBack" class="rbtn">← Library</button>
+    <button id="rBack" class="rbtn" aria-label="Library">← <span class="rlbl">Library</span></button>
     <div class="r-title"><strong id="rTitle"></strong><span id="rChap"></span></div>
     <button id="rMode" class="rbtn" hidden></button>
     <button id="rToc" class="rbtn">Contents</button>
     <button id="rSet" class="rbtn">Display</button>
+    <button id="findBtn" class="rbtn icon" aria-label="Search" title="Search (Ctrl+F)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.4-4.4"/></svg></button>
     <button id="fsBtn" class="rbtn icon" aria-label="Full screen" title="Full screen (F)"><svg id="icFs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><svg id="icFsOff" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg></button>
   </div>
   <div class="r-stage" id="stage">
@@ -91,6 +92,14 @@
     <div id="sweepCover" class="sweep-cover" hidden></div>
     <div id="sweepNext" class="sweep-next" hidden><div class="sweep-clip"><div class="page lens-content sweep-content" aria-hidden="true"></div></div></div>
     <div id="guide" class="guide band"></div>
+  <form id="findBar" class="findbar" hidden role="search" autocomplete="off">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.4-4.4"/></svg>
+    <input id="findIn" type="search" placeholder="Search this book" aria-label="Search this book" enterkeyhint="search" spellcheck="false">
+    <output id="findCount" aria-live="polite"></output>
+    <button type="button" class="rtool" id="findPrev" title="Previous match (Shift+Enter)" aria-label="Previous match"><svg viewBox="0 0 24 24"><path d="M6 15l6-6 6 6"/></svg></button>
+    <button type="button" class="rtool" id="findNext" title="Next match (Enter)" aria-label="Next match"><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+    <button type="button" class="rtool" id="findClose" title="Close search (Esc)" aria-label="Close search"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </form>
   <nav id="pdfRail" class="rail" hidden aria-label="Page tools">
     <button class="rtool" id="railPin" title="Hide the page tools" aria-label="Hide the page tools"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
     <div class="rail-sep"></div>
@@ -108,6 +117,7 @@
     <button class="rtool rail-pages" id="railOut" title="Zoom out" aria-label="Zoom out"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.4-4.4M8 11h6"/></svg></button>
     <div class="rail-sep rail-pages rail-pdf"></div>
     <button class="rtool rail-pages rail-pdf" id="railDark" aria-pressed="false" title="Dark pages: dark paper and light text, pictures keep their colours" aria-label="Dark pages"><svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg></button>
+    <button class="rtool" id="railFind" title="Search (Ctrl+F)" aria-label="Search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.4-4.4"/></svg></button>
     <button class="rtool" id="railToc" title="Contents and Go to page" aria-label="Contents"><svg viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/></svg></button>
   </nav>
   <button id="railShow" class="rail-show" hidden title="Show the page tools" aria-label="Show the page tools"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>

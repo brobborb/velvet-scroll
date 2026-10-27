@@ -2252,7 +2252,7 @@ async function showPdf(mode){
   page.classList.toggle('pdfmode', mode === 'pages');
   R.classList.toggle('pdf-pages', mode === 'pages');
   const mb = $('#rMode'); mb.hidden = false;
-  mb.textContent = mode === 'text' ? 'Original pages' : 'Reflow text';
+  mb.innerHTML = mode === 'text' ? '<span class="lng">Original pages</span><span class="sht">Pages</span>' : '<span class="lng">Reflow text</span><span class="sht">Reflow</span>'; mb.setAttribute('aria-label', mode === 'text' ? 'Original pages' : 'Reflow text');
   mb.disabled = mode === 'pages' && (!pdfDoc.textAllowed || pdfTextCache.get(cur.id) === null);
   mb.title = mb.disabled ? 'This PDF can only be shown as original pages' : '';
   $('#pdfGroup').hidden = false; goPageSetup(pdfDoc.numPages);
@@ -2260,6 +2260,7 @@ async function showPdf(mode){
   tocItems = pdfOutline.filter(o => o.page <= pdfDoc.numPages).map(o => ({label:o.label || `Page ${o.page}`, target:'sec0-pg'+o.page, sec:0, depth:o.depth, page:o.page}));
   if(!tocItems.length && mode === 'pages') tocItems = Array.from({length:Math.min(pdfDoc.numPages, 3000)}, (_,i) => ({label:`Page ${pageName(i+1)}`, target:'sec0-pg'+(i+1), sec:0, depth:0, page:i+1}));
   applySettings(false);
+  if(find.q) setTimeout(() => findRun(find.q), 300);   // search again in the new view
 }
 let pdfSizes = null, pdfQueue = [], pdfBusy = false, pdfNear = null, pdfFar = null;
 async function renderPdfPages(){
@@ -2307,11 +2308,157 @@ async function pumpPages(){
         for(const [x0,y0,x1,y1] of boxes){ const x = Math.max(0, Math.floor(x0)), y = Math.max(0, Math.floor(y0)), ww = Math.min(cv.width, Math.ceil(x1)) - x, hh = Math.min(cv.height, Math.ceil(y1)) - y; if(ww > 0 && hh > 0) o.drawImage(cv, x, y, ww, hh, x, y, ww, hh); }
         out.className = 'smart';
       }
-      if(doc === pdfDoc && d.isConnected){ d.replaceChildren(out); d.dataset.r = w + (dark ? 'd' : ''); }
+      const layers = [out], vpc = pg.getViewport({scale: w / v1.width}), n = +d.dataset.n;
+      try{ layers.push(await pdfTextLayer(doc, pg, n, vpc)); }catch(e){}
+      try{ const ll = await pdfLinkLayer(pg, vpc); if(ll) layers.push(ll); }catch(e){}
+      if(doc === pdfDoc && d.isConnected){ d.replaceChildren(...layers); d.dataset.r = w + (dark ? 'd' : ''); if(find.q) findPaint(); }
     }catch(e){}
   }
   pdfBusy = false;
 }
+/* text and links over each PDF page */
+function pdfPageText(doc, n){   // the page's text (cached for search and the text layer)
+  doc._vsText ||= new Map();
+  if(!doc._vsText.has(n)) doc._vsText.set(n, doc.getPage(n).then(pg => pg.getTextContent()));
+  return doc._vsText.get(n);
+}
+async function pdfTextLayer(doc, pg, n, vp){
+  const tc = await pdfPageText(doc, n), div = document.createElement('div');
+  div.className = 'textLayer' + (doc.textAllowed ? '' : ' nosel');
+  div.style.setProperty('--scale-factor', vp.scale);
+  await globalThis.pdfjsLib.renderTextLayer({textContentSource:tc, container:div, viewport:vp, textDivs:[]}).promise;
+  return div;
+}
+async function pdfLinkLayer(pg, vp){
+  const links = (await pg.getAnnotations({intent:'display'}).catch(() => [])).filter(a => a.subtype === 'Link' && (a.url || a.dest));
+  if(!links.length) return null;
+  const div = document.createElement('div'); div.className = 'linkLayer';
+  for(const a of links){
+    const [x1, y1, x2, y2] = vp.convertToViewportRectangle(a.rect), link = document.createElement('a');
+    link.style.cssText = `left:${Math.min(x1, x2)}px;top:${Math.min(y1, y2)}px;width:${Math.abs(x2 - x1)}px;height:${Math.abs(y2 - y1)}px`;
+    if(a.url){ link.href = a.url; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.title = a.url; }
+    else { link.href = '#'; link.dataset.pdfdest = JSON.stringify(a.dest); link.title = 'Go to this part of the PDF'; }
+    div.append(link);
+  }
+  return div;
+}
+// follow a link inside the PDF: to the page, and to the spot on it when the link says where
+async function goToPdfDest(destJson){
+  const doc = pdfDoc; if(!doc) return;
+  try{
+    let dest = JSON.parse(destJson); if(typeof dest === 'string') dest = await doc.getDestination(dest);
+    if(!Array.isArray(dest)) return;
+    const idx = typeof dest[0] === 'number' ? dest[0] : await doc.getPageIndex(dest[0]), n = idx + 1;
+    goToPage(n);
+    const top = dest[1] && dest[1].name === 'XYZ' ? dest[3] : (dest[1] && /^FitB?H$/.test(dest[1].name) ? dest[2] : null);
+    if(imagePages() && typeof top === 'number' && pdfSizes){
+      const d = page.querySelector('#sec0-pg' + n), ph = pdfSizes.sizes[idx][1];
+      if(d) requestAnimationFrame(() => { scroller.scrollTop += Math.max(0, (ph - top) / ph * d.offsetHeight - 10); updateStatus(); });
+    }
+  }catch(e){}
+}
+
+/* ---------- search: every view (original pages, reflowed text, EPUB and other books) ---------- */
+const find = {q:'', re:null, gen:0, total:0, idx:-1, pages:null, ranges:[], timer:0};
+const findRe = q => { const t = q.trim(); if(!t) return null; return new RegExp(t.split(/\s+/).map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('\\s+'), 'gi'); };
+const pageMode = () => !!(pdfDoc && pdfMode === 'pages');
+// text nodes under an element, joined into one string, with where each node starts
+function textMap(root){
+  const nodes = [], w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT, {acceptNode: n => n.nodeType === 1 ? (n.tagName === 'BR' ? 1 : (/^(SCRIPT|STYLE)$/.test(n.tagName) || n.getAttribute('aria-hidden') === 'true' ? 2 : 3)) : 1});
+  let str = '', n;
+  while((n = w.nextNode())){ if(n.nodeType === 1){ str += ' '; continue; } nodes.push([n, str.length]); str += n.data; }
+  return {str, nodes};
+}
+function rangesIn(root, re){
+  const {str, nodes} = textMap(root), out = []; if(!nodes.length) return out;
+  const at = i => { let lo = 0, hi = nodes.length - 1; while(lo < hi){ const m = (lo + hi + 1) >> 1; if(nodes[m][1] <= i) lo = m; else hi = m - 1; } return nodes[lo]; };
+  re.lastIndex = 0; let m;
+  while((m = re.exec(str))){ if(!m[0]){ re.lastIndex++; continue; }
+    const [a, ao] = at(m.index), [b, bo] = at(m.index + m[0].length - 1), r = document.createRange();
+    try{ r.setStart(a, Math.min(a.data.length, m.index - ao)); r.setEnd(b, Math.min(b.data.length, m.index + m[0].length - bo)); out.push(r); }catch(e){}
+  }
+  return out;
+}
+function findOpen(){
+  if(!cur || R.hidden) return;
+  $('#findBar').hidden = false; $('#findIn').focus(); $('#findIn').select();
+  if(find.q) findPaint();
+}
+function findClose(){
+  $('#findBar').hidden = true; find.gen++; find.q = ''; find.re = null; find.total = 0; find.idx = -1; find.pages = null; find.ranges = [];
+  $('#findIn').value = ''; $('#findCount').value = '';
+  try{ CSS.highlights.delete('vs-find'); CSS.highlights.delete('vs-find-cur'); }catch(e){}
+}
+async function findRun(q){
+  const gen = ++find.gen; find.q = q; find.re = findRe(q); find.total = 0; find.idx = -1; find.pages = null; find.ranges = [];
+  if(!find.re){ $('#findCount').value = ''; findPaint(); return; }
+  if(pageMode()){
+    // count matches page by page from the PDF's text, then show them on the pages as they're drawn
+    const doc = pdfDoc, N = doc.numPages, pages = []; find.pages = pages;
+    const start = currentPage(); let jumped = false;
+    for(let n = 1; n <= N; n++){
+      let str = ''; try{ const tc = await pdfPageText(doc, n); str = tc.items.map(it => (it.str || '') + (it.hasEOL ? ' ' : '')).join(''); }catch(e){}
+      if(gen !== find.gen || doc !== pdfDoc) return;
+      const re = new RegExp(find.re.source, 'gi'), c = (str.match(re) || []).length;
+      pages.push(c); find.total += c;
+      if(n % 20 === 0 || n === N) $('#findCount').value = n < N ? `${find.total} so far…` : '';
+      if(!jumped && c && n >= start){ jumped = true; findGo(find.total - c); }
+    }
+    if(!jumped && find.total) findGo(0);
+  } else {
+    find.ranges = rangesIn(page, new RegExp(find.re.source, 'gi')); find.total = find.ranges.length;
+    // the first match after where you're reading
+    const y = stage.getBoundingClientRect().top + readY(); let i = find.ranges.findIndex(r => r.getBoundingClientRect().top >= y - 4);
+    if(find.total) findGo(i < 0 ? 0 : i);
+  }
+  findCount();
+}
+function findCount(){
+  $('#findCount').value = !find.q.trim() ? '' : find.total ? `${find.idx + 1} of ${find.total}` : (find.pages && find.pages.length < (pdfDoc ? pdfDoc.numPages : 0) ? 'Searching…' : 'Not found');
+}
+// which page holds match i (original pages view), and which match it is on that page
+function findLocate(i){ let k = i; for(let n = 0; n < find.pages.length; n++){ if(k < find.pages[n]) return [n + 1, k]; k -= find.pages[n]; } return null; }
+async function findGo(i){
+  if(!find.total) return;
+  const gen = find.gen; find.idx = ((i % find.total) + find.total) % find.total; findCount();
+  pause(); ttsHold();
+  let r = null;
+  if(pageMode()){
+    const loc = findLocate(find.idx); if(!loc) return;
+    const [n, k] = loc, d = page.querySelector('#sec0-pg' + n);
+    if(!d) return;
+    if(!nearView(d)) goToPage(n);
+    for(let t = 0; t < 60 && gen === find.gen && !d.querySelector('.textLayer'); t++) await new Promise(res => setTimeout(res, 50));
+    if(gen !== find.gen) return;
+    const tl = d.querySelector('.textLayer'); if(!tl) return;
+    const rs = rangesIn(tl, new RegExp(find.re.source, 'gi')); r = rs[Math.min(k, rs.length - 1)];
+  } else r = find.ranges[find.idx];
+  findPaint(r);
+  if(r){ const rc = r.getBoundingClientRect(), st = stage.getBoundingClientRect();
+    if(rc.top < st.top + 60 || rc.bottom > st.bottom - 40) scroller.scrollTop += rc.top - (st.top + readY());
+    pgTops = null; updateStatus(); }
+}
+function findPaint(curRange){
+  try{
+    if(!find.re){ CSS.highlights.delete('vs-find'); CSS.highlights.delete('vs-find-cur'); return; }
+    const all = pageMode() ? [...page.querySelectorAll('.textLayer')].flatMap(tl => rangesIn(tl, new RegExp(find.re.source, 'gi'))) : find.ranges;
+    CSS.highlights.set('vs-find', new Highlight(...all));
+    if(curRange) find.cur = curRange;
+    if(find.cur && find.cur.startContainer.isConnected) CSS.highlights.set('vs-find-cur', new Highlight(find.cur)); else CSS.highlights.delete('vs-find-cur');
+  }catch(e){}
+}
+$('#findIn').addEventListener('input', e => { clearTimeout(find.timer); find.timer = setTimeout(() => findRun(e.target.value), 250); });
+$('#findIn').addEventListener('keydown', e => {
+  if(e.key === 'Escape'){ e.preventDefault(); findClose(); return; }
+  if(e.key === 'Enter'){ e.preventDefault(); if($('#findIn').value !== find.q){ clearTimeout(find.timer); findRun($('#findIn').value); } else findGo(find.idx + (e.shiftKey ? -1 : 1)); }
+});
+$('#findBar').addEventListener('submit', e => e.preventDefault());
+$('#findNext').onclick = () => findGo(find.idx + 1);
+$('#findPrev').onclick = () => findGo(find.idx - 1);
+$('#findClose').onclick = findClose;
+$('#findBtn').onclick = () => $('#findBar').hidden ? findOpen() : findClose();
+$('#railFind').onclick = () => findOpen();
+
 // the page (1-based) at the reading guide, from the page anchors
 function currentPage(){
   if(!pdfDoc && !comic) return 0;
@@ -2387,7 +2534,7 @@ function closeReaderNow(){
   if(!R.hidden && page.childNodes.length) saveCur(); ready = false;
   stopComic(); stopPdfPages(); try{ pdfDoc?.destroy(); }catch(e){} pdfDoc = null; pdfLabels = null; pdfSizes = null; pgTops = null; pgLine = 0;
   R.classList.remove('is-pdf','pdf-pages'); page.classList.remove('pdfmode','tint-light','tint-dark');
-  $('#rMode').hidden = true; $('#pdfGroup').hidden = true; $('#goPage').hidden = true; R.classList.remove('has-pages','rail-on'); $('#pdfRail').hidden = true; $('#railShow').hidden = true;
+  $('#rMode').hidden = true; $('#pdfGroup').hidden = true; findClose(); $('#goPage').hidden = true; R.classList.remove('has-pages','rail-on'); $('#pdfRail').hidden = true; $('#railShow').hidden = true;
   R.hidden = true; document.body.classList.remove('locked');
   page.replaceChildren(); urls.forEach(URL.revokeObjectURL); urls = []; cur = null;
   render();
@@ -3132,6 +3279,7 @@ scroller.addEventListener('pointercancel', endDrag);
 scroller.addEventListener('click', e=>{
   if(suppressClick){ suppressClick = false; e.preventDefault(); return; }
   const a = e.target.closest('[data-go]'); if(a){ e.preventDefault(); ttsHold(); goTo(a.dataset.go); if(tts.on) requestAnimationFrame(ttsRestartHere); return; }
+  const pl = e.target.closest('[data-pdfdest]'); if(pl){ e.preventDefault(); pause(); goToPdfDest(pl.dataset.pdfdest); return; }
   if(e.target.closest('a[href]')) return;
   if(String(getSelection())) return;
   // while reading aloud, a tap on the text reads from that sentence
@@ -3304,6 +3452,8 @@ addEventListener('keydown', e=>{
   if(!$('#ax').hidden && e.key === 'Escape'){ closeAx(); return; }
   if(!$('#ap').hidden && e.key === 'Escape'){ closeAp(); return; }
   if(R.hidden) return;
+  if((e.ctrlKey || e.metaKey) && !e.altKey && (e.key === 'f' || e.key === 'F')){ e.preventDefault(); findOpen(); return; }
+  if(e.key === 'F3'){ e.preventDefault(); if(find.total) findGo(find.idx + (e.shiftKey ? -1 : 1)); else findOpen(); return; }
   const t = e.target, tag = t.tagName;
   const typing = (tag==='INPUT' && t.type!=='range') || tag==='TEXTAREA' || tag==='SELECT';
   if(typing) return;
