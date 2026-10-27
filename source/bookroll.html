@@ -1323,8 +1323,12 @@ const PDF = (() => {
   }
   async function load(buf){
     const L = await lib();
-    const opts = {data: new Uint8Array(buf.slice(0)), isEvalSupported:false, disableFontFace:!inExt, useSystemFonts:true};
-    if(inExt){ opts.cMapUrl = 'lib/cmaps/'; opts.cMapPacked = true; opts.standardFontDataUrl = 'lib/standard_fonts/'; }
+    // the website draws text as shapes (no font loading), so it needs pdf.js's own copies of the standard fonts rather than system fonts
+    const opts = {data: new Uint8Array(buf.slice(0)), isEvalSupported:false, disableFontFace:!inExt, useSystemFonts:inExt};
+    // the character maps (for Chinese, Japanese and Korean text) and the 14 standard PDF fonts (Times, Helvetica, Courier…),
+    // which many PDFs use without including them: packaged with the extension, from jsDelivr on the website
+    const base = inExt ? 'lib/' : 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/';
+    opts.cMapUrl = base + 'cmaps/'; opts.cMapPacked = true; opts.standardFontDataUrl = base + 'standard_fonts/';
     let pdf;
     try{ pdf = await L.getDocument(opts).promise; }
     catch(e){
@@ -3642,7 +3646,15 @@ async function nvSpeak(){
     const ahead = nvPeek(); tts.nvNext = ahead ? {text:ahead, p:nvGen(ahead)} : null;
     tts.nvNext?.p.catch(() => {});
     ttsWord(s + Math.max(0, text.search(/\S/)));
-    const d = await job; if(gen !== tts.gen || !tts.on) return;
+    let d;
+    try{ d = await job; NV.fails = 0; }
+    catch(err){
+      // one sentence failed but the voice is still running: skip it and carry on; stop if it keeps happening
+      if(gen !== tts.gen || !tts.on) return;
+      if(NV.worker && NV.loaded && ++NV.fails < 3) return ttsSpeakNext();
+      throw err;
+    }
+    if(gen !== tts.gen || !tts.on) return;
     const secs = d.pcm.length / d.rate;
     if(!NV.slowWarned && d.ms > secs * 1000 && secs > 1.5){ NV.slowWarned = true;
       toast('This device makes the natural voice a little slower than it speaks, so there may be short pauses between sentences.', 7000); }
