@@ -1,0 +1,68 @@
+{
+  "manifest_version": 3,
+  "name": "Velvet Scroll \u2013 EPUB & Ebook Reader",
+  "version": "1.20.1",
+  "description": "EPUB and ebook reader that scrolls for you. Opens DRM-free EPUB, MOBI, AZW3, PDF, TXT, FB2 and comics, with read aloud.",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "96": "icons/icon-96.png",
+    "128": "icons/icon-128.png"
+  },
+  "action": {
+    "default_title": "Velvet Scroll",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png"
+    },
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "scripts": [
+      "store.js",
+      "background.js"
+    ]
+  },
+  "permissions": [
+    "unlimitedStorage",
+    "storage",
+    "activeTab",
+    "scripting",
+    "contextMenus"
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "bookroll-reader@extension",
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {
+        "required": [
+          "none"
+        ],
+        "optional": [
+          "searchTerms"
+        ]
+      }
+    },
+    "gecko_android": {
+      "strict_min_version": "142.0"
+    }
+  },
+  "optional_host_permissions": [
+    "https://openlibrary.org/*",
+    "https://covers.openlibrary.org/*",
+    "https://*.archive.org/*",
+    "https://www.wikidata.org/*",
+    "https://commons.wikimedia.org/*",
+    "https://upload.wikimedia.org/*",
+    "https://gutendex.com/*",
+    "https://www.gutenberg.org/*",
+    "https://*/*",
+    "http://*/*"
+  ],
+  "homepage_url": "https://velvetscroll.net/",
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+  }
+}

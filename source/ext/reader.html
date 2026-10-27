@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Velvet Scroll</title>
+<link rel="icon" href="icons/icon-32.png">
+<link rel="stylesheet" href="fonts.css">
+<link rel="stylesheet" href="base.css">
+<link rel="stylesheet" href="reader.css">
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <h1>Velvet Scroll</h1>
+      <p>Your ebooks, scrolling at your pace.</p>
+    </div>
+    <div class="row" style="flex-wrap:wrap;gap:10px">
+    <button id="cont" class="btn" hidden></button>
+    <button id="find" class="btn" hidden title="Look up titles, authors, dates and covers in public databases">Find details</button>
+    <button id="artOpen" class="btn" hidden>Save article</button>
+    <button id="axOpen" class="btn">Accessibility</button>
+    <button id="apOpen" class="btn">Appearance</button>
+    <button id="bkOpen" class="btn">Backup</button>
+    <label class="btn primary" for="file">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+      Add books
+    </label>
+    <input type="file" id="file" accept=".epub,.kepub,.mobi,.azw3,.azw,.prc,.pdf,.txt,.htm,.html,.xhtml,.fb2,.fbz,.cbz,.zip,application/epub+zip,application/x-mobipocket-ebook,application/pdf,text/plain,text/html,application/x-cbz,application/zip" multiple hidden>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="tools">
+    <input id="q" class="search" type="search" placeholder="Search titles, authors or ISBN" aria-label="Search library">
+    <select id="sort" class="sortsel" aria-label="Sort by">
+      <option value="recent">Recently read</option>
+      <option value="added">Recently added</option>
+      <option value="title">Title</option>
+      <option value="author">Author</option>
+      <option value="year">Year published</option>
+    </select>
+  </div>
+  <div id="libTabs" class="libtabs" role="tablist" aria-label="Library sections" hidden>
+    <button id="tabBooks" class="libtab" role="tab" aria-selected="true" aria-controls="grid">Books<b></b></button>
+    <button id="tabArts" class="libtab" role="tab" aria-selected="false" aria-controls="grid">Saved articles<b></b></button>
+  </div>
+  <div id="chips" class="chips" role="group" aria-label="Filter"></div>
+  <div id="fmts" class="fmts" role="group" aria-label="File formats" hidden></div>
+  <div id="notice" class="notice" hidden></div>
+  <section id="grid" class="grid" aria-label="Books"></section>
+  <p class="foot"><a class="plink" href="https://velvetscroll.net/privacy.html" target="_blank" rel="noopener">Privacy</a> · <a class="plink" href="https://velvetscroll.net/licences.html" target="_blank" rel="noopener">Licences</a> · Books stay in this browser on this device; nothing is uploaded. Opens EPUB, KEPUB, MOBI, AZW3, PDF, TXT, HTML, FB2 and CBZ comic files, including zipped ones. Drag them anywhere on the page to add them. DRM-protected and password-locked books, including Kindle store purchases, can't be opened.</p>
+  <section id="donate" class="donate" hidden aria-labelledby="donH">
+    <div class="don-text"><h2 id="donH">Support Velvet Scroll</h2><p>Velvet Scroll is free. If you enjoy it, you can help keep it going.</p></div>
+    <div class="don-ways">
+      <a id="donPaypal" class="btn primary" target="_blank" rel="noopener" hidden>Donate with PayPal</a>
+      <div id="donBtc" class="btc" hidden>
+        <canvas id="donQr" width="132" height="132" aria-label="QR code of the Bitcoin address"></canvas>
+        <div class="btc-info">
+          <span class="lbl">Bitcoin</span>
+          <code id="donAddr"></code>
+          <div class="row"><button class="btn" id="donCopy">Copy address</button><a class="btn" id="donWallet">Open in wallet</a></div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <datalist id="shelfList"></datalist>
+</main>
+<div class="drop">Drop ebooks to add them</div>
+
+<div id="reader" class="reader" hidden>
+  <div class="r-top chrome">
+    <button id="rBack" class="rbtn">← Library</button>
+    <div class="r-title"><strong id="rTitle"></strong><span id="rChap"></span></div>
+    <button id="rMode" class="rbtn" hidden></button>
+    <button id="rToc" class="rbtn">Contents</button>
+    <button id="rSet" class="rbtn">Display</button>
+    <button id="fsBtn" class="rbtn icon" aria-label="Full screen" title="Full screen (F)"><svg id="icFs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><svg id="icFsOff" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg></button>
+  </div>
+  <div class="r-stage" id="stage">
+    <div id="scroller" class="scroller" tabindex="-1"><article id="page" class="page"></article></div>
+    <div id="sweepFoot" class="sweep-foot" hidden></div>
+    <div id="sweepHead" class="sweep-head" hidden></div>
+    <div id="sweepLine" class="sweep-line" hidden><span class="sweep-mark"></span></div>
+    <div id="sweepCover" class="sweep-cover" hidden></div>
+    <div id="sweepNext" class="sweep-next" hidden><div class="sweep-clip"><div class="page lens-content sweep-content" aria-hidden="true"></div></div></div>
+    <div id="guide" class="guide band"></div>
+    <div id="lens" class="lens circle" hidden>
+      <div class="lens-view"><div class="lens-content page" aria-hidden="true"></div></div>
+      <div class="lens-bezel"></div>
+      <div class="lens-ring" title="Drag the rim to move the magnifier" aria-hidden="true"></div>
+      <div class="lens-size" title="Drag to resize" aria-hidden="true"></div>
+      <div class="lens-bar" role="group" aria-label="Magnifier">
+        <button id="lzOut" aria-label="Less magnification">−</button><output id="lzVal"></output><button id="lzIn" aria-label="More magnification">+</button>
+        <button id="lShape" aria-label="Switch magnifier shape"></button>
+        <button id="lClose" aria-label="Close magnifier">✕</button>
+      </div>
+    </div>
+    <div id="loading" class="loading" hidden>Opening book…</div>
+  </div>
+  <div class="r-bottom chrome">
+    <button id="play" class="play" aria-label="Start scrolling" title="Play (Space)">
+      <svg id="icPlay" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg>
+      <svg id="icPause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" hidden><rect x="5.5" y="4" width="4.5" height="16" rx="1"/><rect x="14" y="4" width="4.5" height="16" rx="1"/></svg>
+    </button>
+    <button id="ttsBtn" class="tool solo" aria-pressed="false" aria-label="Read aloud" title="Read aloud (R)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4.5 4.5 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg></button>
+    <button id="ttsPrev" class="tool solo" aria-label="Previous paragraph" title="Previous paragraph (←)" hidden><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="5" width="2.6" height="14" rx="1"/><path d="M19 5.5v13L9 12z"/></svg></button>
+    <button id="ttsNext" class="tool solo" aria-label="Next paragraph" title="Next paragraph (→)" hidden><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="16.4" y="5" width="2.6" height="14" rx="1"/><path d="M5 5.5v13L15 12z"/></svg></button>
+    <button id="magBtn" class="tool solo" aria-pressed="false" aria-label="Magnifier" title="Magnifier (M)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21M8 10.5h5M10.5 8v5"/></svg></button>
+    <div class="toolseg" role="group" aria-label="Pointer">
+      <button id="toolArrow" class="tool" aria-pressed="true" aria-label="Pointer: select text" title="Pointer: select text (H to switch)">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 3.5v15.2l4.1-3.9 2.7 6.1 2.6-1.1-2.7-6h5.7z"/></svg>
+      </button>
+      <button id="toolHand" class="tool" aria-pressed="false" aria-label="Hand: drag the page" title="Hand: drag the page (H to switch)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 12V5.5a1.5 1.5 0 0 1 3 0V11M11 10.5V4a1.5 1.5 0 0 1 3 0v6.5M14 10.5V5.5a1.5 1.5 0 0 1 3 0V12M17 9.5a1.5 1.5 0 0 1 3 0V15a7 7 0 0 1-7 7h-1a6 6 0 0 1-4.6-2.2L4 15.6a1.6 1.6 0 0 1 2.4-2.1L8 15"/></svg>
+      </button>
+    </div>
+    <div class="ctl speed">
+      <label for="speed">Speed</label>
+      <button class="stepbtn" id="slower" aria-label="Slower">−</button>
+      <input type="range" id="speed" min="2" max="120" step="1">
+      <button class="stepbtn" id="faster" aria-label="Faster">+</button>
+      <output id="speedOut" for="speed"></output>
+    </div>
+    <div class="ctl seek">
+      <input type="range" id="seek" min="0" max="1000" step="1" aria-label="Position in book">
+      <span class="num" id="pct">0%</span>
+      <span class="num" id="eta"></span>
+    </div>
+    <button id="ribDown" class="ribtog" aria-label="Hide the controls" title="Hide the controls"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+  </div>
+  <button id="ribUp" class="ribup" aria-label="Show the controls" title="Show the controls" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg></button>
+  <div id="dim" class="dim"></div>
+
+  <aside id="tocPanel" class="panel left" hidden aria-label="Contents">
+    <header><h2>Contents</h2><button class="btn" data-close>Close</button></header>
+    <ul id="toc" class="toc"></ul>
+  </aside>
+
+  <aside id="setPanel" class="panel right" hidden aria-label="Display settings">
+    <header><h2>Display</h2><button class="btn" data-close>Close</button></header>
+    <button class="btn" id="axFromReader" style="align-self:flex-start">Accessibility settings</button>
+
+    <div class="grp">
+      <span class="lbl">Text</span>
+      <div class="field"><label for="sSize">Size</label><input type="range" id="sSize" min="14" max="56" step="1"><output id="oSize"></output></div>
+      <div class="field"><label for="sLh">Line spacing</label><input type="range" id="sLh" min="1.2" max="2.4" step="0.05"><output id="oLh"></output></div>
+      <div class="field"><label for="sWidth">Line length</label><input type="range" id="sWidth" min="28" max="100" step="1"><output id="oWidth"></output></div>
+      <div class="seg" id="fonts" role="group" aria-label="Typeface"></div>
+    </div>
+
+    <div class="grp">
+      <span class="lbl">Colours</span>
+      <p class="hint" id="axColNote" hidden></p>
+      <div class="swatches" id="swatches"></div>
+      <div class="colors">
+        <label>Background <input type="color" id="cBg"></label>
+        <label>Text <input type="color" id="cFg"></label>
+      </div>
+      <div class="field"><label for="sBright">Brightness</label><input type="range" id="sBright" min="25" max="100" step="1"><output id="oBright"></output></div>
+    </div>
+
+    <div class="grp">
+      <span class="lbl">Reading guide</span>
+      <div class="seg" id="gmodes" role="group" aria-label="Guide style"></div>
+      <div class="field"><label for="sGpos">Position</label><input type="range" id="sGpos" min="8" max="85" step="1"><output id="oGpos"></output></div>
+      <div class="field"><label for="sGh">Height</label><input type="range" id="sGh" min="1" max="5" step="0.5"><output id="oGh"></output></div>
+      <div class="colors"><label>Guide colour <input type="color" id="cGuide"></label><label class="check"><input type="checkbox" id="sGuideAuto"> Match the accent colour</label></div>
+    </div>
+
+    <div class="grp">
+      <span class="lbl">Read aloud</span>
+      <div class="field"><label for="ttsVoice">Voice</label><select id="ttsVoice" class="hzsel"></select><span></span></div>
+      <div class="field"><label for="sTtsRate">Reading speed</label><input type="range" id="sTtsRate" min="0.5" max="2" step="0.05"><output id="oTtsRate"></output></div>
+      <label class="check"><input type="checkbox" id="sTtsHl"> Highlight each word as it’s read</label>
+      <p class="hint" id="ttsHint">Starts from the line on the reading guide and keeps the spoken words on it. While it’s reading, tap any sentence to read from there, use the ⏮ ⏭ buttons (or ← →) to skip a paragraph, or pick a chapter from Contents. Uses the voices installed on your device.</p>
+      <p class="hint" id="ttsTip"></p>
+      <div id="nvRow" class="grp" hidden>
+        <p class="hint" id="nvStatus" role="status"></p>
+        <div class="row" style="flex-wrap:wrap;gap:8px"><button class="btn" id="nvAbout">About natural voices</button><button class="btn" id="nvRemove" hidden>Remove downloaded voices</button><a class="btn" href="licences.html" target="_blank" rel="noopener">Licences</a></div>
+      </div>
+    </div>
+
+    <div class="grp">
+      <span class="lbl">Magnifier</span>
+      <div class="seg" id="lensShapes" role="group" aria-label="Magnifier shape"><button data-v="circle">Circle</button><button data-v="rect">Rectangle</button></div>
+      <div class="field"><label for="sLensSize">Size</label><input type="range" id="sLensSize" min="120" max="480" step="10"><output id="oLensSize"></output></div>
+      <div class="field"><label for="sLensZoom">Magnification</label><input type="range" id="sLensZoom" min="1.25" max="5" step="0.25"><output id="oLensZoom"></output></div>
+      <p class="hint">Turn it on with the magnifier button or the M key. Drag its rim to move it, or the dot on the rim to resize it.</p>
+    </div>
+
+    <div class="grp">
+      <span class="lbl">Scroll style</span>
+      <div class="seg" id="styles" role="group" aria-label="Scroll style"><button data-v="cinema">Cinema (free scroll)</button><button data-v="sweep">Page sweep</button></div>
+      <label class="check" id="bookRow"><input type="checkbox" id="sBook"> Book layout: keep every line on the same grid</label>
+      <p class="hint" id="styleHint"></p>
+    </div>
+
+    <div class="grp">
+      <span class="lbl">Motion</span>
+      <label class="check"><input type="checkbox" id="sSmooth"> Smooth motion</label>
+      <p class="hint">Moves the text in fractions of a pixel so it glides instead of stepping. Turn it off if text looks slightly soft while it scrolls.</p>
+      <div class="field"><label for="sHz">Refresh rate</label>
+        <select id="sHz" class="hzsel">
+          <option value="auto" id="hzAuto">Auto</option>
+          <option value="60">60 Hz</option><option value="75">75 Hz</option><option value="90">90 Hz</option><option value="100">100 Hz</option>
+          <option value="120">120 Hz</option><option value="144">144 Hz</option><option value="165">165 Hz</option><option value="240">240 Hz</option>
+        </select><span></span></div>
+      <p class="hint">Auto measures your screen. Choose a rate yourself if motion still judders, for example on a monitor that changes its rate.</p>
+    </div>
+
+    <div class="grp" id="pdfGroup" hidden>
+      <span class="lbl" id="pgLbl">PDF pages</span>
+      <div class="field"><label for="sPgw">Page width</label><input type="range" id="sPgw" min="30" max="100" step="1"><output id="oPgw"></output></div>
+      <label class="check" id="tintRow"><input type="checkbox" id="sTint"> Tint pages to match the colours above</label>
+      <p class="hint" id="pgHint">Text size, typeface and spacing apply when the PDF is shown as reflowed text.</p>
+    </div>
+
+    <div class="grp">
+      <span class="lbl">Shortcuts</span>
+      <div class="keys">
+        <kbd>Space</kbd> play / pause · tap the text to do the same<br>
+        <kbd>↑</kbd> <kbd>↓</kbd> faster / slower<br>
+        <kbd>[</kbd> <kbd>]</kbd> smaller / larger text<br>
+        <kbd>Page Down</kbd> <kbd>Page Up</kbd> next / previous page<br>
+        <kbd>H</kbd> switch between pointer and hand tool<br>
+        <kbd>M</kbd> magnifier on / off<br>
+        <kbd>R</kbd> read aloud on / off<br>
+        <kbd>←</kbd> <kbd>→</kbd> while reading aloud: previous / next paragraph<br>
+        <kbd>F</kbd> full screen on / off<br>
+        <kbd>Esc</kbd> close panel, then back to library
+      </div>
+    </div>
+  </aside>
+</div>
+
+<div id="dlg" class="modal" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="dlgH">
+    <header class="sh-head"><h2 id="dlgH">Book details</h2><button class="btn" id="dClose">Close</button></header>
+    <div class="dgrid">
+      <div class="dcover" id="dCover"></div>
+      <div class="dfields">
+        <label for="dTitle">Title<input id="dTitle" autocomplete="off"></label>
+        <label for="dAuthor">Author<input id="dAuthor" autocomplete="off"></label>
+        <label for="dYear">First published<input id="dYear" inputmode="numeric" placeholder="e.g. 1890" autocomplete="off"></label>
+        <label for="dIsbn">ISBN<input id="dIsbn" placeholder="e.g. 978-0-14-118776-1" autocomplete="off" spellcheck="false" aria-describedby="dIsbnMsg"></label>
+        <p class="hint isbnmsg" id="dIsbnMsg" aria-live="polite"></p>
+      </div>
+    </div>
+    <div class="grp">
+      <span class="lbl">Cover</span>
+      <div class="covers" id="dCovers" role="group" aria-label="Choose a cover"></div>
+      <div class="cadd">
+        <label class="btn" for="dImg">Upload image</label><input type="file" id="dImg" accept="image/*" hidden>
+        <div class="urlrow" id="dUrlRow"><input id="dUrl" type="url" inputmode="url" placeholder="Or paste an image’s web address" aria-label="Cover image web address" autocomplete="off"><button class="btn" id="dUrlGo">Use</button></div>
+      </div>
+      <div id="dFit" hidden>
+        <div class="seg" role="group" aria-label="How the image fits the cover"><button data-m="fill">Fill the cover</button><button data-m="fit">Show the whole image</button></div>
+        <p class="hint" id="dFitHint">Drag the large preview to choose which part of the image shows.</p>
+      </div>
+      <p class="hint" id="dCoverHint">Images are shaped to a 2:3 book cover automatically. You can also paste an image, or drop one onto the large preview.</p>
+    </div>
+    <div class="grp">
+      <span class="lbl">Public databases</span>
+      <p class="hint" id="dHint"></p>
+      <div class="row"><button class="btn" id="dSearch">Search Open Library, Wikidata and Gutenberg</button></div>
+      <p class="hint" id="dStatus" role="status"></p>
+      <ul class="results" id="dResults"></ul>
+    </div>
+    <footer class="sh-foot"><button class="btn" id="dCancel">Cancel</button><button class="btn primary" id="dSave">Save</button></footer>
+  </div>
+</div>
+
+<div id="ax" class="modal side" hidden>
+  <div class="sheet" role="dialog" aria-modal="false" aria-labelledby="axH">
+    <header class="sh-head"><h2 id="axH">Accessibility</h2><button class="btn" id="axClose">Done</button></header>
+    <p class="hint">These settings apply everywhere: the library, the reader and every window.</p>
+    <div class="grp">
+      <span class="lbl" id="axHcL">High contrast</span>
+      <div class="seg" id="axHc" role="group" aria-labelledby="axHcL"><button data-v="auto">Match my device</button><button data-v="off">Off</button><button data-v="light">Black on white</button><button data-v="dark">White on black</button></div>
+      <p class="hint" id="axHcHint"></p>
+    </div>
+    <div class="grp">
+      <span class="lbl" id="axCvdL">Colour vision</span>
+      <div class="seg" id="axCvd" role="group" aria-labelledby="axCvdL"><button data-v="none">Standard</button><button data-v="redgreen">Red–green</button><button data-v="blueyellow">Blue–yellow</button><button data-v="mono">No colour</button></div>
+      <p class="hint">Red–green suits protanopia and deuteranopia (the most common kinds); blue–yellow suits tritanopia. The accent, reading guide, word highlight and progress bars switch to colours that stay distinct, and selected buttons and warnings get ✓ and ⚠ marks so nothing relies on colour alone.</p>
+    </div>
+    <div class="grp">
+      <span class="lbl">Size</span>
+      <label class="check"><input type="checkbox" id="axLarge"> Larger buttons and controls</label>
+      <p class="hint">Makes the buttons, menus and labels bigger and easier to tap. The book's own text size is under Display.</p>
+    </div>
+    <div class="grp">
+      <span class="lbl">Reading</span>
+      <label class="check"><input type="checkbox" id="axEasy"> Easier-to-read text</label>
+      <p class="hint">Switches the page to Atkinson Hyperlegible, a typeface designed for low vision, and adds a little space between letters and words, which some readers with dyslexia find helpful. Turning it off puts your typeface back.</p>
+    </div>
+    <div class="grp">
+      <span class="lbl" id="axMoL">Motion</span>
+      <div class="seg" id="axMotion" role="group" aria-labelledby="axMoL"><button data-v="auto">Match my device</button><button data-v="reduce">Reduce motion</button></div>
+      <p class="hint" id="axMoHint"></p>
+    </div>
+    <footer class="sh-foot"><button class="btn" id="axReset">Reset accessibility</button></footer>
+  </div>
+</div>
+
+<div id="ap" class="modal side" hidden>
+  <div class="sheet" role="dialog" aria-modal="false" aria-labelledby="apH">
+    <header class="sh-head"><h2 id="apH">Appearance</h2><button class="btn" id="apClose">Done</button></header>
+    <p class="hint">Colours for the library and panels. The reading page has its own colours under Display in the reader.</p>
+    <div class="grp">
+      <span class="lbl">Theme</span>
+      <div class="seg" id="apMode" role="group" aria-label="Theme"></div>
+    </div>
+    <div class="grp">
+      <span class="lbl">Accent colour</span>
+      <div class="swrow" id="apAccents" role="group" aria-label="Accent colour"></div>
+      <div class="colors"><label>Custom accent <input type="color" id="apAccentC"></label></div>
+    </div>
+    <div class="grp">
+      <span class="lbl">Background</span>
+      <div class="swrow" id="apBgs" role="group" aria-label="Background"></div>
+      <div class="colors"><label>Custom background <input type="color" id="apBgC"></label></div>
+      <p class="hint">Pick a light colour and it's used in the light theme; pick a dark one and it's used in the dark theme. Velvet Scroll makes a matching shade for the other theme, and adjusts the text and accent so they stay easy to read.</p>
+    </div>
+    <footer class="sh-foot"><button class="btn" id="apReset">Reset to default</button></footer>
+  </div>
+</div>
+
+<div id="art" class="modal" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="artH">
+    <header class="sh-head"><h2 id="artH">Save an article</h2><button class="btn" id="artClose">Close</button></header>
+    <p class="hint">Paste the address of an article, story or blog post. Velvet Scroll keeps a clean, readable copy in your library, with its pictures where the site allows.</p>
+    <div class="urlrow"><input id="artUrl" type="url" inputmode="url" placeholder="https://…" aria-label="Article web address" autocomplete="off"><button class="btn primary" id="artGo">Save</button></div>
+    <p class="hint" id="artSt" role="status"></p>
+    <p class="hint">On a page you’re reading, you can also save it with the Velvet Scroll button in the browser toolbar, or by right-clicking the page.</p>
+  </div>
+</div>
+
+<div id="nvdlg" class="modal" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="nvH">
+    <header class="sh-head"><h2 id="nvH">Natural voices</h2><button class="btn" id="nvClose">Close</button></header>
+    <p>Natural voices use <strong>Piper</strong>, an open-source speech system, to read aloud in a more lifelike voice than many built-in voices. It runs entirely on your device: nothing you read is sent anywhere.</p>
+    <div class="grp">
+      <span class="lbl">Before you turn it on</span>
+      <ul class="nvinfo">
+        <li><strong>Downloads:</strong> about <span class="nvFirst">20</span> MB the first time (the pronunciation dictionary<span class="nvEng"> and the speech engine</span>), plus about 63 MB for each voice you choose, from jsDelivr and Hugging Face. Use Wi-Fi if your data is limited. Your browser keeps them, so they aren’t downloaded again unless you remove them or clear this site’s data.</li>
+        <li><strong>Uses your device’s processor.</strong> Speech is made as you listen. On most computers and recent phones it’s made faster than it’s spoken. Older phones may pause briefly between sentences and use more battery.</li>
+        <li><strong>English only</strong>, with British and American voices. Use a device voice for other languages.</li>
+        <li><strong>Word highlighting is estimated</strong>, so it can run slightly ahead or behind the voice.</li>
+        <li><strong>Openly licensed.</strong> The voices were trained on public-domain recordings. Pronunciation uses eSpeak NG, which is free software under the GPL 3.0 licence. See Licences for details and source code.</li>
+      </ul>
+      <p class="hint">You can switch back to a device voice at any time under Display, and remove the downloads there.</p>
+    </div>
+    <p class="hint" id="nvDlgSt" role="status"></p>
+    <footer class="sh-foot"><a class="btn" href="licences.html" target="_blank" rel="noopener">Licences</a><button class="btn" id="nvCancel">Not now</button><button class="btn primary" id="nvGo">Download</button></footer>
+  </div>
+</div>
+
+<div id="bk" class="modal" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="bkH">
+    <header class="sh-head"><h2 id="bkH">Backup and restore</h2><button class="btn" id="bkClose">Close</button></header>
+    <div class="grp">
+      <span class="lbl">Save a backup</span>
+      <p class="hint">One file with your books, covers, reading positions, shelves and settings. Keep it on a USB drive or in your own cloud storage, then restore it in Velvet Scroll on another computer or browser.</p>
+      <label class="check"><input type="checkbox" id="bkBooks" checked> Include the books themselves <span id="bkSize" class="muted"></span></label>
+      <div class="pwrow">
+        <label for="bkPw">Password (optional)<input type="password" id="bkPw" autocomplete="new-password"></label>
+        <label for="bkPw2">Repeat password<input type="password" id="bkPw2" autocomplete="new-password"></label>
+      </div>
+      <p class="hint">With a password, the backup is encrypted with AES-256 and can't be opened without it. A forgotten password can't be recovered.</p>
+      <div class="row"><button class="btn primary" id="bkSave">Save backup</button></div>
+      <p class="hint" id="bkSaveSt" role="status"></p>
+    </div>
+    <div class="grp">
+      <span class="lbl">Restore a backup</span>
+      <p class="hint">Adds the books from a backup to this library. For books you already have, the most recent reading position and details are kept.</p>
+      <div class="row"><label class="btn" for="bkFile">Choose backup file</label><input type="file" id="bkFile" accept=".zip,application/zip" hidden></div>
+      <div id="bkPwIn" class="pwrow" hidden>
+        <label for="bkInPw">This backup is encrypted. Password<input type="password" id="bkInPw" autocomplete="current-password"></label>
+        <div class="row end"><button class="btn primary" id="bkUnlock">Restore</button></div>
+      </div>
+      <p class="hint" id="bkLoadSt" role="status"></p>
+    </div>
+    <div class="grp" id="scGrp">
+      <span class="lbl">Sync code</span>
+      <p class="hint">Copy your reading places, shelves, book details and settings to another browser or device, with no account. The code is encrypted with a passphrase you choose. Books themselves aren’t included: copy them once with a backup, then use a sync code whenever you switch devices.</p>
+      <div class="pwrow">
+        <label for="scPw">Passphrase (at least 8 characters)<input type="password" id="scPw" autocomplete="new-password"></label>
+        <div class="row end"><button class="btn primary" id="scMake">Create sync code</button></div>
+      </div>
+      <div id="scOut" class="grp" hidden>
+        <textarea id="scCode" class="sccode" rows="3" readonly aria-label="Sync code"></textarea>
+        <div class="row" style="flex-wrap:wrap;gap:8px"><button class="btn" id="scCopy">Copy code</button><button class="btn" id="scShare" hidden>Share…</button></div>
+        <div class="scqr"><canvas id="scQr" width="232" height="232" aria-label="QR code of the sync code" hidden></canvas><p class="hint" id="scQrHint"></p></div>
+      </div>
+      <p class="hint" id="scSt" role="status"></p>
+      <span class="lbl" style="margin-top:6px">Use a sync code</span>
+      <textarea id="scIn" class="sccode" rows="3" placeholder="Paste a sync code here" aria-label="Sync code to use" spellcheck="false"></textarea>
+      <div class="pwrow">
+        <label for="scInPw">Its passphrase<input type="password" id="scInPw" autocomplete="current-password"></label>
+        <div class="row end"><button class="btn primary" id="scApply">Use code</button></div>
+      </div>
+      <label class="check"><input type="checkbox" id="scSettings" checked> Also use its display, appearance and accessibility settings</label>
+      <p class="hint" id="scInSt" role="status"></p>
+      <div id="scMissing" hidden><p class="hint">In the code but not in this library (add them with a backup or the original files):</p><ul class="missing" id="scList"></ul></div>
+      <p class="hint">Keep the passphrase separate from the code: anyone with both can see your reading list. A code is a snapshot, so make a new one each time you want to sync.</p>
+    </div>
+    <div class="grp" id="syncGrp" hidden>
+      <span class="lbl" id="syncLbl">Browser sync</span>
+      <label class="check"><input type="checkbox" id="syncOn"> Sync reading positions, shelves, book details and settings</label>
+      <p class="hint" id="syncHint">Uses your browser's own sync between computers where you're signed in to the browser with extension syncing turned on. The books themselves aren't synced: copy them once with a backup, and after that your place follows you.</p>
+      <p class="hint" id="syncSt" role="status"></p>
+      <div id="syncMissing" hidden><p class="hint">In your synced library but not on this computer:</p><ul class="missing" id="syncList"></ul></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast" hidden role="status"></div>
+<script src="lib/jszip.min.js"></script>
+<script src="lib/Readability.js"></script>
+<script src="clip-core.js"></script>
+<script src="store.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

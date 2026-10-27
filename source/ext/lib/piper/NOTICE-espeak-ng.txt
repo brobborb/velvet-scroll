@@ -1,0 +1,1 @@
+piper_phonemize.js and piper_phonemize.wasm: eSpeak NG (GPL-3.0-or-later, https://github.com/espeak-ng/espeak-ng) with piper-phonemize (MIT, https://github.com/rhasspy/piper-phonemize), compiled to WebAssembly by @diffusionstudio/piper-wasm 1.0.0 (https://github.com/diffusion-studio/piper-wasm). Unmodified. See ../../licences.html and ../../LICENSE-GPL-3.0.txt.
