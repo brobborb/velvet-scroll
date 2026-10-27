@@ -3786,7 +3786,7 @@ function railMenu(open){
   const m = $('#railMenu'), b = $('#railMore');
   if(open === undefined) open = m.hidden;
   m.hidden = !open; b.setAttribute('aria-expanded', String(open));
-  if(open){ m.style.top = Math.max(8, Math.min(stage.clientHeight - m.offsetHeight - 8, $('#pdfRail').offsetTop + b.offsetTop - 6)) + 'px';
+  if(open){ m.style.top = Math.max(8, Math.min(stage.clientHeight - m.offsetHeight - 8, b.getBoundingClientRect().top - stage.getBoundingClientRect().top - 6)) + 'px';
     $('#mPrint').disabled = pdfDoc && pdfDoc.printAllowed === false; m.querySelector('button:not(:disabled)')?.focus(); }
 }
 $('#railMore').onclick = e => { e.stopPropagation(); railMenu(); };
