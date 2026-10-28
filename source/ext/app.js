@@ -2034,7 +2034,7 @@ function setAx(patch, relayout){ const go = () => { S.ax = {...S.ax, ...patch}; 
 function closeAxNow(){ $('#ax').hidden = true; }
 function closeAx(){ popLayer('ax'); }
 function openAx(){ if($('#ax').hidden){ pushLayer('ax'); $('#ax').hidden = false; } renderAx(); $('#axClose').focus(); }
-$('#axOpen').onclick = openAx; $('#axFromReader').onclick = openAx; $('#axClose').onclick = closeAx;
+$('#axOpen').onclick = () => $('#ax').hidden ? openAx() : closeAx(); $('#axFromReader').onclick = openAx; $('#axClose').onclick = closeAx;
 $('#axHc').addEventListener('click', e => { const b = e.target.closest('[data-v]'); if(b) setAx({contrast:b.dataset.v}); });
 $('#axCvd').addEventListener('click', e => { const b = e.target.closest('[data-v]'); if(b) setAx({cvd:b.dataset.v}); });
 $('#axMotion').addEventListener('click', e => { const b = e.target.closest('[data-v]'); if(b) setAx({motion:b.dataset.v}); });
@@ -2047,7 +2047,7 @@ $('#axEasy').addEventListener('change', e => {
 $('#axReset').onclick = () => { const go = () => { if(S.ax.easy && S.ax.prevFont && S.font === 'Atkinson') S.font = S.ax.prevFont; S.ax = {...AX_DEFAULT}; applySettings(); renderAx(); }; R.hidden ? go() : keepPlace(go); };
 // follow the device when its contrast, colour or motion settings change
 [AXMQ.contrast, AXMQ.forced, AXMQ.motion].forEach(m => { try{ m.addEventListener('change', () => applySettings(false)); }catch(e){} });
-$('#apOpen').onclick = () => { if($('#ap').hidden){ pushLayer('ap'); $('#ap').hidden = false; } renderAppearance(); $('#apClose').focus(); };
+$('#apOpen').onclick = () => { if(!$('#ap').hidden){ closeAp(); return; } pushLayer('ap'); $('#ap').hidden = false; renderAppearance(); $('#apClose').focus(); };
 $('#apClose').onclick = closeAp;
 $('#apReset').onclick = () => setHome({...HOME_DEFAULT});
 $('#apAccentC').addEventListener('input', e => setHome({accent:e.target.value}));
@@ -2804,7 +2804,7 @@ function closeReaderNow(){
   if(!R.hidden && page.childNodes.length) saveCur(); ready = false;
   stopComic(); stopPdfPages(); try{ pdfDoc?.destroy(); }catch(e){} pdfDoc = null; pdfLabels = null; pdfRot = 0; pdfTrim = null; thumbsReset(); railMenu(false); pdfSizes = null; pgTops = null; pgLine = 0;
   R.classList.remove('is-pdf','pdf-pages'); page.classList.remove('pdfmode','tint-light','tint-dark');
-  $('#rMode').hidden = true; $('#pdfGroup').hidden = true; findClose(); notesClear(); tocTab('toc'); $('#tabThumbs').hidden = true; $('#goPage').hidden = true; R.classList.remove('has-pages','rail-on'); $('#pdfRail').hidden = true; $('#railShow').hidden = true;
+  $('#rMode').hidden = true; $('#pdfGroup').hidden = true; findClose(); notesClear(); tocTab('toc'); $('#tabThumbs').hidden = true; $('#goPage').hidden = true; R.classList.remove('has-pages','rail-on'); $('#pdfRail').hidden = true; $('#railShow').hidden = true; $('#railPin').hidden = true;
   R.hidden = true; document.body.classList.remove('locked');
   page.replaceChildren(); urls.forEach(URL.revokeObjectURL); urls = []; cur = null;
   render();
@@ -3641,12 +3641,14 @@ const pageTotal = () => pdfDoc ? pdfDoc.numPages : comic ? comic.pages.length : 
 let railPinned = true;
 function railApply(){
   const on = R.classList.contains('has-pages'), pinned = railPinned;
-  $('#pdfRail').hidden = !(on && pinned); $('#railShow').hidden = !(on && !pinned);
+  $('#pdfRail').hidden = !(on && pinned); $('#railShow').hidden = !(on && !pinned); $('#railPin').hidden = !(on && pinned);
+  if(on && pinned) stage.style.setProperty('--railw', $('#pdfRail').offsetWidth + 'px');
   R.classList.toggle('rail-on', on && pinned);
   railUpdate();
 }
 function railUpdate(){
   if($('#pdfRail').hidden) return;
+  stage.style.setProperty('--railw', $('#pdfRail').offsetWidth + 'px');
   const n = currentPage(), total = pageTotal();
   if(document.activeElement !== $('#railPage')) $('#railPage').value = pageName(n);
   $('#railTotal').textContent = (pdfLabels && pageName(n) !== String(n)) ? `${n} / ${total}` : `/ ${total}`;

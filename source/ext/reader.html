@@ -107,8 +107,6 @@
     <button type="button" class="rtool" id="findClose" title="Close search (Esc)" aria-label="Close search"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   </form>
   <nav id="pdfRail" class="rail" hidden aria-label="Page tools">
-    <button class="rtool" id="railPin" title="Hide the page tools" aria-label="Hide the page tools"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
-    <div class="rail-sep"></div>
     <input id="railPage" class="rail-page" type="text" inputmode="text" spellcheck="false" aria-label="Page" title="Type a page and press Enter">
     <span id="railTotal" class="rail-total"></span>
     <button class="rtool" id="railFirst" title="First page" aria-label="First page"><svg viewBox="0 0 24 24"><path d="M6 5h12M7 15l5-5 5 5"/></svg></button>
@@ -136,6 +134,7 @@
     <button role="menuitem" id="mSave"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>Download original</button>
     <button role="menuitem" id="mInfo"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/></svg>Document details</button>
   </div>
+  <button id="railPin" class="rail-show rail-hide" hidden title="Hide the page tools" aria-label="Hide the page tools"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
   <button id="railShow" class="rail-show" hidden title="Show the page tools" aria-label="Show the page tools"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
     <div id="lens" class="lens circle" hidden>
       <div class="lens-view"><div class="lens-content page" aria-hidden="true"></div></div>
