@@ -1991,7 +1991,7 @@ async function ocrPage(w, doc, n){
   const r = await w.recognize(blob, {}, {blocks: true, text: false});
   const out = [];
   for(const b of r.data.blocks || []) for(const p of b.paragraphs || []) for(const l of p.lines || []){
-    const s = (l.text || '').replace(/\s+/g, ' ').trim(), bb = l.bbox;
+    const s = (l.text || '').replace(/\s+/g, ' ').trim().replace(/^[+«»*®]\s/, '• '), bb = l.bbox;   // bullets often come out as + or «
     if(!s || !bb || l.confidence < 45 || !/[\p{L}\p{N}]/u.test(s)) continue;   // skip guesses (often from pictures)
     const bl = l.baseline && l.baseline.x1 > l.baseline.x0 ? l.baseline : {x0: bb.x0, y0: bb.y1 - (bb.y1 - bb.y0) * 0.2, x1: bb.x1, y1: bb.y1 - (bb.y1 - bb.y0) * 0.2};
     const slope = (bl.y1 - bl.y0) / (bl.x1 - bl.x0), yb = x => bl.y0 + (x - bl.x0) * slope;
