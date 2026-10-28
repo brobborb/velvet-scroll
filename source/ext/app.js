@@ -2010,7 +2010,43 @@ function applyHome(){
   else if(cvd){ const dark = homeDark(), pal = homePalette(dark, dark ? cvd.dark : cvd.light, h.bg); for(const k of TOKENS) st.setProperty(k, pal[k]); }
   else if(h.mode === 'system' && !h.accent && !h.bg){ TOKENS.forEach(k => st.removeProperty(k)); }
   else { const pal = homePalette(homeDark(), h.accent, h.bg); for(const k of TOKENS) st.setProperty(k, pal[k]); }
+  faviconUpdate(hc, cvd, h);
   if(!$('#ap').hidden) renderAppearance();
+}
+/* the tab's icon in the library's colours: light themes paint the tile in the accent, dark themes use the page colour
+   with the reading band in the accent. The default light theme keeps the usual icon. */
+let favLink = document.querySelector('link[rel~="icon"]'); const favOrig = favLink && favLink.getAttribute('href');
+let favLast = '';
+// some browsers (Firefox, Safari) only notice a new icon when the link itself is replaced
+function favSet(href, type){ const l = document.createElement('link'); l.rel = 'icon'; if(type) l.type = type; l.href = href; favLink.replaceWith(l); favLink = l; }
+function faviconUpdate(hc, cvd, h){
+  if(!favLink) return;
+  const cs = getComputedStyle(document.documentElement), tok = k => cs.getPropertyValue(k).trim();
+  const dark = hc !== 'off' ? hc === 'dark' : homeDark(), accent = tok('--accent') || '#2c6a57', bg = tok('--bg') || (dark ? '#101715' : '#eef2f0');
+  const plain = hc === 'off' && !cvd && !h.accent && !dark;
+  const key = plain ? '' : [dark, accent, bg, hc].join('|');
+  if(key === favLast) return; favLast = key;
+  if(plain){ favSet(favOrig); return; }
+  try{
+    const N = 64, cv = document.createElement('canvas'); cv.width = cv.height = N; const c = cv.getContext('2d'), k = N / 128;
+    const rr = (x, y, w, hh, r, fill) => { c.beginPath(); c.roundRect(x * k, y * k, w * k, hh * k, r * k); c.fillStyle = fill; c.fill(); };
+    let tile, line, band, slot;
+    if(dark){
+      tile = C.contrast(bg, '#000000') < 1.6 ? bg : '#121a18';            // the page's own dark colour
+      if(C.contrast(tile, '#000000') < 1.15) tile = '#141a19';            // pure black would vanish on a dark tab bar
+      line = 'rgba(225,235,232,.82)'; band = accent; slot = C.contrast(accent, '#000') > 7 ? '#0b0f0e' : '#ffffff';
+      if(hc !== 'off'){ tile = '#000000'; line = '#ffffff'; band = '#ffd60a'; slot = '#000000'; }
+    } else {
+      tile = hc !== 'off' ? '#000000' : accent; line = hc !== 'off' ? '#ffffff' : 'rgba(255,255,255,.88)';
+      const hue = C.hsl(tile)[0];
+      band = hc !== 'off' ? '#ffd60a' : hue >= 25 && hue <= 70 ? '#f7f1e3' : '#f0c24b'; slot = hc !== 'off' ? '#000000' : '#1f1a0e';
+    }
+    rr(4, 4, 120, 120, 27, tile);
+    if(dark) { c.lineWidth = 2 * k; c.strokeStyle = 'rgba(255,255,255,.14)'; c.beginPath(); c.roundRect(5 * k, 5 * k, 118 * k, 118 * k, 26 * k); c.stroke(); }
+    [[25, 70], [39, 58], [84, 74], [98, 48]].forEach(([y, w]) => rr(27, y, w, 7, 3.5, line));
+    rr(17, 54, 94, 22, 8, band); rr(27, 61.5, 66, 7, 3.5, slot);
+    favSet(cv.toDataURL('image/png'), 'image/png');
+  }catch(e){}
 }
 try{ darkMQ.addEventListener ? darkMQ.addEventListener('change', applyHome) : darkMQ.addListener && darkMQ.addListener(applyHome); }catch(e){}
 new MutationObserver(applyHome).observe(document.documentElement, {attributes:true, attributeFilter:['data-theme']});
