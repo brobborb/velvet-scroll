@@ -7,7 +7,7 @@ src=open(S+'bookroll.html').read()
 style=re.search(r'<style>(.*?)</style>',src,re.S).group(1).strip()+'\n'
 script=re.findall(r'<script>(.*?)</script>',src,re.S)[-1].strip()+'\n'
 body=src[src.index('</style>')+8:src.rindex('<script>')].strip()
-DESC='EPUB and ebook reader that scrolls for you. Opens DRM-free EPUB, MOBI, AZW3, PDF, TXT, FB2 and comics, with read aloud.'
+DESC='An ebook reader that scrolls for you, with a reading guide, read aloud and your books kept private on your device.'
 
 def ext_files(E):
     open(E+'app.js','w').write(script); open(E+'reader.css','w').write(style)
