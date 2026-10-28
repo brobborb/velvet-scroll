@@ -80,6 +80,9 @@ main.wrap{padding-block:20px 48px;display:flex;flex-direction:column;gap:16px}
 .seg3 button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg)}
 .seg3 button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .dlist{display:flex;flex-direction:column}
+.dbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:flex-end;font-size:14px;color:var(--muted);padding:0 4px 8px}
+.dbar .btn{padding:6px 14px}
+#dDescSrc{margin:-6px 0 0}
 .drow{display:grid;grid-template-columns:84px minmax(0,1fr) auto;gap:6px 20px;align-items:start;padding:14px 12px;border-radius:10px;border-bottom:1px solid var(--line)}
 .drow:hover{background:color-mix(in srgb,var(--accent-soft) 55%,transparent)}
 .drow .cover{width:84px}
