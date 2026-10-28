@@ -23,6 +23,7 @@
     <button id="axOpen" class="btn">Accessibility</button>
     <button id="apOpen" class="btn">Appearance</button>
     <button id="bkOpen" class="btn">Backup</button>
+    <button id="urlOpen" class="btn" title="Add an ebook or PDF from a web address"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1"/></svg>Add from URL</button>
     <label class="btn primary" for="file">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
       Add books
@@ -443,6 +444,18 @@
     <div class="urlrow"><input id="artUrl" type="url" inputmode="url" placeholder="https://…" aria-label="Article web address" autocomplete="off"><button class="btn primary" id="artGo">Save</button></div>
     <p class="hint" id="artSt" role="status"></p>
     <p class="hint">On a page you’re reading, you can also save it with the Velvet Scroll button in the browser toolbar, or by right-clicking the page.</p>
+  </div>
+</div>
+
+<div id="urlDlg" class="modal" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="urlH">
+    <header class="sh-head"><h2 id="urlH">Add from a web address</h2><button class="btn" id="urlClose">Close</button></header>
+    <p class="hint">Paste a link to an ebook or PDF: EPUB, PDF, MOBI, AZW3, FB2, TXT or CBZ. Links to a book’s page on Project Gutenberg or arXiv work too, as do shared Dropbox, Google Drive and GitHub links. DRM-protected books can’t be added.</p>
+    <div class="urlrow"><input id="urlIn" type="url" inputmode="url" placeholder="https://…" aria-label="Web address of the book or PDF" autocomplete="off"><button class="btn primary" id="urlGo">Add</button></div>
+    <progress id="urlProg" class="urlprog" hidden></progress>
+    <p class="hint" id="urlSt" role="status" aria-live="polite"></p>
+    <div class="row" id="urlAct" style="flex-wrap:wrap;gap:8px"></div>
+    <p class="hint" id="urlExtHint">Many sites don’t let other websites download their files. If a link doesn’t work here, download the file in your browser and use Add books, or use the Velvet Scroll browser extension, which can download from any site you allow.</p>
   </div>
 </div>
 
