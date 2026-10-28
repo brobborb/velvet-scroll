@@ -1843,7 +1843,7 @@ function card(b){
   if(shelf) shelf.addEventListener('change', async ()=>{ b.shelf = shelf.value.trim(); b.upd = Date.now(); await dbPutMeta(b); render(); });
   return el('article',{class:'card'},
     el('button',{class:'cover', 'aria-label':`Read ${b.title}`, onclick:()=>openBook(b)}, coverEl(b)),
-    el('div',{}, el('h3',{text:b.title}), (b.author || b.year) ? el('p',{class:'au'}, b.author || '', b.author && b.year ? ' · ' : '', b.year ? el('span',{class:'yr', text:String(b.year)}) : null) : null),
+    el('div',{class:'meta'}, el('h3',{text:b.title}), (b.author || b.year) ? el('p',{class:'au'}, b.author || '', b.author && b.year ? ' · ' : '', b.year ? el('span',{class:'yr', text:String(b.year)}) : null) : null),
     el('div',{class:'prog'}, Object.assign(el('span'),{style:`width:${Math.round(p*100)}%`})),
     el('div',{class:'status'}, el('span',{text: st==='finished'?'Finished': st==='reading'?`${Math.round(p*100)}% read`:'Unread'}),
       b.sample ? el('span',{class:'pill',text:'Sample'}) : b.needsCheck ? el('button',{class:'pill check', text:'Check details', onclick:()=>openDetails(b)}) : null),
