@@ -3603,7 +3603,7 @@ $('#seek').addEventListener('change', ()=>{ seeking = false; if(tts.on) requestA
 // window resizes are handled by the reading area's ResizeObserver above
 
 /* panels */
-function hidePanels(){ $('#tocPanel').hidden = true; $('#setPanel').hidden = true; }
+function hidePanels(){ $('#tocPanel').hidden = true; $('#setPanel').hidden = true; railPanelMarks(); }
 function closePanels(){ if(layers.includes('panel')) popLayer('panel'); else hidePanels(); }
 function togglePanel(id, other){
   if(!$(id).hidden){ closePanels(); return; }
@@ -3676,7 +3676,8 @@ $('#modeRelax').onclick = () => { S.mode = 'relax'; applySettings(); modeShow();
 modeShow();
 $('#railFirst').onclick = () => goToPage(1);
 $('#railLast').onclick = () => goToPage(pageTotal());
-$('#railToc').onclick = () => $('#rToc').click();
+$('#railToc').onclick = () => { const showingToc = !$('#tocPanel').hidden && $('#thumbs').hidden && $('#notesBox').hidden;
+  if(showingToc){ closePanels(); return; } if($('#tocPanel').hidden) $('#rToc').click(); tocTab('toc'); railPanelMarks(); };
 $('#railPage').addEventListener('keydown', e => {
   if(e.key === 'Escape'){ e.target.value = pageName(currentPage()); e.target.blur(); return; }
   if(e.key !== 'Enter') return;
@@ -3728,6 +3729,7 @@ function tocTab(t){
   $('#toc').hidden = t !== 'toc'; $('#thumbs').hidden = t !== 'thumbs'; $('#notesBox').hidden = t !== 'notes';
   if(t === 'thumbs') thumbsBuild();
   if(t === 'notes') notesList();
+  railPanelMarks();
 }
 $('#tocTabs').addEventListener('click', e => { const b = e.target.closest('[data-t]'); if(b) tocTab(b.dataset.t); });
 function thumbsReset(){ thumbIO?.disconnect(); thumbIO = null; $('#thumbs').replaceChildren(); }
@@ -3764,7 +3766,13 @@ $('#thumbs').addEventListener('click', e => {
   goToPage(+b.dataset.n); thumbsMark(+b.dataset.n);
   if(innerWidth < 760) closePanels();
 });
-$('#railThumbs').onclick = () => { if($('#tocPanel').hidden) $('#rToc').click(); tocTab('thumbs'); };
+// the thumbnails and contents buttons open their view, and close it again on a second click
+const thumbsShowing = () => !$('#tocPanel').hidden && !$('#thumbs').hidden;
+$('#railThumbs').onclick = () => { if(thumbsShowing()){ closePanels(); return; } if($('#tocPanel').hidden) $('#rToc').click(); tocTab('thumbs'); railPanelMarks(); };
+function railPanelMarks(){
+  $('#railThumbs').setAttribute('aria-pressed', String(thumbsShowing()));
+  $('#railToc').setAttribute('aria-pressed', String(!$('#tocPanel').hidden && $('#thumbs').hidden && $('#notesBox').hidden));
+}
 
 /* trim white margins: one crop for the whole PDF, found from a sample of its pages */
 let pdfTrim = null;
@@ -3911,7 +3919,7 @@ document.querySelector('.r-title').addEventListener('click', () => {
   if($('#tocPanel').hidden) $('#rToc').click();
   setTimeout(() => { $('#goPageIn').focus(); $('#goPageIn').select(); }, 50);
 });
-$('#rToc').onclick = ()=>{ togglePanel('#tocPanel', '#setPanel'); const c = $('#toc .cur'); if(!$('#tocPanel').hidden && c) c.scrollIntoView({block:'center'}); };
+$('#rToc').onclick = ()=>{ togglePanel('#tocPanel', '#setPanel'); const c = $('#toc .cur'); if(!$('#tocPanel').hidden && c) c.scrollIntoView({block:'center'}); railPanelMarks(); };
 $('#rSet').onclick = ()=>{ togglePanel('#setPanel', '#tocPanel'); };
 document.querySelectorAll('[data-close]').forEach(b=>b.onclick=closePanels);
 $('#rBack').onclick = closeReader;
