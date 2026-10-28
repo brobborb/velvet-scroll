@@ -988,7 +988,7 @@ async function openDetails(b){
   $('#dResults').replaceChildren(); $('#dStatus').textContent = '';
   $('#dSearch').hidden = !IS_EXT;
   $('#dHint').textContent = IS_EXT ? 'Searches using the title and author above. Only those words are sent. Covers from Wikimedia Commons and Project Gutenberg are openly licensed.'
-    : 'Looking up details needs the Velvet Scroll browser extension, because this page can’t connect to other websites. You can still edit the details and choose the classic leather cover here.';
+    : 'Looking up details online needs the Velvet Scroll browser extension.';
   renderCoverChoices(); $('#dlg').hidden = false; $('#dTitle').focus();
   if(!b.isbn){ const t = await openingText(b), found = findIsbn(t);
     if(found && dlg && dlg.b === b && !$('#dIsbn').value){ $('#dIsbn').value = found; isbnMsg(); $('#dStatus').textContent = 'ISBN found in the book.'; } }
@@ -1050,6 +1050,17 @@ $('#dSave').onclick = async () => {
 };
 
 /* ---------- Saving web articles (extension) ---------- */
+/* the Add books menu */
+function addMenu(open){ const m = $('#addMenu'), b = $('#addMore'); if(open === undefined) open = m.hidden; m.hidden = !open; b.setAttribute('aria-expanded', String(open));
+  if(open) m.querySelector('button:not([hidden])').focus(); }
+$('#addMore').hidden = !(IS_EXT && typeof velvetArticle === 'function');   // the website has one way to add, so no menu
+$('#addMore').onclick = e => { e.stopPropagation(); addMenu(); };
+document.addEventListener('pointerdown', e => { if(!$('#addMenu').hidden && !e.target.closest('#addMenu, #addMore')) addMenu(false); });
+$('#addMenu').addEventListener('keydown', e => { const items = [...$('#addMenu').querySelectorAll('button:not([hidden])')], i = items.indexOf(document.activeElement);
+  if(e.key === 'Escape'){ e.stopPropagation(); addMenu(false); $('#addMore').focus(); }
+  else if(e.key === 'ArrowDown' || e.key === 'ArrowUp'){ e.preventDefault(); items[(i + (e.key === 'ArrowDown' ? 1 : items.length - 1)) % items.length].focus(); } });
+$('#addMenu').addEventListener('click', e => { if(e.target.closest('button')) addMenu(false); });
+$('#addFilesItem').onclick = () => $('#file').click();
 const CAN_SAVE_ARTICLES = IS_EXT && typeof velvetArticle === 'function' && typeof velvetStoreArticle === 'function';
 $('#artOpen').hidden = !CAN_SAVE_ARTICLES;
 function closeArtNow(){ $('#art').hidden = true; }
@@ -1762,21 +1773,87 @@ function render(){
   if(!books.length){ notice.hidden=false; notice.textContent='Your library is empty. Open the sample to try the scroller, then add your own ebooks or comics.'; }
   else if(!list.length){ notice.hidden=false; notice.textContent = view === 'articles' ? 'No saved articles match this search or filter.' : 'No books match this search or filter.'; }
   else notice.hidden=true;
-  $('#grid').replaceChildren(...list.map(card));
-  const lastB = books.filter(b=>{ const s=status(b); return s==='reading'; }).sort((a,b)=>(progress[b.id]?.t||0)-(progress[a.id]?.t||0))[0];
+  libLayoutShow();
+  const G = $('#grid');
+  if(libLayout === 'details'){ G.className = 'dlist'; G.replaceChildren(...list.map(detailRow)); }
+  else if(libLayout === 'table'){ G.className = 'tview'; G.replaceChildren(list.length ? libTable(list) : ''); }
+  else { G.className = 'grid' + (libSize < 140 ? ' compact' : ''); G.replaceChildren(...list.map(card)); }
+  const reading = books.filter(b=>{ const s=status(b); return s==='reading'; }).sort((a,b)=>(progress[b.id]?.t||0)-(progress[a.id]?.t||0)), lastB = reading[0];
   const cb = $('#cont'); cb.hidden = !lastB;
-  if(lastB){ cb.textContent = `Continue “${lastB.title.length>28 ? lastB.title.slice(0,27)+'…' : lastB.title}” · ${Math.round(progress[lastB.id].p*100)}%`; cb.onclick = ()=>openBook(lastB); }
+  if(lastB){ const pc = Math.round(progress[lastB.id].p*100), when = progress[lastB.id].t ? ago(progress[lastB.id].t) : '';
+    cb.replaceChildren(
+      el('button', {class:'cover', 'aria-label':`Continue ${lastB.title}`, onclick:() => openBook(lastB)}, coverEl(lastB)),
+      el('div', {class:'rinfo'}, el('span', {class:'rk', text:'Continue reading'}), el('span', {class:'rt', text:lastB.title, title:lastB.title}),
+        lastB.author ? el('span', {class:'ra', text:lastB.author}) : null,
+        el('div', {class:'rp'}, el('div', {class:'prog'}, Object.assign(el('span'), {style:`width:${pc}%`})), el('span', {text:`${pc}%` + (when ? ` · ${when}` : '')}))),
+      reading.length > 1 ? el('div', {class:'more', 'aria-label':'Also reading'}, ...reading.slice(1, 4).map(b => el('button', {text:b.title, title:`Continue ${b.title} (${Math.round(progress[b.id].p*100)}%)`, onclick:() => openBook(b)}))) : null,
+      el('button', {class:'btn primary', text:'Continue', onclick:() => openBook(lastB)})); }
+}
+function rmButton(b){
+  const rm = !b.sample && el('button',{class:'ghost', text:'Remove', 'aria-label':`Remove ${b.title}`});
+  if(rm){ let t; rm.onclick = async ()=>{ if(rm.classList.contains('confirm')){ clearTimeout(t); await dbDel(b.id); books = books.filter(x=>x.id!==b.id); delete progress[b.id]; LS.set('progress',progress); render(); toast(`Removed “${b.title}”.`); }
+    else { rm.classList.add('confirm'); rm.textContent='Confirm'; t=setTimeout(()=>{ rm.classList.remove('confirm'); rm.textContent='Remove'; }, 3000); } }; }
+  return rm;
+}
+function shelfInput(b){
+  const shelf = !b.sample && el('input',{class:'shelf', list:'shelfList', placeholder:'Add to shelf', 'aria-label':`Shelf for ${b.title}`, value:b.shelf||''});
+  if(shelf) shelf.addEventListener('change', async ()=>{ b.shelf = shelf.value.trim(); b.upd = Date.now(); await dbPutMeta(b); render(); });
+  return shelf;
+}
+/* ---------- library layouts: Grid (with cover size), Details and Table ---------- */
+let libLayout = LS.get('libLayout', 'grid'), libSize = LS.get('libSize', 158);
+function libLayoutShow(){
+  document.querySelectorAll('.seg3 button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === libLayout)));
+  const r = $('#libSize'); r.hidden = libLayout !== 'grid'; r.value = libSize;
+  document.documentElement.style.setProperty('--cardw', libSize + 'px');
+}
+document.querySelectorAll('.seg3 button').forEach(btn => btn.onclick = () => { libLayout = btn.dataset.v; LS.set('libLayout', libLayout); render(); });
+$('#libSize').addEventListener('input', e => { libSize = +e.target.value; document.documentElement.style.setProperty('--cardw', libSize + 'px'); $('#grid').classList.toggle('compact', libLayout === 'grid' && libSize < 140); });
+$('#libSize').addEventListener('change', e => LS.set('libSize', +e.target.value));
+const ago = t => { if(!t) return ''; const d = (Date.now() - t) / 864e5, rtf = new Intl.RelativeTimeFormat(undefined, {numeric:'auto'});
+  return d < 1 ? rtf.format(0, 'day') : d < 30 ? rtf.format(-Math.floor(d), 'day') : d < 365 ? rtf.format(-Math.floor(d / 30.4), 'month') : rtf.format(-Math.floor(d / 365), 'year'); };
+const progText = b => { const st = status(b), p = progress[b.id]?.p || 0; return st === 'finished' ? 'Finished' : st === 'reading' ? `${Math.round(p*100)}% read` : 'Unread'; };
+const fmtName = b => b.kind === 'article' ? 'Article' : FMT_LABEL[fmtOf(b)] || '';
+function detailRow(b){
+  const p = progress[b.id]?.p || 0;
+  const meta = el('p', {class:'dmeta'}, ...[b.kind === 'article' ? (b.site || b.author) : b.author, b.year, fmtName(b), progText(b), b.shelf ? 'Shelf: ' + b.shelf : ''].filter(Boolean).map(t => el('span', {text:String(t)})));
+  const rm = rmButton(b), shelf = shelfInput(b);
+  return el('article', {class:'drow', 'data-id':b.id},
+    el('button', {class:'cover', 'aria-label':`Read ${b.title}`, onclick:() => openBook(b)}, coverEl(b)),
+    el('div', {class:'dmain'}, el('h3', {}, el('button', {class:'linkbtn', text:b.title, onclick:() => openBook(b)})), meta,
+      p > 0.005 && p < 0.985 ? el('div', {class:'prog'}, Object.assign(el('span'), {style:`width:${Math.round(p*100)}%`})) : null),
+    el('div', {class:'dact'}, b.needsCheck ? el('button', {class:'pill check', text:'Check details', onclick:() => openDetails(b)}) : null,
+      shelf || null, rm ? el('button', {class:'ghost det', text:'Details', onclick:() => openDetails(b)}) : null, rm || null));
+}
+const TCOLS = [['Title', 'title', ''], ['Author', 'author', 'c-au'], ['Year', 'year', ''], ['Format', '', 'c-fmt'], ['Progress', 'recent', ''], ['Shelf', '', 'c-shelf'], ['Added', 'added', 'c-added']];
+function libTable(list){
+  const sortv = $('#sort').value;
+  const head = el('tr', {}, ...TCOLS.map(([label, key, cls]) => { const th = el('th', {class:cls, scope:'col'});
+      if(key){ if(sortv === key) th.setAttribute('aria-sort', key === 'title' || key === 'author' || key === 'year' ? 'ascending' : 'descending');
+        th.append(el('button', {text:label, title: key === 'recent' ? 'Sort by recently read' : 'Sort by ' + label.toLowerCase(), onclick:() => { $('#sort').value = key; $('#sort').dispatchEvent(new Event('change')); }})); }
+      else th.append(el('span', {text:label}));
+      return th; }), el('th', {class:'ta'}, el('span', {class:'vh', text:'Actions'})));
+  const rows = list.map(b => { const p = progress[b.id]?.p || 0, rm = rmButton(b);
+    return el('tr', {'data-id':b.id},
+      el('td', {class:'c-ti'}, el('button', {class:'linkbtn tt', text:b.title, title:'Read', onclick:() => openBook(b)}),
+        el('div', {class:'tsub mut', text:[b.kind === 'article' ? (b.site || b.author) : b.author, fmtName(b)].filter(Boolean).join(' · ')}),
+        rm ? el('div', {class:'tsub'}, el('button', {class:'ghost det', text:'Details', onclick:() => openDetails(b)}), rmButton(b)) : ''),
+      el('td', {class:'c-au mut', text: b.kind === 'article' ? (b.site || b.author || '') : (b.author || '')}),
+      el('td', {class:'yr mut', text: b.year ? String(b.year) : ''}),
+      el('td', {class:'c-fmt mut', text: fmtName(b)}),
+      el('td', {}, el('div', {class:'tp'}, el('div', {class:'prog'}, Object.assign(el('span'), {style:`width:${Math.round(p*100)}%`})), el('span', {class:'mut', text:progText(b)}))),
+      el('td', {class:'c-shelf mut', text:b.shelf || ''}),
+      el('td', {class:'c-added mut num', text: b.added ? ago(b.added) : ''}),
+      el('td', {class:'ta'}, rm ? el('button', {class:'ghost det', text:'Details', onclick:() => openDetails(b)}) : '', rm || ''));
+  });
+  return el('div', {class:'twrap'}, el('table', {class:'ltable'}, el('thead', {}, head), el('tbody', {}, ...rows)));
 }
 function card(b){
   const p = progress[b.id]?.p || 0, st = status(b);
-  const rm = !b.sample && el('button',{class:'ghost', text:'Remove'});
-  if(rm){ let t; rm.onclick = async ()=>{ if(rm.classList.contains('confirm')){ clearTimeout(t); await dbDel(b.id); books = books.filter(x=>x.id!==b.id); delete progress[b.id]; LS.set('progress',progress); render(); toast(`Removed “${b.title}”.`); }
-    else { rm.classList.add('confirm'); rm.textContent='Confirm'; t=setTimeout(()=>{ rm.classList.remove('confirm'); rm.textContent='Remove'; }, 3000); } }; }
-  const shelf = !b.sample && el('input',{class:'shelf', list:'shelfList', placeholder:'Add to shelf', 'aria-label':`Shelf for ${b.title}`, value:b.shelf||''});
-  if(shelf) shelf.addEventListener('change', async ()=>{ b.shelf = shelf.value.trim(); b.upd = Date.now(); await dbPutMeta(b); render(); });
+  const rm = rmButton(b), shelf = shelfInput(b);
   return el('article',{class:'card'},
     el('button',{class:'cover', 'aria-label':`Read ${b.title}`, onclick:()=>openBook(b)}, coverEl(b)),
-    el('div',{}, el('h3',{text:b.title}), (b.author || b.year) ? el('p',{class:'au'}, b.author || '', b.author && b.year ? ' · ' : '', b.year ? el('span',{class:'yr', text:String(b.year)}) : null) : null),
+    el('div',{class:'meta'}, el('h3',{text:b.title}), (b.author || b.year) ? el('p',{class:'au'}, b.author || '', b.author && b.year ? ' · ' : '', b.year ? el('span',{class:'yr', text:String(b.year)}) : null) : null),
     el('div',{class:'prog'}, Object.assign(el('span'),{style:`width:${Math.round(p*100)}%`})),
     el('div',{class:'status'}, el('span',{text: st==='finished'?'Finished': st==='reading'?`${Math.round(p*100)}% read`:'Unread'}),
       b.sample ? el('span',{class:'pill',text:'Sample'}) : b.needsCheck ? el('button',{class:'pill check', text:'Check details', onclick:()=>openDetails(b)}) : null),
