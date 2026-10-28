@@ -545,9 +545,8 @@ const PDF = (() => {
     const i = (md && md.info) || {};
     let title = cleanTitle(i.Title), author = (i.Author||'').trim();
     let desc = typeof i.Subject === 'string' ? i.Subject : '';
-    const junk = d => !d || d.trim().length < 40 || !/\s/.test(d.trim()) || /^\(?(unspecified|none|untitled|anonymous|n\/a)\)?$/i.test(d.trim());   // a subject is often a keyword or a tool's placeholder
-    try{ const x = md && md.metadata; if(x){ if(!title) title = cleanTitle(x.get('dc:title')); if(!author) author = (x.get('dc:creator')||'').toString().trim(); if(junk(desc)) desc = (x.get('dc:description')||'').toString(); } }catch(e){}
-    return {title, author, desc: junk(desc) ? '' : desc};
+    try{ const x = md && md.metadata; if(x){ if(!title) title = cleanTitle(x.get('dc:title')); if(!author) author = (x.get('dc:creator')||'').toString().trim(); if(!desc) desc = (x.get('dc:description')||'').toString(); } }catch(e){}
+    return {title, author, desc};
   }
   async function outline(pdf){
     const out = [];
@@ -768,7 +767,7 @@ const LOOKUP = (() => {
     const j = await getJSON('https://openlibrary.org/search.json?' + p, signal);
     return (j.docs||[]).map(d => ({source:'Open Library', title:d.title, author:(d.author_name||[]).slice(0,3).join(' & '), year:d.first_publish_year || null,
       thumb: d.cover_i ? `https://covers.openlibrary.org/b/id/${d.cover_i}-M.jpg` : null, cover: d.cover_i ? `https://covers.openlibrary.org/b/id/${d.cover_i}-L.jpg` : null,
-      openCover:false, link:'https://openlibrary.org' + d.key, olKey:d.key}));
+      openCover:false, link:'https://openlibrary.org' + d.key}));
   }
   async function gutenberg(q, signal){
     const j = await getJSON('https://gutendex.com/books/?search=' + encodeURIComponent([q.title, surname(q.author)].filter(Boolean).join(' ')), signal);
@@ -783,16 +782,16 @@ const LOOKUP = (() => {
     const sn = surname(q.author);
     const hits = (s.search||[]).filter(h => WORK.test(h.description||'') && (!sn || fold(h.description).includes(sn))).slice(0,3);
     if(!hits.length) return [];
-    const e = await getJSON(base + 'action=wbgetentities&props=claims|labels|sitelinks&sitefilter=enwiki&languages=en&ids=' + hits.map(h => h.id).join('|'), signal);
+    const e = await getJSON(base + 'action=wbgetentities&props=claims|labels&languages=en&ids=' + hits.map(h => h.id).join('|'), signal);
     return hits.map(h => {
-      const ent = (e.entities && e.entities[h.id]) || {}, c = ent.claims || {}, wiki = ent.sitelinks && ent.sitelinks.enwiki && ent.sitelinks.enwiki.title;
+      const c = (e.entities && e.entities[h.id] && e.entities[h.id].claims) || {};
       const val = p => c[p] && c[p][0] && c[p][0].mainsnak && c[p][0].mainsnak.datavalue && c[p][0].mainsnak.datavalue.value;
       const time = val('P577'), file = val('P18');
       const year = time && time.time ? parseInt(time.time.slice(1,5), 10) * (time.time[0]==='-' ? -1 : 1) : null;
       const by = /\bby\s+(.+)$/i.exec(h.description||'');
       const fp = file ? 'https://commons.wikimedia.org/wiki/Special:FilePath/' + encodeURIComponent(String(file).replace(/ /g,'_')) : null;
       return {source:'Wikidata', title:h.label, author: by ? by[1] : '', year: year || null,
-        thumb: fp && fp + '?width=240', cover: fp && fp + '?width=700', openCover:!!fp, link:'https://www.wikidata.org/wiki/' + h.id, wiki: wiki || null};
+        thumb: fp && fp + '?width=240', cover: fp && fp + '?width=700', openCover:!!fp, link:'https://www.wikidata.org/wiki/' + h.id};
     });
   }
 
@@ -829,27 +828,9 @@ const LOOKUP = (() => {
     const years = ok.map(c => c.year).filter(y => y && y > 0);
     const cover = ok.find(c => c.openCover && c.source === 'Wikidata') || ok.find(c => c.openCover) || null;
     const main = ok.find(c => c.isbnMatch) || ok.find(c => c.source === 'Open Library') || ok[0];
-    return {title:main.title, author:main.author || ok.find(c => c.author)?.author || '', year: years.length ? Math.min(...years) : null, cover,
-      olKey: (ok.find(c => c.olKey) || {}).olKey || null, wiki: (ok.find(c => c.wiki) || {}).wiki || null};
+    return {title:main.title, author:main.author || ok.find(c => c.author)?.author || '', year: years.length ? Math.min(...years) : null, cover};
   }
-  // a description for a matched book: Open Library's (usually the publisher's blurb), else the opening of its Wikipedia article
-  const WIKI = ['https://en.wikipedia.org/*'];
-  function olClean(t){
-    t = String(t || '').split(/\n\s*-{3,}|\n\s*\*\*(?:Also|Contains|Source)|\(\[source\]/i)[0];
-    return t.replace(/^\s*\[\d+\]:\s*\S+.*$/gm, '').replace(/\[([^\]]+)\]\((?:[^)]+)\)/g, '$1').replace(/\[([^\]]+)\]\[\d+\]/g, '$1').replace(/[*_]{1,2}([^*_]+)[*_]{1,2}/g, '$1').trim();
-  }
-  async function describe(m, canWiki, signal){
-    if(m.olKey && /^\/works\//.test(m.olKey)){
-      try{ const w = await getJSON('https://openlibrary.org' + m.olKey + '.json', signal), d = olClean(typeof w.description === 'string' ? w.description : w.description && w.description.value);
-        if(d.length >= 60) return {text:d, src:'Open Library', url:'https://openlibrary.org' + m.olKey}; }catch(e){}
-    }
-    if(m.wiki && canWiki){
-      try{ const j = await getJSON('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(m.wiki.replace(/ /g, '_')), signal);
-        if(j.type !== 'disambiguation' && j.extract && j.extract.length >= 60) return {text:j.extract, src:'Wikipedia', url:(j.content_urls && j.content_urls.desktop && j.content_urls.desktop.page) || ''}; }catch(e){}
-    }
-    return null;
-  }
-  return {HOSTS, WIKI, guessFromText, weakTitle, search, best, describe, titleScore, authorMatch, surname};
+  return {HOSTS, guessFromText, weakTitle, search, best, titleScore, authorMatch, surname};
 })();
 
 // Chrome names its extension API "chrome"; Firefox calls it "browser". Use one name for both.
@@ -889,11 +870,9 @@ async function openingTextOf(buf){
 }
 async function grantLookup(){
   if(!IS_EXT) return false;
-  const origins = [...LOOKUP.HOSTS, ...LOOKUP.WIKI];
-  try{ return await browser.permissions.request({origins, data_collection:['searchTerms']}); }
-  catch(e){ try{ return await browser.permissions.request({origins}); }catch(_){ return false; } }
+  try{ return await browser.permissions.request({origins:LOOKUP.HOSTS, data_collection:['searchTerms']}); }
+  catch(e){ try{ return await browser.permissions.request({origins:LOOKUP.HOSTS}); }catch(_){ return false; } }
 }
-async function hasWiki(){ if(!IS_EXT) return false; try{ return await browser.permissions.contains({origins:LOOKUP.WIKI}); }catch(e){ return false; } }
 async function hasLookup(){ if(!IS_EXT) return false; try{ return await browser.permissions.contains({origins:LOOKUP.HOSTS}); }catch(e){ return false; } }
 async function fetchCover(url){
   try{ const r = await fetch(url, {credentials:'omit'}); if(!r.ok) return null; const bl = await r.blob();
@@ -918,7 +897,6 @@ async function autoLookup(list, onEach){
       let got = false;
       if(noRealCover && best.cover){ const img = await fetchCover(best.cover.cover); if(img){ b.coverBuf = img.buf; b.coverType = img.type; b.coverSrc = 'online'; got = true; } }
       if(noRealCover && !got && b.coverSrc === 'page'){ b.prevSrc = 'page'; b.coverSrc = 'classic'; }
-      if(!b.desc){ const d = await LOOKUP.describe(best, await hasWiki()).catch(() => null); if(d){ b.desc = cleanDesc(d.text); b.descSrc = d.src; b.descUrl = d.url; } }
       b.needsCheck = false; upd++;
     } else {
       if(q.title && LOOKUP.weakTitle(b.title, b.file)) b.title = q.title;
@@ -1053,10 +1031,7 @@ function renderResults(){
   $('#dResults').replaceChildren(...dlg.results.map(r => {
     const use = el('button', {class:'btn', text:'Use'});
     use.onclick = () => { $('#dTitle').value = r.title || $('#dTitle').value; if(r.author) $('#dAuthor').value = r.author; if(r.year) $('#dYear').value = r.year;
-      if(r.thumb) dlg.choice = {kind:'online', url:r.cover, thumb:r.thumb}; renderCoverChoices(); $('#dStatus').textContent = 'Details filled in. Choose Save to keep them.';
-      if(!$('#dDesc').value.trim() && (r.olKey || r.wiki)){ const b0 = dlg.b;
-        hasWiki().then(w => LOOKUP.describe(r, w)).then(d => { if(d && dlg && dlg.b === b0 && !$('#dDesc').value.trim()){ $('#dDesc').value = cleanDesc(d.text); dlgDescSrc = d.src; dlgDescUrl = d.url; descSrcShow();
-          $('#dStatus').textContent = 'Details and description filled in. Choose Save to keep them.'; } }).catch(() => {}); } };
+      if(r.thumb) dlg.choice = {kind:'online', url:r.cover, thumb:r.thumb}; renderCoverChoices(); $('#dStatus').textContent = 'Details filled in. Choose Save to keep them.'; };
     return el('li', {},
       r.thumb ? el('img', {class:'rt', src:r.thumb, alt:'', loading:'lazy', referrerpolicy:'no-referrer', onerror:e => e.target.style.visibility = 'hidden'}) : el('span', {class:'rt'}),
       el('div', {}, el('strong', {text:r.title}), el('div', {class:'meta', text:[r.author, r.year].filter(Boolean).join(' · ')}),
@@ -1078,9 +1053,7 @@ async function openDetails(b){
   $('#dUrl').value = ''; $('#dUrlRow').hidden = IN_CLAUDE;
   pushLayer('details');
   dlg = {b, results:[], custom:null, choice: b.coverBuf && b.coverSrc !== 'classic' ? {kind:'own'} : {kind:'classic'}};
-  dModesSet(b.vis || ''); $('#dDesc').value = bookDesc(b); dlgDescSrc = b.kind === 'article' ? 'article' : b.descSrc || ''; dlgDescUrl = b.descUrl || ''; descSrcShow();
-  if(b.desc === undefined && !b.sample && b.kind !== 'article') dbGetFile(b.id).then(buf => buf && readMeta(buf, b.file, true)).then(m => { const d = cleanDesc(m && m.desc); b.desc = d;
-    if(d && dlg && dlg.b === b && !$('#dDesc').value) $('#dDesc').value = d; dbPutMeta(b); }).catch(() => {});
+  dModesSet(b.vis || '');
   $('#dTitle').value = b.title; $('#dAuthor').value = b.author || ''; $('#dYear').value = b.year || ''; $('#dIsbn').value = b.isbn || ''; isbnMsg();
   $('#dResults').replaceChildren(); $('#dStatus').textContent = '';
   $('#dSearch').hidden = !IS_EXT;
@@ -1117,15 +1090,6 @@ function dModesHint(){ const v = dModes(); $('#dModesHint').textContent = !v ? '
   if(on && $(o).getAttribute('aria-pressed') !== 'true'){ $(o).setAttribute('aria-pressed', 'true'); }   // turning off the only one: show it in the other mode instead
   $(a).setAttribute('aria-pressed', String(!on)); dModesHint();
 });
-let dlgDescSrc = '', dlgDescUrl = '';
-function descSrcShow(){
-  const m = $('#dDescSrc'), v = $('#dDesc').value.trim(), s = dlgDescSrc;
-  if(!v || !s || s === 'you' || s === 'article'){ m.replaceChildren(); return; }
-  const label = {book:'From the book’s own details.', doc:'From the document’s summary or overview.'}[s];
-  if(label){ m.textContent = label; return; }
-  m.replaceChildren('From ', dlgDescUrl ? el('a', {href:dlgDescUrl, target:'_blank', rel:'noopener', text:s}) : s, s === 'Wikipedia' ? ' (CC BY-SA licence).' : '.');
-}
-$('#dDesc').addEventListener('input', () => { dlgDescSrc = 'you'; descSrcShow(); });
 function closeDetailsNow(){ $('#dlg').hidden = true; dlg = null; }
 function closeDetails(){ popLayer('details'); }
 ['#dTitle','#dAuthor','#dYear'].forEach(id => $(id).addEventListener('input', () => { if(dlg && dlg.choice.kind === 'classic') renderCoverChoices(); }));
@@ -1164,8 +1128,6 @@ $('#dSave').onclick = async () => {
   const y = parseInt($('#dYear').value, 10); b.year = Number.isFinite(y) ? y : null;
   const vis = dModes();
   if(vis) b.vis = vis; else delete b.vis;
-  const dv = $('#dDesc').value.replace(/\s+/g, ' ').trim();
-  if(dv !== bookDesc(b) || (dlgDescSrc && dlgDescSrc !== b.descSrc)){ if(b.kind === 'article') b.excerpt = dv; else { b.desc = dv; b.descSrc = dlgDescSrc || 'you'; if(dlgDescUrl) b.descUrl = dlgDescUrl; else delete b.descUrl; } }
   b.needsCheck = false; b.looked = true; b.upd = Date.now();
   await dbPutMeta(b); closeDetails(); render();
   toast(vis && vis !== modeKey() ? `Details saved. This book now shows only in ${vis === 's' ? 'Study' : 'Relaxed'} mode, so it’s hidden here.` : 'Details saved.', vis && vis !== modeKey() ? 6000 : 3200);
@@ -1836,47 +1798,6 @@ function cleanDesc(t){
   s = s.replace(/\s+/g, ' ').trim();
   return s.length > 1500 ? s.slice(0, 1497).replace(/\s+\S*$/, '') + '…' : s;
 }
-/* a document's own summary: the opening of its Abstract, Summary, Overview or Introduction (reports, papers, course readings) */
-const isDocFmt = b => ['pdf', 'txt', 'html'].includes(fmtOf(b));
-async function docOpening(buf, id){   // a PDF's first pages as lines, using recognised text on scanned pages
-  const u8 = new Uint8Array(buf);
-  if(!PDF.isPdf(u8)) return openingTextOf(buf);
-  const pdf = await PDF.load(buf), ocr = id ? await ocrLoad(id) : new Map();
-  try{ let t = '';
-    for(let n = 1; n <= Math.min(5, pdf.numPages); n++){
-      const tc = await (await pdf.getPage(n)).getTextContent(), real = tc.items.map(x => (x.str || '') + (x.hasEOL ? '\n' : '')).join('');
-      t += (real.replace(/\s/g, '').length < 20 && ocr.get(n) ? ocr.get(n).map(l => l.s).join('\n') : real) + '\n';
-      if(t.length > 30000) break;
-    }
-    return t;
-  } finally { pdf.destroy(); }
-}
-function docAbstract(text){
-  const lines = String(text || '').replace(/\r/g, '').split('\n').map(l => l.replace(/\s+/g, ' ').trim()).filter(Boolean);
-  const H = /^(?:\d+(?:\.\d+)*\.?\s+)?(abstract|executive summary|summary|synopsis|overview|about this (?:book|report|document|paper|guide)|introduction|preface|foreword)\b\s*[:.\-–—]?\s*(.*)$/i;
-  const PRI = ['abstract', 'executive summary', 'summary', 'synopsis', 'overview', 'about this', 'introduction', 'preface', 'foreword'];
-  let best = null;
-  lines.forEach((l, i) => { const m = H.exec(l); if(!m) return; const rest = m[2];
-    if(!rest && l.length > 40) return;                                   // a sentence that merely starts with the word
-    if(rest && (rest.length < 40 || !/[.!?]/.test(rest))) return;       // "Introduction to Biology": a title, not a heading
-    if(!rest && /^[a-z]/.test(m[1])) return;                              // a lone lowercase word is a wrapped line, not a heading
-    const p = PRI.findIndex(k => m[1].toLowerCase().startsWith(k)); if(!best || p < best.p) best = {i, p, rest}; });
-  if(!best) return '';
-  const heading = l => l.length < 60 && !/[.!?,;:]$/.test(l) && /^[\p{Lu}\d]/u.test(l) && (l === l.toUpperCase() || l.split(' ').length <= 6);
-  let out = best.rest || '';
-  for(let i = best.i + 1; i < lines.length; i++){
-    const l = lines[i];
-    if(heading(l) && out.length > 0 && /[.!?:)”’"]$/.test(out)) break;
-    if(/^(page \d+|\d+)$/i.test(l)) continue;
-    out = /[A-Za-z]-$/.test(out) && /^[a-z]/.test(l) ? out.slice(0, -1) + l : (out ? out + ' ' : '') + l;
-    if(out.length >= 420 && /[.!?][”’"]?$/.test(l)) break;
-    if(out.length > 900) break;
-  }
-  const sents = out.match(/[^.!?]+[.!?]+[”’")]*\s*/g) || [];
-  let r = ''; for(const x of sents){ if(r.length + x.length > 700 && r.length >= 120) break; r += x; }
-  r = (r || out).trim();
-  return r.length >= 80 ? r : '';
-}
 async function readMeta(buf, name, noCover){
   const s = await sniff(buf, name);
   if(s.kind === 'txt'){ const t = decodeText(await bytesOf(s, buf)), g = LOOKUP.guessFromText(t);
@@ -2047,8 +1968,7 @@ function render(){
   else notice.hidden=true;
   libLayoutShow();
   const G = $('#grid');
-  if(libLayout === 'details'){ G.className = 'dlist'; const miss = missingDesc(list).filter(b => b.desc !== undefined).length;
-    G.replaceChildren(...(miss ? [el('div', {class:'dbar'}, el('span', {text:`${miss} ${miss === 1 ? 'book has' : 'books have'} no description.`}), el('button', {class:'btn', text:'Find descriptions', onclick:descFind}))] : []), ...list.map(detailRow)); descFill(list); }
+  if(libLayout === 'details'){ G.className = 'dlist'; G.replaceChildren(...list.map(detailRow)); }
   else if(libLayout === 'table'){ G.className = 'tview'; G.replaceChildren(list.length ? libTable(list) : ''); }
   else { G.className = 'grid' + (libSize < 140 ? ' compact' : ''); G.replaceChildren(...list.map(card)); }
   const reading = books.filter(b=>{ const s=status(b); return s==='reading' && inMode(b); }).sort((a,b)=>(progress[b.id]?.t||0)-(progress[a.id]?.t||0)), lastB = reading[0];
@@ -2087,16 +2007,14 @@ const ago = t => { if(!t) return ''; const d = (Date.now() - t) / 864e5, rtf = n
   return d < 1 ? rtf.format(0, 'day') : d < 30 ? rtf.format(-Math.floor(d), 'day') : d < 365 ? rtf.format(-Math.floor(d / 30.4), 'month') : rtf.format(-Math.floor(d / 365), 'year'); };
 const progText = b => { const st = status(b), p = progress[b.id]?.p || 0; return st === 'finished' ? 'Finished' : st === 'reading' ? `${Math.round(p*100)}% read` : 'Unread'; };
 const fmtName = b => b.kind === 'article' ? 'Article' : FMT_LABEL[fmtOf(b)] || '';
-function bookDesc(b){ return b.kind === 'article' ? (b.excerpt || '') : (b.desc || ''); }
 function detailRow(b){
-  const p = progress[b.id]?.p || 0, d = bookDesc(b);
+  const p = progress[b.id]?.p || 0;
   const meta = el('p', {class:'dmeta'}, ...[b.kind === 'article' ? (b.site || b.author) : b.author, b.year, fmtName(b), progText(b), b.shelf ? 'Shelf: ' + b.shelf : ''].filter(Boolean).map(t => el('span', {text:String(t)})));
-  const desc = el('p', {class:'ddesc' + (d ? '' : ' none'), text: d || (b.sample ? 'A short tour of Velvet Scroll.' : b.desc === undefined && b.kind !== 'article' ? '' : 'No description.')});
   const rm = rmButton(b), shelf = shelfInput(b);
   return el('article', {class:'drow', 'data-id':b.id},
     el('button', {class:'cover', 'aria-label':`Read ${b.title}`, onclick:() => openBook(b)}, coverEl(b)),
     el('div', {class:'dmain'}, el('h3', {}, el('button', {class:'linkbtn', text:b.title, onclick:() => openBook(b)})), meta,
-      p > 0.005 && p < 0.985 ? el('div', {class:'prog'}, Object.assign(el('span'), {style:`width:${Math.round(p*100)}%`})) : null, desc),
+      p > 0.005 && p < 0.985 ? el('div', {class:'prog'}, Object.assign(el('span'), {style:`width:${Math.round(p*100)}%`})) : null),
     el('div', {class:'dact'}, b.needsCheck ? el('button', {class:'pill check', text:'Check details', onclick:() => openDetails(b)}) : null,
       shelf || null, rm ? el('button', {class:'ghost det', text:'Details', onclick:() => openDetails(b)}) : null, rm || null));
 }
@@ -2122,55 +2040,6 @@ function libTable(list){
       el('td', {class:'ta'}, rm ? el('button', {class:'ghost det', text:'Details', onclick:() => openDetails(b)}) : '', rm || ''));
   });
   return el('div', {class:'twrap'}, el('table', {class:'ltable'}, el('thead', {}, head), el('tbody', {}, ...rows)));
-}
-// a description from the file itself: the book's own blurb, else (documents) its abstract or overview
-async function descLocal(b){
-  try{ const buf = await dbGetFile(b.id); if(!buf) return null;
-    if(b.desc === undefined){ const d = cleanDesc((await readMeta(buf, b.file, true)).desc); if(d) return {text:d, src:'book'}; }
-    if(isDocFmt(b)){ b.descTry = Date.now(); const d = docAbstract(await docOpening(buf, b.id)); if(d) return {text:d, src:'doc'}; }
-  }catch(e){}
-  return null;
-}
-// online: the matching book's description from Open Library or Wikipedia (extension, with permission)
-async function descOnline(b, canWiki){
-  const q = {title:b.title, author:b.author || '', isbn: isbnValid(b.isbn || '') ? isbnTo13(b.isbn) : ''};
-  let r = null; try{ r = await LOOKUP.search(q); }catch(e){}
-  if(!r) return {offline:true};
-  if(r.failed === r.total) return {offline:true};
-  const best = LOOKUP.best(r.results); if(!best) return null;
-  const d = await LOOKUP.describe(best, canWiki).catch(() => null);
-  return d ? {text:cleanDesc(d.text), src:d.src, url:d.url} : null;
-}
-const missingDesc = list => list.filter(b => !b.sample && b.kind !== 'article' && !b.desc);
-async function descFind(){
-  const list = missingDesc(books.filter(inMode)); if(!list.length){ toast('Every book here has a description.'); return; }
-  const online = IS_EXT && await grantLookup(), canWiki = online && await hasWiki();
-  let found = 0, i = 0, offline = false;
-  for(const b of list){
-    toast(`Finding descriptions: ${++i} of ${list.length}…`, 60000);
-    let d = await descLocal(b);
-    if(!d && online && !offline && fmtOf(b) !== 'comic'){ const o = await descOnline(b, canWiki); if(o && o.offline) offline = true; else d = o; await sleep(250); }
-    if(d){ b.desc = d.text; b.descSrc = d.src; if(d.url) b.descUrl = d.url; found++; } else if(b.desc === undefined) b.desc = '';
-    b.descTry = Date.now(); await dbPutMeta(b);
-  }
-  render();
-  const left = list.length - found;
-  toast((found ? `Found descriptions for ${found} of ${list.length} book${list.length === 1 ? '' : 's'}.` : 'No descriptions were found.') +
-    (offline ? ' Couldn’t reach the book databases, so only the files themselves were checked.' : left ? (IS_EXT ? ' You can write your own in Details.' : ' The Velvet Scroll extension can also look books up online. You can write your own in Details.') : ''), 8000);
-}
-// fill in descriptions for books added before they were kept, a few at a time while the Details layout is showing
-let descBusy = false;
-async function descFill(list){
-  if(descBusy) return; descBusy = true;
-  try{
-    for(const b of list.filter(b => !b.sample && b.kind !== 'article' && (b.desc === undefined || (!b.desc && !b.descTry && isDocFmt(b))))){
-      if(libLayout !== 'details' || !$('#reader').hidden) break;
-      const d = await descLocal(b); if(d){ b.desc = d.text; b.descSrc = d.src; } else if(b.desc === undefined) b.desc = '';
-      await dbPutMeta(b);
-      const row = document.querySelector(`.drow[data-id="${CSS.escape(b.id)}"] .ddesc`);
-      if(row){ row.textContent = d || 'No description.'; row.classList.toggle('none', !d); }
-    }
-  } finally { descBusy = false; }
 }
 function card(b){
   const p = progress[b.id]?.p || 0, st = status(b);
@@ -2213,8 +2082,6 @@ async function addFiles(files, opts){
       try{ const fm = fmtFromSniff((await sniff(buf, f.name)).kind, f.name); if(fm) m.fmt = fm; }catch(e){}
       if(m.fp && books.some(b => b.fp === m.fp)){ dup++; continue; }
       if(ep.coverBuf){ m.coverBuf = ep.coverBuf; m.coverType = ep.coverType; m.coverSrc = PDF.isPdf(new Uint8Array(buf)) ? 'page' : 'own'; }
-      if(m.desc) m.descSrc = 'book';
-      else if(isDocFmt(m)){ try{ const d = docAbstract(await docOpening(buf)); if(d){ m.desc = d; m.descSrc = 'doc'; } }catch(e){} m.descTry = Date.now(); }
       await dbPutFile(m.id, buf); await dbPutMeta(m); books.push(m); added++; fresh.push(m);
     }catch(e){ bad.push(f.name + (e.message==='drm' ? ' (DRM-protected)' : e.message==='backup' ? ' (that’s a Velvet Scroll backup: restore it with Backup)' : e.message==='password' ? ' (password-protected)' : e.message==='nopdf' ? ' (the PDF reader couldn’t load; check your connection)' : '')); }
   }
@@ -2409,8 +2276,6 @@ async function ocrRun(doc, todo){
   ocrEnd(run);
   pdfTextCache.delete(id);
   const mb = $('#rMode'); if(pdfMode === 'pages' && run.found){ mb.disabled = false; mb.title = ''; }
-  if(run.found && cur && cur.id === id && !cur.desc && isDocFmt(cur)){   // a scanned report's overview can now be its description
-    const b = cur; setTimeout(async () => { const d = await descLocal(b); if(d && !b.desc){ b.desc = d.text; b.descSrc = d.src; await dbPutMeta(b); } }, 1500); }
   const msgDone = !run.found ? 'No text was found on those pages.' : `Text recognised on ${run.found === 1 ? '1 page' : run.found + ' pages'}. You can now search, select and highlight it, or choose Reflow to read it as text or listen to it.`;
   if(pdfMode === 'text' && run.found){   // reading reflowed text: rebuild it with the new pages, keeping the place
     if(tts.on){ toast('Text recognised. It will appear in the reflowed text the next time you open this PDF.', 7000); return; }

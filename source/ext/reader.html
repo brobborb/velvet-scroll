@@ -52,7 +52,7 @@
       <input type="range" id="libSize" min="110" max="260" step="6" aria-label="Cover size" title="Cover size">
       <div class="seg3" role="group" aria-label="Library layout">
         <button type="button" data-v="grid" aria-label="Grid" title="Grid: covers"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.2"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.2"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.2"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.2"/></svg></button>
-        <button type="button" data-v="details" aria-label="Details" title="Details: covers with descriptions"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4" width="5" height="7" rx="1"/><rect x="3.5" y="13" width="5" height="7" rx="1"/><path d="M11.5 5.5h9M11.5 9h6M11.5 14.5h9M11.5 18h6"/></svg></button>
+        <button type="button" data-v="details" aria-label="List" title="List: one book per row"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4" width="5" height="7" rx="1"/><rect x="3.5" y="13" width="5" height="7" rx="1"/><path d="M11.5 5.5h9M11.5 9h6M11.5 14.5h9M11.5 18h6"/></svg></button>
         <button type="button" data-v="table" aria-label="Table" title="Table: titles in a list"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 10.5h16M4 15h16M4 19.5h16"/></svg></button>
       </div>
     </div>
@@ -344,8 +344,6 @@
         <p class="hint" id="dModesHint" aria-live="polite"></p>
       </div>
     </div>
-    <label class="ddescl" for="dDesc">Description<textarea id="dDesc" rows="2" placeholder="A short description of the book (optional)"></textarea></label>
-    <p class="hint" id="dDescSrc"></p>
     <div class="grp">
       <span class="lbl">Cover</span>
       <div class="covers" id="dCovers" role="group" aria-label="Choose a cover"></div>
