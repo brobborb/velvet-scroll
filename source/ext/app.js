@@ -3818,9 +3818,9 @@ $('#mTrim').onclick = () => { railMenu(false); setTrim(!S.trim); };
 $('#mPrint').onclick = () => { railMenu(false); pdfPrint(); };
 $('#mSave').onclick = () => { railMenu(false); pdfDownload(); };
 $('#mInfo').onclick = () => { railMenu(false); pdfInfo(); };
-$('#dPrint').onclick = () => pdfPrint();
-$('#dSave').onclick = () => pdfDownload();
-$('#dInfo').onclick = () => pdfInfo();
+$('#pdfPrintBtn').onclick = () => pdfPrint();
+$('#pdfSaveBtn').onclick = () => pdfDownload();
+$('#pdfInfoBtn').onclick = () => pdfInfo();
 /* download the original file */
 async function pdfDownload(){
   if(!cur) return;

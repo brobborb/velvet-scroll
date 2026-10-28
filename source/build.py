@@ -7,6 +7,10 @@ src=open(S+'bookroll.html').read()
 style=re.search(r'<style>(.*?)</style>',src,re.S).group(1).strip()+'\n'
 script=re.findall(r'<script>(.*?)</script>',src,re.S)[-1].strip()+'\n'
 body=src[src.index('</style>')+8:src.rindex('<script>')].strip()
+# every id on the page must be unique, or one button can quietly take over another's job
+from collections import Counter
+dups=[k for k,v in Counter(re.findall(r'\bid="([^"]+)"', body)).items() if v>1]
+if dups: sys.exit('Duplicate ids in bookroll.html: ' + ', '.join(dups))
 DESC='EPUB and ebook reader that scrolls for you. Opens DRM-free EPUB, MOBI, AZW3, PDF, TXT, FB2 and comics, with read aloud.'
 
 def ext_files(E):
