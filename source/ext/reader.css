@@ -33,6 +33,10 @@ button,input,select{font:inherit;color:inherit}
 .modeseg button{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:0;border-radius:999px;padding:0;width:36px;height:34px;background:transparent;color:var(--fg);font:inherit;font-weight:600;font-size:14px;cursor:pointer}
 .vh{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .modeseg{align-self:center}
+.chiprow{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.chiprow .chips{flex:1;min-width:0}
+.chiprow .modeseg{flex:none;align-items:center}
+.modelbl{font-size:13px;color:var(--muted);padding:0 4px 0 8px}
 .modeseg button svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .modeseg button:hover{background:var(--accent-soft)}
 .modeseg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg)}
