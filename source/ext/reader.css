@@ -349,6 +349,7 @@ html.ax-hc .rail,html.ax-hc .rail-show{border:2px solid var(--rfg)}
 .ctl output,.ctl .num{font-variant-numeric:tabular-nums;white-space:nowrap;opacity:.85;flex:none}
 .stepbtn{width:30px;height:30px;flex:none;border-radius:50%;border:1px solid color-mix(in srgb,var(--rfg) 22%,transparent);background:transparent;color:var(--rfg);cursor:pointer;font-weight:700}
 .rbtn.icon{padding:6px 9px;display:inline-grid;place-items:center}
+.rbtn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
 .rbtn .sht{display:none}
 .rbtn.icon svg{width:18px;height:18px}
 .ribtog{display:none;width:36px;height:36px;flex:none;margin-left:auto;border-radius:50%;border:1px solid color-mix(in srgb,var(--rfg) 22%,transparent);background:transparent;color:var(--rfg);place-items:center;cursor:pointer}

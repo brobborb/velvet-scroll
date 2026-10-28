@@ -2439,11 +2439,11 @@ function rangesIn(root, re){
 }
 function findOpen(){
   if(!cur || R.hidden) return;
-  $('#findBar').hidden = false; $('#findIn').focus(); $('#findIn').select();
+  $('#findBar').hidden = false; findMarks(); $('#findIn').focus(); $('#findIn').select();
   if(find.q) findPaint();
 }
 function findClose(){
-  $('#findBar').hidden = true; find.gen++; find.q = ''; find.re = null; find.total = 0; find.idx = -1; find.pages = null; find.ranges = [];
+  $('#findBar').hidden = true; findMarks(); find.gen++; find.q = ''; find.re = null; find.total = 0; find.idx = -1; find.pages = null; find.ranges = [];
   $('#findIn').value = ''; $('#findCount').value = '';
   try{ CSS.highlights.delete('vs-find'); CSS.highlights.delete('vs-find-cur'); }catch(e){}
 }
@@ -2515,7 +2515,8 @@ $('#findNext').onclick = () => findGo(find.idx + 1);
 $('#findPrev').onclick = () => findGo(find.idx - 1);
 $('#findClose').onclick = findClose;
 $('#findBtn').onclick = () => $('#findBar').hidden ? findOpen() : findClose();
-$('#railFind').onclick = () => findOpen();
+$('#railFind').onclick = () => $('#findBar').hidden ? findOpen() : findClose();
+function findMarks(){ const on = String(!$('#findBar').hidden); $('#railFind').setAttribute('aria-pressed', on); $('#findBtn').setAttribute('aria-pressed', on); }
 /* centre the title on the window when the buttons either side leave room; otherwise it fills the space between them */
 function titleCentre(){
   const t = document.querySelector('.r-title'), bar = t.parentElement; if(R.hidden) return;
