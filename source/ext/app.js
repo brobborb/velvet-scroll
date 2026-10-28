@@ -532,6 +532,7 @@ const PDF = (() => {
       throw new Error('invalid');
     }
     let perms = null; try{ perms = await pdf.getPermissions(); }catch(e){}
+    pdf.encrypted = perms != null;   // only encrypted PDFs carry permissions
     const F = L.PermissionFlag || {COPY:0x10, COPY_FOR_ACCESSIBILITY:0x200};
     pdf.textAllowed = !perms || perms.includes(F.COPY) || perms.includes(F.COPY_FOR_ACCESSIBILITY);
     pdf.printAllowed = !perms || perms.includes(F.PRINT ?? 0x04) || perms.includes(F.PRINT_HIGH_QUALITY ?? 0x800);
@@ -2878,7 +2879,7 @@ $('#noteText').addEventListener('keydown', e => { if(e.key === 'Enter' && (e.ctr
 function notesSorted(){ return [...bookNotes()].sort((a, b) => (a.pg || 0) - (b.pg || 0) || (a.f ?? 0) - (b.f ?? 0) || a.t - b.t); }
 function notesList(){
   const list = notesSorted(), ul = $('#notesList');
-  $('#notesEmpty').hidden = !!list.length; $('#notesExport').hidden = !list.length;
+  $('#notesEmpty').hidden = !!list.length; $('#notesExport').hidden = !list.length; $('#notesPdf').hidden = !list.length || !pdfDoc;
   ul.replaceChildren(...list.map(nt => {
     const b = el('button', {}, el('div', {class:'q', text:nt.q}), nt.n ? el('div', {class:'n', text:nt.n}) : null,
       el('div', {class:'m', text:(nt.pg ? `Page ${pageName(nt.pg)} · ` : '') + new Date(nt.t).toLocaleDateString(undefined, {day:'numeric', month:'short', year:'numeric'})}));
@@ -4019,8 +4020,92 @@ $('#mInfo').onclick = () => { railMenu(false); pdfInfo(); };
 $('#pdfPrintBtn').onclick = () => pdfPrint();
 $('#pdfSaveBtn').onclick = () => pdfDownload();
 $('#pdfInfoBtn').onclick = () => pdfInfo();
+$('#mSaveHl').onclick = () => { railMenu(false); pdfSaveHighlights(); };
+$('#pdfSaveHlBtn').onclick = () => pdfSaveHighlights();
+$('#notesPdf').onclick = () => pdfSaveHighlights();
 $('#mOcr').onclick = () => { railMenu(false); ocrStart(); };
 $('#pdfOcrBtn').onclick = () => ocrStart();
+/* ---------- Saving a copy of a PDF with its highlights and notes ----------
+   Each highlight becomes a standard PDF highlight annotation (with its note as the comment), drawn with its own appearance,
+   so it shows in Acrobat, Preview, Edge, Chrome, Firefox and other readers. The original in the library is unchanged. */
+const HL_RGB = {y:[1, 0.88, 0.25], g:[0.55, 0.88, 0.5], b:[0.55, 0.76, 1], p:[1, 0.62, 0.8]};
+function pdfLibLoad(){
+  if(globalThis.PDFLib) return Promise.resolve(globalThis.PDFLib);
+  return pdfLibLoad.p ||= new Promise((res, rej) => { const s = document.createElement('script');
+    s.src = IS_EXT ? 'lib/pdf-lib.min.js' : 'https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js';
+    s.onload = () => globalThis.PDFLib ? res(globalThis.PDFLib) : rej(new Error('net')); s.onerror = () => { s.remove(); pdfLibLoad.p = null; rej(new Error('net')); }; document.head.append(s); });
+}
+// letters and digits only, so a passage matches whatever the spacing, hyphenation or punctuation
+const hlSkel = t => [...String(t).normalize('NFKC').toLowerCase()].filter(c => /[\p{L}\p{N}]/u.test(c)).join('');
+// how far along a line of text a character sits, by its width in an ordinary font (better than equal shares per character)
+function hlMeasure(t){ const c = hlMeasure.c ||= document.createElement('canvas').getContext('2d'); c.font = '100px Arial, Helvetica, sans-serif'; return c.measureText(t).width; }
+async function hlPage(doc, n){
+  const tc = await pdfPageText(doc, n), chars = [], map = [];
+  tc.items.forEach((it, ii) => { const s = it.str || ''; for(let k = 0; k < s.length; k++) for(const c of s[k].normalize('NFKC').toLowerCase()) if(/[\p{L}\p{N}]/u.test(c)){ chars.push(c); map.push([ii, k]); } });
+  return {s: chars.join(''), map, items: tc.items};
+}
+// where a highlight's words are on its page, as quadrilaterals in the PDF's own coordinates
+async function hlQuads(doc, nt, cache){
+  const q = hlSkel(nt.q); if(!q) return null;
+  const pre = hlSkel(nt.pre || '').slice(-40), post = hlSkel(nt.post || '').slice(0, 40), N = doc.numPages;
+  const order = nt.pg ? [nt.pg, nt.pg + 1, nt.pg - 1, ...Array.from({length:N}, (_, i) => i + 1)] : Array.from({length:N}, (_, i) => i + 1);
+  let best = null;
+  for(const n of [...new Set(order)].filter(n => n >= 1 && n <= N)){
+    const P = cache.get(n) || cache.set(n, await hlPage(doc, n)).get(n);
+    for(let i = P.s.indexOf(q); i >= 0; i = P.s.indexOf(q, i + 1)){
+      let sc = 0; for(let k = 1; k <= Math.min(pre.length, i) && P.s[i - k] === pre[pre.length - k]; k++) sc++;
+      for(let k = 0; k < post.length && P.s[i + q.length + k] === post[k]; k++) sc++;
+      if(nt.pg && n !== nt.pg) sc -= 20;
+      if(!best || sc > best.sc) best = {sc, n, i, P};
+    }
+    if(best && best.n === nt.pg && best.sc >= Math.min(pre.length + post.length, 10)) break;
+  }
+  if(!best) return null;
+  const {P, n, i} = best, segs = [];
+  for(let j = i; j < i + q.length; j++){ const [ii, k] = P.map[j], s = segs[segs.length - 1]; if(s && s.ii === ii) s.k1 = k; else segs.push({ii, k0:k, k1:k}); }
+  const quads = [];
+  for(const {ii, k0, k1} of segs){
+    const it = P.items[ii], t = it.transform, L = (it.str || '').length, w = it.width || 0; if(!L || !w) continue;
+    const ul = Math.hypot(t[0], t[1]) || 1, vl = Math.hypot(t[2], t[3]) || 1, ux = t[0] / ul, uy = t[1] / ul, vx = t[2] / vl, vy = t[3] / vl;
+    const str = it.str, full = hlMeasure(str) || L, a = w * (hlMeasure(str.slice(0, k0)) || 0) / full, z = w * hlMeasure(str.slice(0, k1 + 1)) / full, lo = -0.22 * vl, hi = 0.9 * vl, P0 = [t[4], t[5]];
+    const at = (d, h) => [P0[0] + ux * d + vx * h, P0[1] + uy * d + vy * h];
+    quads.push([...at(a, hi), ...at(z, hi), ...at(a, lo), ...at(z, lo)]);   // top left, top right, bottom left, bottom right
+  }
+  return quads.length ? {n, quads} : null;
+}
+async function pdfSaveHighlights(){
+  if(!cur || !pdfDoc) return;
+  const list = notesSorted(); if(!list.length){ toast('Highlight some text first, then save a copy with your highlights.', 5000); return; }
+  if(pdfDoc.encrypted){ toast('This PDF is protected, so a copy with highlights can’t be made. Use Export notes in Contents → Notes instead.', 7000); return; }
+  const buf = await dbGetFile(cur.id); if(!buf){ toast('Couldn’t find the original file.'); return; }
+  toast('Making a copy with your highlights…', 20000);
+  try{
+    const L = await pdfLibLoad(), {PDFDocument, PDFName, PDFHexString, PDFString} = L;
+    const out = await PDFDocument.load(buf, {updateMetadata: false});
+    const cache = new Map(), ctx = out.context; let done = 0, missed = 0;
+    const gs = ctx.register(ctx.obj({Type: 'ExtGState', BM: 'Multiply', CA: 1, ca: 1}));
+    for(const nt of list){
+      const hl = await hlQuads(pdfDoc, nt, cache); if(!hl){ missed++; continue; }
+      const pts = hl.quads.flat(), xs = pts.filter((_, i) => i % 2 === 0), ys = pts.filter((_, i) => i % 2 === 1);
+      const rect = [Math.min(...xs) - 1, Math.min(...ys) - 1, Math.max(...xs) + 1, Math.max(...ys) + 1].map(v => Math.round(v * 100) / 100);
+      const [r, g, b] = HL_RGB[nt.c] || HL_RGB.y, f = v => (Math.round(v * 1000) / 1000).toString();
+      const draw = `q /GS0 gs ${f(r)} ${f(g)} ${f(b)} rg ` + hl.quads.map(Q => `${f(Q[0])} ${f(Q[1])} m ${f(Q[2])} ${f(Q[3])} l ${f(Q[6])} ${f(Q[7])} l ${f(Q[4])} ${f(Q[5])} l h f`).join(' ') + ' Q';
+      const ap = ctx.register(ctx.stream(draw, {Type: 'XObject', Subtype: 'Form', BBox: rect, Resources: {ExtGState: {GS0: gs}}}));
+      const an = ctx.obj({Type: 'Annot', Subtype: 'Highlight', Rect: rect, QuadPoints: pts.map(v => Math.round(v * 100) / 100), C: [r, g, b], F: 4, AP: {N: ap}});
+      an.set(PDFName.of('T'), PDFHexString.fromText('Velvet Scroll'));
+      an.set(PDFName.of('M'), PDFString.fromDate(new Date(nt.t || Date.now())));
+      an.set(PDFName.of('NM'), PDFString.of('vs-' + nt.id));
+      if(nt.n) an.set(PDFName.of('Contents'), PDFHexString.fromText(nt.n));
+      out.getPage(hl.n - 1).node.addAnnot(ctx.register(an)); done++;
+    }
+    if(!done){ toast('Couldn’t find your highlighted passages in the PDF’s text, so no copy was made.', 6000); return; }
+    const bytes = await out.save();
+    const base = (cur.file ? cur.file.replace(/\.pdf$/i, '') : (cur.title || 'document')).replace(/[\\/:*?"<>|]+/g, '').trim();
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([bytes], {type: 'application/pdf'})); a.download = base + ' (highlighted).pdf';
+    document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+    toast(missed ? `Saved a copy with ${done} of your ${done + missed} highlights. The others couldn’t be matched to the PDF’s text.` : `Saved a copy with your ${done === 1 ? 'highlight' : done + ' highlights'}${list.some(n => n.n) ? ' and notes' : ''}.`, 6000);
+  }catch(e){ console.warn(e); toast(e && e.message === 'net' ? 'Couldn’t load the PDF writer. Check your internet connection and try again.' : 'Sorry, a copy with highlights couldn’t be made from this PDF.', 6000); }
+}
 /* download the original file */
 async function pdfDownload(){
   if(!cur) return;
