@@ -89,7 +89,8 @@ async function openEpub(buf){
   const ncx = (ncxId && manifest[ncxId]) || Object.values(manifest).find(m=>m.type==='application/x-dtbncx+xml');
   let isbn = '';
   for(const idEl of tags('identifier')){ const c = isbnClean(idEl.textContent); if(isbnValid(c) && (!isbn || c.length === 13)) isbn = c; }
-  return {zip, title, author, spine, cover, nav, ncx, isbn};
+  const desc = (tags('description')[0]?.textContent || '').trim();
+  return {zip, title, author, spine, cover, nav, ncx, isbn, desc};
 }
 
 async function readToc(ep){
@@ -356,8 +357,8 @@ const MOBI = (() => {
     const author = (ex[100]||[]).map(str).filter(Boolean).join(' & ');
     let cover = null;
     for(const t of [201, 202]){ if(cover || !ex[t] || h0.resourceStart===NONE) continue; const o = u32(ex[t][0],0); if(o !== NONE) cover = resource(rec(h0.resourceStart + o)); }
-    const isbn = ex[104] ? str(ex[104][0]) : '';
-    return {u8, rec, n, h0, kf8, dec, title, author, cover, isbn};
+    const isbn = ex[104] ? str(ex[104][0]) : '', desc = ex[103] ? str(ex[103][0]) : '';
+    return {u8, rec, n, h0, kf8, dec, title, author, cover, isbn, desc};
   }
 
   function mobi6(mb){
@@ -543,8 +544,9 @@ const PDF = (() => {
     const md = await pdf.getMetadata().catch(()=>null);
     const i = (md && md.info) || {};
     let title = cleanTitle(i.Title), author = (i.Author||'').trim();
-    try{ const x = md && md.metadata; if(x){ if(!title) title = cleanTitle(x.get('dc:title')); if(!author) author = (x.get('dc:creator')||'').toString().trim(); } }catch(e){}
-    return {title, author};
+    let desc = typeof i.Subject === 'string' ? i.Subject : '';
+    try{ const x = md && md.metadata; if(x){ if(!title) title = cleanTitle(x.get('dc:title')); if(!author) author = (x.get('dc:creator')||'').toString().trim(); if(!desc) desc = (x.get('dc:description')||'').toString(); } }catch(e){}
+    return {title, author, desc};
   }
   async function outline(pdf){
     const out = [];
@@ -1051,7 +1053,10 @@ async function openDetails(b){
   $('#dUrl').value = ''; $('#dUrlRow').hidden = IN_CLAUDE;
   pushLayer('details');
   dlg = {b, results:[], custom:null, choice: b.coverBuf && b.coverSrc !== 'classic' ? {kind:'own'} : {kind:'classic'}};
-  dModesSet(b.vis || ''); $('#dTitle').value = b.title; $('#dAuthor').value = b.author || ''; $('#dYear').value = b.year || ''; $('#dIsbn').value = b.isbn || ''; isbnMsg();
+  dModesSet(b.vis || ''); $('#dDesc').value = bookDesc(b);
+  if(b.desc === undefined && !b.sample && b.kind !== 'article') dbGetFile(b.id).then(buf => buf && readMeta(buf, b.file, true)).then(m => { const d = cleanDesc(m && m.desc); b.desc = d;
+    if(d && dlg && dlg.b === b && !$('#dDesc').value) $('#dDesc').value = d; dbPutMeta(b); }).catch(() => {});
+  $('#dTitle').value = b.title; $('#dAuthor').value = b.author || ''; $('#dYear').value = b.year || ''; $('#dIsbn').value = b.isbn || ''; isbnMsg();
   $('#dResults').replaceChildren(); $('#dStatus').textContent = '';
   $('#dSearch').hidden = !IS_EXT;
   $('#dHint').textContent = IS_EXT ? 'Searches using the title and author above. Only those words are sent. Covers from Wikimedia Commons and Project Gutenberg are openly licensed.'
@@ -1125,6 +1130,8 @@ $('#dSave').onclick = async () => {
   const y = parseInt($('#dYear').value, 10); b.year = Number.isFinite(y) ? y : null;
   const vis = dModes();
   if(vis) b.vis = vis; else delete b.vis;
+  const dv = $('#dDesc').value.replace(/\s+/g, ' ').trim();
+  if(dv !== bookDesc(b)){ if(b.kind === 'article') b.excerpt = dv; else b.desc = dv; }
   b.needsCheck = false; b.looked = true; b.upd = Date.now();
   await dbPutMeta(b); closeDetails(); render();
   toast(vis && vis !== modeKey() ? `Details saved. This book now shows only in ${vis === 's' ? 'Study' : 'Relaxed'} mode, so it’s hidden here.` : 'Details saved.', vis && vis !== modeKey() ? 6000 : 3200);
@@ -1570,7 +1577,7 @@ function fb2Meta(doc){
   const date = kid(ti, 'date'), y = parseInt((date && (date.getAttribute('value') || date.textContent)) || '', 10);
   const cp = kid(ti, 'coverpage'), im = cp && kid(cp, 'image');
   const isbn = isbnClean(doc.getElementsByTagNameNS('*', 'isbn')[0]?.textContent || '');
-  return {isbn: isbnValid(isbn) ? isbn : '', title: kid(ti, 'book-title')?.textContent.trim() || '', author: authors.slice(0,3).join(' & '), year: y > 0 && y < 3000 ? y : null, coverId: im ? fbHref(im) : null};
+  return {isbn: isbnValid(isbn) ? isbn : '', title: kid(ti, 'book-title')?.textContent.trim() || '', author: authors.slice(0,3).join(' & '), year: y > 0 && y < 3000 ? y : null, coverId: im ? fbHref(im) : null, desc: kid(ti, 'annotation')?.textContent || ''};
 }
 function fb2Binary(doc, id){
   const b = [...doc.getElementsByTagNameNS('*', 'binary')].find(x => x.getAttribute('id') === id); if(!b) return null;
@@ -1651,7 +1658,7 @@ async function comicMeta(zip){
   const ci = Object.keys(zip.files).find(p => /(^|\/)comicinfo\.xml$/i.test(p)); if(!ci) return {};
   try{ const d = new DOMParser().parseFromString(await zip.file(ci).async('string'), 'application/xml'), g = n => d.getElementsByTagName(n)[0]?.textContent.trim() || '';
     const series = g('Series'), num = g('Number'), y = parseInt(g('Year'), 10);
-    return {title: g('Title') ? (series && !g('Title').includes(series) ? `${series} ${num ? '#' + num + ': ' : ''}${g('Title')}` : g('Title')) : series ? `${series}${num ? ' #' + num : ''}` : '', author: g('Writer'), year: y > 0 ? y : null}; }catch(e){ return {}; }
+    return {title: g('Title') ? (series && !g('Title').includes(series) ? `${series} ${num ? '#' + num + ': ' : ''}${g('Title')}` : g('Title')) : series ? `${series}${num ? ' #' + num : ''}` : '', author: g('Writer'), year: y > 0 ? y : null, desc: g('Summary')}; }catch(e){ return {}; }
 }
 async function smallCover(blob){
   try{ const bm = await createImageBitmap(blob), w = 360, h = Math.round(bm.height * w / bm.width), cv = document.createElement('canvas'); cv.width = w; cv.height = h;
@@ -1677,7 +1684,14 @@ async function htmlMeta(ep){
 }
 
 /* title, author and cover for the library, from any format */
-async function readMeta(buf, name){
+// a book's own description (blurb), as plain text
+function cleanDesc(t){
+  let s = String(t || ''); if(!s.trim()) return '';
+  if(/<[a-z!/][^>]*>|&[#a-z0-9]+;/i.test(s)) s = new DOMParser().parseFromString(s, 'text/html').body.textContent || '';
+  s = s.replace(/\s+/g, ' ').trim();
+  return s.length > 1500 ? s.slice(0, 1497).replace(/\s+\S*$/, '') + '…' : s;
+}
+async function readMeta(buf, name, noCover){
   const s = await sniff(buf, name);
   if(s.kind === 'txt'){ const t = decodeText(await bytesOf(s, buf)), g = LOOKUP.guessFromText(t);
     if(!g.title){ const first = t.replace(/^\uFEFF/, '').split(/\n/).map(l => l.trim()).find(Boolean) || '';
@@ -1685,14 +1699,14 @@ async function readMeta(buf, name){
     return {title:g.title, author:g.author}; }
   if(s.kind === 'html' || s.kind === 'htmlzip') return htmlMeta(htmlBook(s, buf));
   if(s.kind === 'fb2'){ const d = fb2Doc(await bytesOf(s, buf)), m = fb2Meta(d), c = m.coverId && fb2Binary(d, m.coverId);
-    return {title:m.title, author:m.author, year:m.year, isbn:m.isbn, coverBuf: c ? c.data.slice().buffer : null, coverType: c ? c.type : null}; }
-  if(s.kind === 'cbz'){ const m = await comicMeta(s.zip), first = await s.zip.file(s.paths[0]).async('blob');
+    return {title:m.title, author:m.author, year:m.year, isbn:m.isbn, desc:m.desc, coverBuf: c ? c.data.slice().buffer : null, coverType: c ? c.type : null}; }
+  if(s.kind === 'cbz'){ const m = await comicMeta(s.zip); if(noCover) return m; const first = await s.zip.file(s.paths[0]).async('blob');
     return Object.assign(m, await smallCover(new Blob([first], {type:imgType(s.paths[0])}))); }
   if(PDF.isPdf(new Uint8Array(buf))){
     const pdf = await PDF.load(buf);
     try{
       const out = await PDF.info(pdf);
-      try{
+      if(!noCover) try{
         const pg = await pdf.getPage(1), v1 = pg.getViewport({scale:1}), vp = pg.getViewport({scale: 360/v1.width});
         const cv = document.createElement('canvas'); cv.width = Math.round(vp.width); cv.height = Math.round(vp.height);
         const ctx = cv.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0,0,cv.width,cv.height);
@@ -1706,11 +1720,11 @@ async function readMeta(buf, name){
   if(MOBI.isMobi(new Uint8Array(buf))){
     const mb = MOBI.open(buf);
     const mi = isbnClean(mb.isbn);
-    return {title:mb.title, author:mb.author, isbn: isbnValid(mi) ? mi : '', coverBuf: mb.cover ? mb.cover.data.slice().buffer : null, coverType: mb.cover?.type};
+    return {title:mb.title, author:mb.author, isbn: isbnValid(mi) ? mi : '', desc:mb.desc, coverBuf: mb.cover ? mb.cover.data.slice().buffer : null, coverType: mb.cover?.type};
   }
   const ep = await openEpub(buf);
-  const out = {title:ep.title, author:ep.author, isbn:ep.isbn};
-  if(ep.cover){ const cf = getFile(ep.zip, ep.cover.href); if(cf){ out.coverBuf = await cf.async('arraybuffer'); out.coverType = ep.cover.type; } }
+  const out = {title:ep.title, author:ep.author, isbn:ep.isbn, desc:ep.desc};
+  if(ep.cover && !noCover){ const cf = getFile(ep.zip, ep.cover.href); if(cf){ out.coverBuf = await cf.async('arraybuffer'); out.coverType = ep.cover.type; } }
   return out;
 }
 
@@ -1845,18 +1859,94 @@ function render(){
   else if(!all0.length){ notice.hidden=false; notice.textContent=`No books are set to show in ${S.mode === 'relax' ? 'Relaxed' : 'Study'} mode. Switch mode, or choose Details under a book to pick the modes it shows in.`; }
   else if(!list.length){ notice.hidden=false; notice.textContent = view === 'articles' ? 'No saved articles match this search or filter.' : 'No books match this search or filter.'; }
   else notice.hidden=true;
-  $('#grid').replaceChildren(...list.map(card));
+  libLayoutShow();
+  const G = $('#grid');
+  if(libLayout === 'details'){ G.className = 'dlist'; G.replaceChildren(...list.map(detailRow)); descFill(list); }
+  else if(libLayout === 'table'){ G.className = 'tview'; G.replaceChildren(list.length ? libTable(list) : ''); }
+  else { G.className = 'grid' + (libSize < 140 ? ' compact' : ''); G.replaceChildren(...list.map(card)); }
   const lastB = books.filter(b=>{ const s=status(b); return s==='reading' && inMode(b); }).sort((a,b)=>(progress[b.id]?.t||0)-(progress[a.id]?.t||0))[0];
   const cb = $('#cont'); cb.hidden = !lastB;
   if(lastB){ cb.textContent = `Continue “${lastB.title.length>28 ? lastB.title.slice(0,27)+'…' : lastB.title}” · ${Math.round(progress[lastB.id].p*100)}%`; cb.onclick = ()=>openBook(lastB); }
 }
-function card(b){
-  const p = progress[b.id]?.p || 0, st = status(b);
-  const rm = !b.sample && el('button',{class:'ghost', text:'Remove'});
+function rmButton(b){
+  const rm = !b.sample && el('button',{class:'ghost', text:'Remove', 'aria-label':`Remove ${b.title}`});
   if(rm){ let t; rm.onclick = async ()=>{ if(rm.classList.contains('confirm')){ clearTimeout(t); await dbDel(b.id); books = books.filter(x=>x.id!==b.id); delete progress[b.id]; LS.set('progress',progress); if(notesAll[b.id]){ delete notesAll[b.id]; LS.set('notes', notesAll); } ocrDrop(b.id); render(); toast(`Removed “${b.title}”.`); }
     else { rm.classList.add('confirm'); rm.textContent='Confirm'; t=setTimeout(()=>{ rm.classList.remove('confirm'); rm.textContent='Remove'; }, 3000); } }; }
+  return rm;
+}
+function shelfInput(b){
   const shelf = !b.sample && el('input',{class:'shelf', list:'shelfList', placeholder:'Add to shelf', 'aria-label':`Shelf for ${b.title}`, value:b.shelf||''});
   if(shelf) shelf.addEventListener('change', async ()=>{ b.shelf = shelf.value.trim(); b.upd = Date.now(); await dbPutMeta(b); render(); });
+  return shelf;
+}
+/* ---------- library layouts: Grid (with cover size), Details and Table ---------- */
+let libLayout = LS.get('libLayout', 'grid'), libSize = LS.get('libSize', 158);
+function libLayoutShow(){
+  document.querySelectorAll('.seg3 button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === libLayout)));
+  const r = $('#libSize'); r.hidden = libLayout !== 'grid'; r.value = libSize;
+  document.documentElement.style.setProperty('--cardw', libSize + 'px');
+}
+document.querySelectorAll('.seg3 button').forEach(btn => btn.onclick = () => { libLayout = btn.dataset.v; LS.set('libLayout', libLayout); render(); });
+$('#libSize').addEventListener('input', e => { libSize = +e.target.value; document.documentElement.style.setProperty('--cardw', libSize + 'px'); $('#grid').classList.toggle('compact', libLayout === 'grid' && libSize < 140); });
+$('#libSize').addEventListener('change', e => LS.set('libSize', +e.target.value));
+const ago = t => { if(!t) return ''; const d = (Date.now() - t) / 864e5, rtf = new Intl.RelativeTimeFormat(undefined, {numeric:'auto'});
+  return d < 1 ? rtf.format(0, 'day') : d < 30 ? rtf.format(-Math.floor(d), 'day') : d < 365 ? rtf.format(-Math.floor(d / 30.4), 'month') : rtf.format(-Math.floor(d / 365), 'year'); };
+const progText = b => { const st = status(b), p = progress[b.id]?.p || 0; return st === 'finished' ? 'Finished' : st === 'reading' ? `${Math.round(p*100)}% read` : 'Unread'; };
+const fmtName = b => b.kind === 'article' ? 'Article' : FMT_LABEL[fmtOf(b)] || '';
+function bookDesc(b){ return b.kind === 'article' ? (b.excerpt || '') : (b.desc || ''); }
+function detailRow(b){
+  const p = progress[b.id]?.p || 0, d = bookDesc(b);
+  const meta = el('p', {class:'dmeta'}, ...[b.kind === 'article' ? (b.site || b.author) : b.author, b.year, fmtName(b), progText(b), b.shelf ? 'Shelf: ' + b.shelf : ''].filter(Boolean).map(t => el('span', {text:String(t)})));
+  const desc = el('p', {class:'ddesc' + (d ? '' : ' none'), text: d || (b.sample ? 'A short tour of Velvet Scroll.' : b.desc === undefined && b.kind !== 'article' ? '' : 'No description.')});
+  const rm = rmButton(b), shelf = shelfInput(b);
+  return el('article', {class:'drow', 'data-id':b.id},
+    el('button', {class:'cover', 'aria-label':`Read ${b.title}`, onclick:() => openBook(b)}, coverEl(b)),
+    el('div', {class:'dmain'}, el('h3', {}, el('button', {class:'linkbtn', text:b.title, onclick:() => openBook(b)})), meta,
+      p > 0.005 && p < 0.985 ? el('div', {class:'prog'}, Object.assign(el('span'), {style:`width:${Math.round(p*100)}%`})) : null, desc),
+    el('div', {class:'dact'}, b.needsCheck ? el('button', {class:'pill check', text:'Check details', onclick:() => openDetails(b)}) : null,
+      shelf || null, rm ? el('button', {class:'ghost det', text:'Details', onclick:() => openDetails(b)}) : null, rm || null));
+}
+const TCOLS = [['Title', 'title', ''], ['Author', 'author', 'c-au'], ['Year', 'year', ''], ['Format', '', 'c-fmt'], ['Progress', 'recent', ''], ['Shelf', '', 'c-shelf'], ['Added', 'added', 'c-added']];
+function libTable(list){
+  const sortv = $('#sort').value;
+  const head = el('tr', {}, ...TCOLS.map(([label, key, cls]) => { const th = el('th', {class:cls, scope:'col'});
+      if(key){ if(sortv === key) th.setAttribute('aria-sort', key === 'title' || key === 'author' || key === 'year' ? 'ascending' : 'descending');
+        th.append(el('button', {text:label, title: key === 'recent' ? 'Sort by recently read' : 'Sort by ' + label.toLowerCase(), onclick:() => { $('#sort').value = key; $('#sort').dispatchEvent(new Event('change')); }})); }
+      else th.append(el('span', {text:label}));
+      return th; }), el('th', {class:'ta'}, el('span', {class:'vh', text:'Actions'})));
+  const rows = list.map(b => { const p = progress[b.id]?.p || 0, rm = rmButton(b);
+    return el('tr', {'data-id':b.id},
+      el('td', {class:'c-ti'}, el('button', {class:'linkbtn tt', text:b.title, title:'Read', onclick:() => openBook(b)}),
+        el('div', {class:'tsub mut', text:[b.kind === 'article' ? (b.site || b.author) : b.author, fmtName(b)].filter(Boolean).join(' · ')}),
+        rm ? el('div', {class:'tsub'}, el('button', {class:'ghost det', text:'Details', onclick:() => openDetails(b)}), rmButton(b)) : ''),
+      el('td', {class:'c-au mut', text: b.kind === 'article' ? (b.site || b.author || '') : (b.author || '')}),
+      el('td', {class:'yr mut', text: b.year ? String(b.year) : ''}),
+      el('td', {class:'c-fmt mut', text: fmtName(b)}),
+      el('td', {}, el('div', {class:'tp'}, el('div', {class:'prog'}, Object.assign(el('span'), {style:`width:${Math.round(p*100)}%`})), el('span', {class:'mut', text:progText(b)}))),
+      el('td', {class:'c-shelf mut', text:b.shelf || ''}),
+      el('td', {class:'c-added mut num', text: b.added ? ago(b.added) : ''}),
+      el('td', {class:'ta'}, rm ? el('button', {class:'ghost det', text:'Details', onclick:() => openDetails(b)}) : '', rm || ''));
+  });
+  return el('div', {class:'twrap'}, el('table', {class:'ltable'}, el('thead', {}, head), el('tbody', {}, ...rows)));
+}
+// fill in descriptions for books added before they were kept, a few at a time while the Details layout is showing
+let descBusy = false;
+async function descFill(list){
+  if(descBusy) return; descBusy = true;
+  try{
+    for(const b of list.filter(b => b.desc === undefined && !b.sample && b.kind !== 'article')){
+      if(libLayout !== 'details' || !$('#reader').hidden) break;
+      let d = '';
+      try{ const buf = await dbGetFile(b.id); if(buf) d = cleanDesc((await readMeta(buf, b.file, true)).desc); }catch(e){}
+      b.desc = d; await dbPutMeta(b);
+      const row = document.querySelector(`.drow[data-id="${CSS.escape(b.id)}"] .ddesc`);
+      if(row){ row.textContent = d || 'No description.'; row.classList.toggle('none', !d); }
+    }
+  } finally { descBusy = false; }
+}
+function card(b){
+  const p = progress[b.id]?.p || 0, st = status(b);
+  const rm = rmButton(b), shelf = shelfInput(b);
   return el('article',{class:'card'},
     el('button',{class:'cover', 'aria-label':`Read ${b.title}`, onclick:()=>openBook(b)}, coverEl(b)),
     el('div',{class:'meta'}, el('h3',{text:b.title}), (b.author || b.year) ? el('p',{class:'au'}, b.author || '', b.author && b.year ? ' · ' : '', b.year ? el('span',{class:'yr', text:String(b.year)}) : null) : null),
@@ -1891,7 +1981,7 @@ async function addFiles(files){
       }
       const title = ep.title || f.name.replace(/(\.(fb2|txt|x?html?|kepub))?\.[a-z0-9]+$/i,'').replace(/[_-]+/g,' ').trim();
       if(books.some(b=>b.title===title && b.author===ep.author)){ dup++; continue; }
-      const m = {id:uid(), title, author:ep.author, year:ep.year || null, isbn:ep.isbn || '', added:Date.now(), upd:Date.now(), shelf:'', file:f.name, size:buf.byteLength, fp: await fingerprint(buf)};
+      const m = {id:uid(), title, author:ep.author, year:ep.year || null, isbn:ep.isbn || '', added:Date.now(), upd:Date.now(), shelf:'', file:f.name, size:buf.byteLength, fp: await fingerprint(buf), desc: cleanDesc(ep.desc)};
       try{ const fm = fmtFromSniff((await sniff(buf, f.name)).kind, f.name); if(fm) m.fmt = fm; }catch(e){}
       if(m.fp && books.some(b => b.fp === m.fp)){ dup++; continue; }
       if(ep.coverBuf){ m.coverBuf = ep.coverBuf; m.coverType = ep.coverType; m.coverSrc = PDF.isPdf(new Uint8Array(buf)) ? 'page' : 'own'; }

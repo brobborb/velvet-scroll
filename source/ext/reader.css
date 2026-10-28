@@ -68,7 +68,58 @@ main.wrap{padding-block:20px 48px;display:flex;flex-direction:column;gap:16px}
 .fmtclear{border:0;background:none;color:var(--accent);cursor:pointer;font-size:14px;padding:4px 6px;text-decoration:underline}
 .notice{border:1px dashed var(--line);border-radius:var(--radius);padding:12px 16px;color:var(--muted);background:var(--surface)}
 
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:28px 22px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--cardw,158px),1fr));gap:28px 22px}
+/* library layouts: cover size, Details and Table */
+.viewsw{display:flex;align-items:center;gap:10px;flex:none}
+.viewsw input[type=range]{width:104px;accent-color:var(--accent)}
+.viewsw input[hidden]{display:none}
+.seg3{display:inline-flex;padding:3px;gap:2px;border-radius:999px;border:1px solid var(--line);background:var(--surface)}
+.seg3 button{width:34px;height:30px;border:0;border-radius:999px;background:transparent;color:var(--fg);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+.seg3 button svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.seg3 button:hover{background:var(--accent-soft)}
+.seg3 button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg)}
+.seg3 button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.dlist{display:flex;flex-direction:column}
+.drow{display:grid;grid-template-columns:84px minmax(0,1fr) auto;gap:6px 20px;align-items:start;padding:14px 12px;border-radius:10px;border-bottom:1px solid var(--line)}
+.drow:hover{background:color-mix(in srgb,var(--accent-soft) 55%,transparent)}
+.drow .cover{width:84px}
+.drow .cover:hover{transform:none}
+.dmain{min-width:0;display:flex;flex-direction:column;gap:4px}
+.dmain h3{margin:0;font-family:var(--f-read);font-size:17px;font-weight:600;line-height:1.3}
+.linkbtn{border:0;background:none;padding:0;font:inherit;color:inherit;text-align:left;cursor:pointer;overflow-wrap:anywhere}
+.linkbtn:hover{text-decoration:underline;text-underline-offset:3px}
+.dmeta{margin:0;font-size:13px;color:var(--muted);display:flex;flex-wrap:wrap;gap:2px 0}
+.dmeta span+span::before{content:"·";margin:0 7px;opacity:.7}
+.ddesc{margin:4px 0 0;font-size:14px;line-height:1.5;max-width:75ch;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.ddesc.none{color:var(--muted);font-style:italic}
+.drow .prog{max-width:220px;margin-top:4px}
+.dact{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.dact .shelf{width:150px;flex:none}
+.twrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.ltable{width:100%;border-collapse:collapse;font-size:14px}
+.ltable th{text-align:left;font-weight:600;font-size:13px;color:var(--muted);padding:0;border-bottom:1px solid var(--line);white-space:nowrap;background:color-mix(in srgb,var(--line) 35%,var(--surface))}
+.ltable th > span,.ltable th > button{display:block;padding:10px 12px}
+.ltable th > button{border:0;background:none;font:inherit;color:inherit;cursor:pointer;width:100%;text-align:left}
+.ltable th > button:hover{color:var(--fg)}
+.ltable th[aria-sort] > button{color:var(--fg)}
+.ltable th[aria-sort] > button::after{content:" ↓";color:var(--accent)}
+.ltable td{padding:8px 12px;border-bottom:1px solid color-mix(in srgb,var(--line) 70%,transparent);vertical-align:middle}
+.ltable tr:last-child td{border-bottom:0}
+.ltable tbody tr:hover{background:color-mix(in srgb,var(--accent-soft) 55%,transparent)}
+.ltable .tt{font-family:var(--f-read);font-weight:600;font-size:15px}
+.ltable .num,.ltable .yr{font-variant-numeric:tabular-nums;white-space:nowrap}
+.ltable .mut{color:var(--muted)}
+.ltable .tp{display:flex;align-items:center;gap:8px;white-space:nowrap}
+.ltable .tp .prog{width:60px;flex:none}
+.ltable .ta{white-space:nowrap;text-align:right;width:1%}
+.ltable .ta .ghost{opacity:.55}
+.ltable tr:hover .ta .ghost,.ltable .ta .ghost:focus-visible{opacity:1}
+@media (hover:none){ .ltable .ta .ghost{opacity:1} }
+@media (max-width:760px){ .ltable .c-fmt,.ltable .c-shelf,.ltable .c-added{display:none} .viewsw input[type=range]{width:80px} }
+.ltable .tsub{display:none}
+.ltable .tt{overflow-wrap:break-word}
+.grid.compact .card > .row{display:none}
+@media (max-width:560px){ .ltable .c-au,.ltable .ta,.ltable .tp .prog{display:none} .ltable .tsub{display:flex;gap:2px;font-size:12.5px;margin-top:2px} .ltable .tsub .ghost{padding:2px 8px 2px 0;font-size:12.5px} .ltable td{padding:8px 10px} .drow{grid-template-columns:64px minmax(0,1fr);padding:12px 4px} .drow .cover{width:64px} .dact{grid-column:2;flex-direction:row;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:4px} .dact .shelf{width:140px} .ddesc{-webkit-line-clamp:2} }
 .card{display:flex;flex-direction:column;gap:10px;min-width:0}
 /* the title takes the spare space, so progress, shelf and Details/Remove line up along each row of books */
 .card > .meta{flex:1 1 auto}
@@ -138,6 +189,8 @@ main.wrap{padding-block:20px 48px;display:flex;flex-direction:column;gap:16px}
 #dlg .drow2{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,3fr);gap:10px}
 #dlg .isbnmsg:empty,#dlg #dModesHint:empty{display:none}
 #dlg .isbnmsg{margin:-4px 0 0}
+.ddescl{display:flex;flex-direction:column;gap:3px;font-size:13px;color:var(--muted);font-weight:700}
+.ddescl textarea{border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--bg);color:var(--fg);font:400 14px/1.45 var(--f-ui);resize:vertical;min-height:2.6em;field-sizing:content;max-height:9em}
 #dlg .modeseg button{height:30px}
 #dlg .grp{gap:6px}
 #dlg .covers{grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px}
@@ -504,7 +557,7 @@ kbd{font-family:var(--f-ui);font-size:12px;border:1px solid var(--line);border-b
 
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:max(20px,calc(env(safe-area-inset-bottom,0px) + 12px));z-index:90;background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:8px;font-size:14px;max-width:min(520px,calc(100vw - 32px));box-shadow:0 8px 24px rgb(0 0 0 / .25)}
 @media (max-width:560px){
-  .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 14px}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(min(var(--cardw,158px),calc(50% - 7px)),1fr));gap:22px 14px}
   .r-top .rbtn{padding:6px 8px;font-size:13px}
   .r-top .lng{display:none} .r-top .sht{display:inline}
   .r-top{gap:6px}
