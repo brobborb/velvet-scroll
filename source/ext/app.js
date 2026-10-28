@@ -1051,7 +1051,7 @@ async function openDetails(b){
   $('#dUrl').value = ''; $('#dUrlRow').hidden = IN_CLAUDE;
   pushLayer('details');
   dlg = {b, results:[], custom:null, choice: b.coverBuf && b.coverSrc !== 'classic' ? {kind:'own'} : {kind:'classic'}};
-  $('#dTitle').value = b.title; $('#dAuthor').value = b.author || ''; $('#dYear').value = b.year || ''; $('#dIsbn').value = b.isbn || ''; isbnMsg();
+  dModesSet(b.vis || ''); $('#dTitle').value = b.title; $('#dAuthor').value = b.author || ''; $('#dYear').value = b.year || ''; $('#dIsbn').value = b.isbn || ''; isbnMsg();
   $('#dResults').replaceChildren(); $('#dStatus').textContent = '';
   $('#dSearch').hidden = !IS_EXT;
   $('#dHint').textContent = IS_EXT ? 'Searches using the title and author above. Only those words are sent. Covers from Wikimedia Commons and Project Gutenberg are openly licensed.'
@@ -1076,6 +1076,17 @@ function isbnMsg(){
     c.length === 10 || c.length === 13 ? 'This ISBN’s check digit doesn’t match. Check for a typo.' : 'An ISBN has 10 or 13 digits (the last can be X).';
 }
 $('#dIsbn').addEventListener('input', isbnMsg);
+/* which library modes a book shows in: b.vis is 's' (Study only), 'r' (Relaxed only) or absent (both) */
+const modeKey = () => S.mode === 'relax' ? 'r' : 's';
+const inMode = b => !b.vis || b.vis === modeKey();
+function dModesSet(v){ $('#dStudy').setAttribute('aria-pressed', String(v !== 'r')); $('#dRelax').setAttribute('aria-pressed', String(v !== 's')); dModesHint(); }
+function dModes(){ const st = $('#dStudy').getAttribute('aria-pressed') === 'true', rl = $('#dRelax').getAttribute('aria-pressed') === 'true'; return st && rl ? '' : st ? 's' : 'r'; }
+function dModesHint(){ const v = dModes(); $('#dModesHint').textContent = !v ? 'Shown in the library in both modes.' : `Shown only in ${v === 's' ? 'Study' : 'Relaxed'} mode.`; }
+[['#dStudy', '#dRelax'], ['#dRelax', '#dStudy']].forEach(([a, o]) => $(a).onclick = () => {
+  const on = $(a).getAttribute('aria-pressed') === 'true';
+  if(on && $(o).getAttribute('aria-pressed') !== 'true'){ $(o).setAttribute('aria-pressed', 'true'); }   // turning off the only one: show it in the other mode instead
+  $(a).setAttribute('aria-pressed', String(!on)); dModesHint();
+});
 function closeDetailsNow(){ $('#dlg').hidden = true; dlg = null; }
 function closeDetails(){ popLayer('details'); }
 ['#dTitle','#dAuthor','#dYear'].forEach(id => $(id).addEventListener('input', () => { if(dlg && dlg.choice.kind === 'classic') renderCoverChoices(); }));
@@ -1112,8 +1123,11 @@ $('#dSave').onclick = async () => {
   else if(b.coverSrc === 'classic'){ b.coverSrc = b.prevSrc || 'own'; }
   b.title = $('#dTitle').value.trim() || b.title; b.author = $('#dAuthor').value.trim(); b.isbn = isbnClean($('#dIsbn').value);
   const y = parseInt($('#dYear').value, 10); b.year = Number.isFinite(y) ? y : null;
+  const vis = dModes();
+  if(vis) b.vis = vis; else delete b.vis;
   b.needsCheck = false; b.looked = true; b.upd = Date.now();
-  await dbPutMeta(b); closeDetails(); render(); toast('Details saved.');
+  await dbPutMeta(b); closeDetails(); render();
+  toast(vis && vis !== modeKey() ? `Details saved. This book now shows only in ${vis === 's' ? 'Study' : 'Relaxed'} mode, so it’s hidden here.` : 'Details saved.', vis && vis !== modeKey() ? 6000 : 3200);
 };
 
 /* ---------- Saving web articles (extension) ---------- */
@@ -1323,7 +1337,7 @@ async function makeSyncCode(pw){
   const {hz, ttsVoice, ...settings} = S;   // the refresh rate and voice belong to each device
   const data = {app:'VS', v:1, t:Date.now(), st:LS.get('settingsT', 0), s:settings, m:pdfModes,
     b: books.filter(b => !b.sample && b.fp).map(b => { const pr = progress[b.id] || {};
-      return [b.fp, (b.title || '').slice(0, 90), (b.author || '').slice(0, 60), b.year || 0, b.isbn || '', b.shelf || '', b.upd || b.added || 0, +(pr.p || 0).toFixed(5), pr.t || 0, pr.pg || 0, pr.mode || '']; })};
+      return [b.fp, (b.title || '').slice(0, 90), (b.author || '').slice(0, 60), b.year || 0, b.isbn || '', b.shelf || '', b.upd || b.added || 0, +(pr.p || 0).toFixed(5), pr.t || 0, pr.pg || 0, pr.mode || '', b.vis || '']; })};
   const json = new TextEncoder().encode(JSON.stringify(data));
   let body; try{ const z = await squeeze(json); body = new Uint8Array(z.length + 1); body[0] = 1; body.set(z, 1); }
   catch(e){ body = new Uint8Array(json.length + 1); body[0] = 0; body.set(json, 1); }
@@ -1341,12 +1355,12 @@ async function readSyncCode(code, pw){
 async function applySyncCode(data, useSettings){
   for(const b of books) await ensureFp(b);
   let places = 0, details = 0; const missing = [];
-  for(const [fp, title, author, year, isbn, shelf, upd, p, pt, pg, mode] of data.b){
+  for(const [fp, title, author, year, isbn, shelf, upd, p, pt, pg, mode, vis] of data.b){
     const b = books.find(x => x.fp === fp) || books.find(x => x.title === title && (x.author || '') === (author || ''));
     if(!b){ missing.push(title + (author ? ' · ' + author : '')); continue; }
     // newer details win; so do any details at all when this copy has never been edited (it was only just added here)
-    const untouched = (b.upd || 0) - (b.added || 0) < 5000, differs = b.title !== title || (b.author || '') !== (author || '') || (b.year || 0) !== (year || 0) || (b.isbn || '') !== (isbn || '') || (b.shelf || '') !== (shelf || '');
-    if(differs && ((upd || 0) > (b.upd || 0) || untouched)){ Object.assign(b, {title, author, year: year || null, isbn: isbn || b.isbn || '', shelf, upd: Math.max(upd || 0, b.upd || 0)}); await dbPutMeta(b); details++; }
+    const untouched = (b.upd || 0) - (b.added || 0) < 5000, differs = b.title !== title || (b.author || '') !== (author || '') || (b.year || 0) !== (year || 0) || (b.isbn || '') !== (isbn || '') || (b.shelf || '') !== (shelf || '') || (vis !== undefined && (b.vis || '') !== vis);
+    if(differs && ((upd || 0) > (b.upd || 0) || untouched)){ Object.assign(b, {title, author, year: year || null, isbn: isbn || b.isbn || '', shelf, upd: Math.max(upd || 0, b.upd || 0)}); if(vis !== undefined){ if(vis) b.vis = vis; else delete b.vis; } await dbPutMeta(b); details++; }
     const lp = progress[b.id];
     if(pt && (!lp || pt > (lp.t || 0)) && !(cur && cur.id === b.id)){ setProgressRec(b.id, {p, t:pt, pg: pg || undefined, mode: mode || undefined}); places++; }
   }
@@ -1419,7 +1433,7 @@ const syncQ = new Map();
 function syncBook(b){
   if(!syncOn || !b || !b.fp || b.sample) return;
   const pr = progress[b.id] || {};
-  syncQ.set('b:' + b.fp, {title:b.title, author:b.author || '', year:b.year || null, isbn:b.isbn || '', shelf:b.shelf || '', upd:b.upd || b.added || 0, p:pr.p || 0, pt:pr.t || 0, pg:pr.pg || null, mode:pr.mode || null});
+  syncQ.set('b:' + b.fp, {title:b.title, author:b.author || '', year:b.year || null, isbn:b.isbn || '', shelf:b.shelf || '', vis:b.vis || '', upd:b.upd || b.added || 0, p:pr.p || 0, pt:pr.t || 0, pg:pr.pg || null, mode:pr.mode || null});
   if(!syncTimer) syncTimer = setTimeout(syncFlush, 15000);   // at most every 15 seconds while reading
 }
 function syncSettings(){ if(!syncOn) return; const {hz, ...rest} = S; syncQ.set('settings', {t:LS.get('settingsT', Date.now()), s:rest}); if(!syncTimer) syncTimer = setTimeout(syncFlush, 15000); }
@@ -1439,7 +1453,7 @@ async function syncPull(){
     if(!k.startsWith('b:') || !v) continue;
     const b = books.find(x => x.fp === k.slice(2));
     if(!b){ missing.push(v); continue; }
-    if((v.upd || 0) > (b.upd || 0)){ Object.assign(b, {title:v.title || b.title, author:v.author, year:v.year, isbn:v.isbn || b.isbn || '', shelf:v.shelf, upd:v.upd}); await dbPutMeta(b); changed = true; }
+    if((v.upd || 0) > (b.upd || 0)){ Object.assign(b, {title:v.title || b.title, author:v.author, year:v.year, isbn:v.isbn || b.isbn || '', shelf:v.shelf, upd:v.upd}); if('vis' in v){ if(v.vis) b.vis = v.vis; else delete b.vis; } await dbPutMeta(b); changed = true; }
     const lp = progress[b.id];
     if(v.pt && (!lp || v.pt > (lp.t || 0)) && !(cur && cur.id === b.id)){ setProgressRec(b.id, {p:v.p, t:v.pt, pg:v.pg || undefined, mode:v.mode || undefined}); changed = true; }
   }
@@ -1789,7 +1803,7 @@ function classicCover(b){
 }
 function render(){
   coverUrls.forEach(URL.revokeObjectURL); coverUrls = [];
-  const all0 = books.length ? books : [SAMPLE];
+  const all0 = (books.length ? books : [SAMPLE]).filter(inMode);
   // two sections: books and saved articles (the tabs appear once there are articles)
   const nArts = books.filter(b => b.kind === 'article').length, nBooks = all0.length - nArts;
   const view = nArts ? libView : 'books';   // the remembered tab, once there are articles to show
@@ -1828,10 +1842,11 @@ function render(){
     s==='added' ? b.added-a.added : ((progress[b.id]?.t||0)-(progress[a.id]?.t||0)) || b.added-a.added);
   const notice = $('#notice');
   if(!books.length){ notice.hidden=false; notice.textContent='Your library is empty. Open the sample to try the scroller, then add your own ebooks or comics.'; }
+  else if(!all0.length){ notice.hidden=false; notice.textContent=`No books are set to show in ${S.mode === 'relax' ? 'Relaxed' : 'Study'} mode. Switch mode, or choose Details under a book to pick the modes it shows in.`; }
   else if(!list.length){ notice.hidden=false; notice.textContent = view === 'articles' ? 'No saved articles match this search or filter.' : 'No books match this search or filter.'; }
   else notice.hidden=true;
   $('#grid').replaceChildren(...list.map(card));
-  const lastB = books.filter(b=>{ const s=status(b); return s==='reading'; }).sort((a,b)=>(progress[b.id]?.t||0)-(progress[a.id]?.t||0))[0];
+  const lastB = books.filter(b=>{ const s=status(b); return s==='reading' && inMode(b); }).sort((a,b)=>(progress[b.id]?.t||0)-(progress[a.id]?.t||0))[0];
   const cb = $('#cont'); cb.hidden = !lastB;
   if(lastB){ cb.textContent = `Continue “${lastB.title.length>28 ? lastB.title.slice(0,27)+'…' : lastB.title}” · ${Math.round(progress[lastB.id].p*100)}%`; cb.onclick = ()=>openBook(lastB); }
 }
@@ -3862,8 +3877,9 @@ $('#railPin').onclick = () => { railPinned = false; railApply(); };
 $('#railShow').onclick = () => { railPinned = true; railApply(); };
 /* reading modes: Study shows the page tools for PDFs and comics; Relaxed keeps them tucked away behind a small tab */
 function modeShow(){ $('#modeStudy').setAttribute('aria-pressed', String(S.mode !== 'relax')); $('#modeRelax').setAttribute('aria-pressed', String(S.mode === 'relax')); }
-$('#modeStudy').onclick = () => { S.mode = 'study'; applySettings(); modeShow(); toast('Study mode: PDFs and comics open with the page tools on the right.'); };
-$('#modeRelax').onclick = () => { S.mode = 'relax'; applySettings(); modeShow(); toast('Relaxed mode: the page tools stay tucked away. Use the small tab on the right if you need them.'); };
+function modeHidden(){ const n = books.filter(b => !inMode(b)).length; return n ? ` ${n === 1 ? '1 book is' : n + ' books are'} set to show only in ${S.mode === 'relax' ? 'Study' : 'Relaxed'} mode.` : ''; }
+$('#modeStudy').onclick = () => { S.mode = 'study'; applySettings(); modeShow(); render(); toast('Study mode: PDFs and comics open with the page tools on the right.' + modeHidden(), 5000); };
+$('#modeRelax').onclick = () => { S.mode = 'relax'; applySettings(); modeShow(); render(); toast('Relaxed mode: the page tools stay tucked away. Use the small tab on the right if you need them.' + modeHidden(), 5000); };
 modeShow();
 $('#railFirst').onclick = () => goToPage(1);
 $('#railLast').onclick = () => goToPage(pageTotal());
