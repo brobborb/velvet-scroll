@@ -129,6 +129,21 @@ main.wrap{padding-block:20px 48px;display:flex;flex-direction:column;gap:16px}
 .dmodes .dml{font-size:13px;color:var(--muted);font-weight:700}
 .dmodes .modeseg button{width:auto;padding:0 12px 0 10px}
 #dModesHint{margin:-6px 0 0}
+/* Book details: compact, with Save always in view */
+#dlg .sheet{gap:12px;padding:16px 20px 0;width:min(700px,100%)}
+#dlg .dgrid{gap:16px}
+#dlg .dfields{gap:9px}
+#dlg .dfields label{gap:3px}
+#dlg .dfields input{padding:6px 10px}
+#dlg .drow2{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,3fr);gap:10px}
+#dlg .isbnmsg:empty,#dlg #dModesHint:empty{display:none}
+#dlg .isbnmsg{margin:-4px 0 0}
+#dlg .modeseg button{height:30px}
+#dlg .grp{gap:6px}
+#dlg .covers{grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px}
+#dlg .hint{font-size:12.5px;margin:0}
+#dlg .sh-foot{position:sticky;bottom:0;z-index:2;background:var(--surface);margin:0 -20px;padding:10px 20px 14px;border-top:1px solid var(--line)}
+@media (max-width:480px){ #dlg .drow2{grid-template-columns:minmax(0,1fr)} #dlg .sheet{padding:14px 14px 0} #dlg .sh-foot{margin:0 -14px;padding:10px 14px 12px} }
 .dfields label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);font-weight:700}
 .dfields input{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--bg);color:var(--fg);font-size:15px;font-weight:400;min-width:0}
 .cadd{display:flex;flex-wrap:wrap;gap:8px;align-items:center}

@@ -316,8 +316,10 @@
       <div class="dfields">
         <label for="dTitle">Title<input id="dTitle" autocomplete="off"></label>
         <label for="dAuthor">Author<input id="dAuthor" autocomplete="off"></label>
-        <label for="dYear">First published<input id="dYear" inputmode="numeric" placeholder="e.g. 1890" autocomplete="off"></label>
-        <label for="dIsbn">ISBN<input id="dIsbn" placeholder="e.g. 978-0-14-118776-1" autocomplete="off" spellcheck="false" aria-describedby="dIsbnMsg"></label>
+        <div class="drow2">
+          <label for="dYear">First published<input id="dYear" inputmode="numeric" placeholder="e.g. 1890" autocomplete="off"></label>
+          <label for="dIsbn">ISBN<input id="dIsbn" placeholder="e.g. 978-0-14-118776-1" autocomplete="off" spellcheck="false" aria-describedby="dIsbnMsg"></label>
+        </div>
         <p class="hint isbnmsg" id="dIsbnMsg" aria-live="polite"></p>
         <div class="dmodes"><span class="dml" id="dModesL">Show in</span>
           <div class="modeseg" role="group" aria-labelledby="dModesL">
@@ -339,7 +341,7 @@
         <div class="seg" role="group" aria-label="How the image fits the cover"><button data-m="fill">Fill the cover</button><button data-m="fit">Show the whole image</button></div>
         <p class="hint" id="dFitHint">Drag the large preview to choose which part of the image shows.</p>
       </div>
-      <p class="hint" id="dCoverHint">Images are shaped to a 2:3 book cover automatically. You can also paste an image, or drop one onto the large preview.</p>
+      <p class="hint" id="dCoverHint">Images are shaped to a 2:3 cover. You can also paste an image, or drop one onto the preview.</p>
     </div>
     <div class="grp">
       <span class="lbl">Public databases</span>

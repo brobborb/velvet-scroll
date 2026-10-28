@@ -1055,7 +1055,7 @@ async function openDetails(b){
   $('#dResults').replaceChildren(); $('#dStatus').textContent = '';
   $('#dSearch').hidden = !IS_EXT;
   $('#dHint').textContent = IS_EXT ? 'Searches using the title and author above. Only those words are sent. Covers from Wikimedia Commons and Project Gutenberg are openly licensed.'
-    : 'Looking up details needs the Velvet Scroll browser extension, because this page can’t connect to other websites. You can still edit the details and choose the classic leather cover here.';
+    : 'Looking up details online needs the Velvet Scroll browser extension.';
   renderCoverChoices(); $('#dlg').hidden = false; $('#dTitle').focus();
   if(!b.isbn){ const t = await openingText(b), found = findIsbn(t);
     if(found && dlg && dlg.b === b && !$('#dIsbn').value){ $('#dIsbn').value = found; isbnMsg(); $('#dStatus').textContent = 'ISBN found in the book.'; } }
