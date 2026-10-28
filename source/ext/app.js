@@ -1177,6 +1177,16 @@ $('#dSave').onclick = async () => {
 const URL_MAX = 500e6;
 let urlCtl = null;
 function closeUrlNow(){ $('#urlDlg').hidden = true; if(urlCtl){ urlCtl.abort(); urlCtl = null; } }
+/* the Add books menu */
+function addMenu(open){ const m = $('#addMenu'), b = $('#addMore'); if(open === undefined) open = m.hidden; m.hidden = !open; b.setAttribute('aria-expanded', String(open));
+  if(open) m.querySelector('button:not([hidden])').focus(); }
+$('#addMore').onclick = e => { e.stopPropagation(); addMenu(); };
+document.addEventListener('pointerdown', e => { if(!$('#addMenu').hidden && !e.target.closest('#addMenu, #addMore')) addMenu(false); });
+$('#addMenu').addEventListener('keydown', e => { const items = [...$('#addMenu').querySelectorAll('button:not([hidden])')], i = items.indexOf(document.activeElement);
+  if(e.key === 'Escape'){ e.stopPropagation(); addMenu(false); $('#addMore').focus(); }
+  else if(e.key === 'ArrowDown' || e.key === 'ArrowUp'){ e.preventDefault(); items[(i + (e.key === 'ArrowDown' ? 1 : items.length - 1)) % items.length].focus(); } });
+$('#addMenu').addEventListener('click', e => { if(e.target.closest('button')) addMenu(false); });
+$('#addFilesItem').onclick = () => $('#file').click();
 $('#urlOpen').onclick = () => { pushLayer('url'); $('#urlDlg').hidden = false; $('#urlSt').textContent = ''; $('#urlAct').replaceChildren(); $('#urlProg').hidden = true; $('#urlIn').value = ''; $('#urlIn').focus(); };
 $('#urlClose').onclick = () => popLayer('url');
 $('#urlDlg').addEventListener('click', e => { if(e.target === $('#urlDlg')) popLayer('url'); });
@@ -2041,9 +2051,16 @@ function render(){
     G.replaceChildren(...(miss ? [el('div', {class:'dbar'}, el('span', {text:`${miss} ${miss === 1 ? 'book has' : 'books have'} no description.`}), el('button', {class:'btn', text:'Find descriptions', onclick:descFind}))] : []), ...list.map(detailRow)); descFill(list); }
   else if(libLayout === 'table'){ G.className = 'tview'; G.replaceChildren(list.length ? libTable(list) : ''); }
   else { G.className = 'grid' + (libSize < 140 ? ' compact' : ''); G.replaceChildren(...list.map(card)); }
-  const lastB = books.filter(b=>{ const s=status(b); return s==='reading' && inMode(b); }).sort((a,b)=>(progress[b.id]?.t||0)-(progress[a.id]?.t||0))[0];
+  const reading = books.filter(b=>{ const s=status(b); return s==='reading' && inMode(b); }).sort((a,b)=>(progress[b.id]?.t||0)-(progress[a.id]?.t||0)), lastB = reading[0];
   const cb = $('#cont'); cb.hidden = !lastB;
-  if(lastB){ cb.textContent = `Continue “${lastB.title.length>28 ? lastB.title.slice(0,27)+'…' : lastB.title}” · ${Math.round(progress[lastB.id].p*100)}%`; cb.onclick = ()=>openBook(lastB); }
+  if(lastB){ const pc = Math.round(progress[lastB.id].p*100), when = progress[lastB.id].t ? ago(progress[lastB.id].t) : '';
+    cb.replaceChildren(
+      el('button', {class:'cover', 'aria-label':`Continue ${lastB.title}`, onclick:() => openBook(lastB)}, coverEl(lastB)),
+      el('div', {class:'rinfo'}, el('span', {class:'rk', text:'Continue reading'}), el('span', {class:'rt', text:lastB.title, title:lastB.title}),
+        lastB.author ? el('span', {class:'ra', text:lastB.author}) : null,
+        el('div', {class:'rp'}, el('div', {class:'prog'}, Object.assign(el('span'), {style:`width:${pc}%`})), el('span', {text:`${pc}%` + (when ? ` · ${when}` : '')}))),
+      reading.length > 1 ? el('div', {class:'more', 'aria-label':'Also reading'}, ...reading.slice(1, 4).map(b => el('button', {text:b.title, title:`Continue ${b.title} (${Math.round(progress[b.id].p*100)}%)`, onclick:() => openBook(b)}))) : null,
+      el('button', {class:'btn primary', text:'Continue', onclick:() => openBook(lastB)})); }
 }
 function rmButton(b){
   const rm = !b.sample && el('button',{class:'ghost', text:'Remove', 'aria-label':`Remove ${b.title}`});

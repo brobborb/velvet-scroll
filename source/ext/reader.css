@@ -26,6 +26,40 @@ button,input,select{font:inherit;color:inherit}
 .top .wrap{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 24px;padding-block:22px 18px}
 .brand h1{font-family:var(--f-display);font-weight:400;font-size:32px;line-height:1.1;margin:0;letter-spacing:-.01em}
 .brand p{margin:4px 0 0;color:var(--muted)}
+.hdrbtns{display:flex;align-items:center;gap:6px 14px;flex-wrap:wrap}
+.hquiet{display:flex;align-items:center;gap:2px}
+.qbtn{display:inline-flex;align-items:center;gap:7px;border:0;background:none;border-radius:999px;padding:8px 12px;cursor:pointer;font-weight:600;font-size:14px;color:var(--muted);white-space:nowrap}
+.qbtn svg{width:20px;height:20px;flex:none}
+.qbtn:hover,.qbtn[aria-expanded="true"]{background:var(--accent-soft);color:var(--fg)}
+.qbtn[hidden]{display:none}
+.addsplit{position:relative;display:inline-flex}
+.addsplit .addmain{border-radius:999px 0 0 999px;padding-right:14px}
+.addsplit .addmain svg{width:18px;height:18px}
+.addsplit .addmore{border-radius:0 999px 999px 0;padding:9px 11px 9px 9px;border-left:1px solid color-mix(in srgb,var(--accent-fg) 30%,transparent)}
+.addsplit .addmore svg{width:17px;height:17px}
+.addmenu{position:absolute;right:0;top:calc(100% + 8px);z-index:40;min-width:250px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 14px 40px rgb(0 0 0 / .22);padding:6px;display:flex;flex-direction:column}
+.addmenu[hidden]{display:none}
+.addmenu button{white-space:nowrap;display:flex;align-items:center;gap:10px;border:0;background:none;text-align:left;padding:10px 12px;border-radius:8px;cursor:pointer;font-size:14.5px;color:var(--fg)}
+.addmenu button[hidden]{display:none}
+.addmenu button:hover,.addmenu button:focus-visible{background:var(--accent-soft);outline:none}
+.addmenu svg{width:19px;height:19px;flex:none;color:var(--muted)}
+/* Continue reading */
+.resume{display:flex;align-items:center;gap:16px;margin-top:20px;padding:12px 14px 12px 12px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+.resume[hidden]{display:none}
+.resume .cover{width:52px;flex:none;border-radius:2px 5px 5px 2px}
+.resume .cover:hover{transform:none}
+.resume .rinfo{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.resume .rk{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.resume .rt{font-family:var(--f-read);font-weight:600;font-size:17px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.resume .ra{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.resume .rp{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums;margin-top:3px}
+.resume .rp .prog{flex:0 1 240px;min-width:40px}
+.resume .rp span{white-space:nowrap}
+.resume .more{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;max-width:40%}
+.resume .more button{border:1px solid var(--line);background:none;border-radius:999px;padding:4px 10px;font-size:12.5px;color:var(--muted);cursor:pointer;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.resume .more button:hover{border-color:var(--accent);color:var(--fg)}
+@media (max-width:860px){ .hquiet .qbtn span{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap} .hquiet .qbtn{padding:9px} .resume .more{display:none} }
+@media (max-width:560px){ .top .wrap{padding-block:16px 14px} .brand h1{font-size:27px} .brand p{font-size:14px} .resume{gap:12px;margin-top:14px} .resume .cover{width:44px} .resume .rt{font-size:16px} .resume > .btn{padding:8px 14px} }
 .btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 16px;cursor:pointer;font-weight:700;white-space:nowrap}
 .btn:hover{border-color:var(--accent)}
 .btn.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}

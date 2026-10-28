@@ -16,24 +16,29 @@
       <h1>Velvet Scroll</h1>
       <p>Your ebooks, scrolling at your pace.</p>
     </div>
-    <div class="row hdrbtns" style="flex-wrap:wrap;gap:10px">
-    <button id="cont" class="btn" hidden></button>
-    <button id="find" class="btn" hidden title="Look up titles, authors, dates and covers in public databases">Find details</button>
-    <button id="artOpen" class="btn" hidden>Save article</button>
-    <button id="axOpen" class="btn">Accessibility</button>
-    <button id="apOpen" class="btn">Appearance</button>
-    <button id="bkOpen" class="btn">Backup</button>
-    <button id="urlOpen" class="btn" title="Add an ebook or PDF from a web address"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1"/></svg>Add from URL</button>
-    <label class="btn primary" for="file">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-      Add books
-    </label>
+    <div class="hdrbtns">
+    <nav class="hquiet" aria-label="Library tools">
+      <button id="find" class="qbtn" hidden title="Look up titles, authors, dates and covers in public databases"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.4-4.4"/><path d="M8.5 9.5h5M8.5 12.5h3"/></svg><span>Find details</span></button>
+      <button id="apOpen" class="qbtn" title="Appearance: theme, colours and fonts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.2 0 2-.9 2-2 0-.6-.3-1-.6-1.4-.3-.4-.6-.8-.6-1.4 0-1.1.9-2 2-2H17a4 4 0 0 0 4-4c0-4-4-7.2-9-7.2z"/><circle cx="7.5" cy="11" r="1.1"/><circle cx="10" cy="7" r="1.1"/><circle cx="14.5" cy="7" r="1.1"/></svg><span>Appearance</span></button>
+      <button id="axOpen" class="qbtn" title="Accessibility: larger text, contrast and motion"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="4.5" r="1.8"/><path d="M5 8.5l7 1.5 7-1.5M12 10v5M12 15l-3 6M12 15l3 6"/></svg><span>Accessibility</span></button>
+      <button id="bkOpen" class="qbtn" title="Backup, restore and sync codes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16v3H4zM5.5 10v9h13v-9M10 13.5h4"/></svg><span>Backup</span></button>
+    </nav>
+    <div class="addsplit">
+      <label class="btn primary addmain" for="file"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add books</label>
+      <button class="btn primary addmore" id="addMore" aria-haspopup="menu" aria-expanded="false" aria-controls="addMenu" title="More ways to add" aria-label="More ways to add books"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+      <div id="addMenu" class="addmenu" role="menu" hidden>
+        <button role="menuitem" id="addFilesItem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/></svg>Choose files on this device…</button>
+        <button role="menuitem" id="urlOpen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1"/></svg>From a web address…</button>
+        <button role="menuitem" id="artOpen" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h11l3 3v13H5z"/><path d="M8 9h8M8 12.5h8M8 16h5"/></svg>Save a web article…</button>
+      </div>
+    </div>
     <input type="file" id="file" accept=".epub,.kepub,.mobi,.azw3,.azw,.prc,.pdf,.txt,.htm,.html,.xhtml,.fb2,.fbz,.cbz,.zip,application/epub+zip,application/x-mobipocket-ebook,application/pdf,text/plain,text/html,application/x-cbz,application/zip" multiple hidden>
     </div>
   </div>
 </header>
 
 <main class="wrap">
+  <section id="cont" class="resume" hidden aria-label="Continue reading"></section>
   <div class="tools">
     <input id="q" class="search" type="search" placeholder="Search titles, authors or ISBN" aria-label="Search library">
     <select id="sort" class="sortsel" aria-label="Sort by">
