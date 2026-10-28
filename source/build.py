@@ -11,7 +11,7 @@ body=src[src.index('</style>')+8:src.rindex('<script>')].strip()
 from collections import Counter
 dups=[k for k,v in Counter(re.findall(r'\bid="([^"]+)"', body)).items() if v>1]
 if dups: sys.exit('Duplicate ids in bookroll.html: ' + ', '.join(dups))
-DESC='EPUB and ebook reader that scrolls for you. Opens DRM-free EPUB, MOBI, AZW3, PDF, TXT, FB2 and comics, with read aloud.'
+DESC='An ebook reader that scrolls for you, with a reading guide, read aloud and your books kept private on your device.'
 
 def ext_files(E):
     open(E+'app.js','w').write(script); open(E+'reader.css','w').write(style)
