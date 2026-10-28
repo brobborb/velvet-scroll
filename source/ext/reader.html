@@ -108,6 +108,11 @@
     <button type="button" class="rtool" id="findNext" title="Next match (Enter)" aria-label="Next match"><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
     <button type="button" class="rtool" id="findClose" title="Close search (Esc)" aria-label="Close search"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   </form>
+  <div id="ocrBar" class="findbar ocrbar" hidden>
+    <span id="ocrMsg" role="status" aria-live="polite">Recognising text…</span>
+    <progress id="ocrProg" max="1" aria-hidden="true"></progress>
+    <button type="button" class="btn" id="ocrStop">Stop</button>
+  </div>
   <nav id="pdfRail" class="rail" hidden aria-label="Page tools">
     <input id="railPage" class="rail-page" type="text" inputmode="text" spellcheck="false" aria-label="Page" title="Type a page and press Enter">
     <span id="railTotal" class="rail-total"></span>
@@ -135,6 +140,7 @@
     <button role="menuitem" id="mPrint"><svg viewBox="0 0 24 24"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="7"/></svg>Print…</button>
     <button role="menuitem" id="mSave"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>Download original</button>
     <button role="menuitem" id="mInfo"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/></svg>Document details</button>
+    <button role="menuitem" id="mOcr"><svg viewBox="0 0 24 24"><path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16M8 9.5h8M8 12h8M8 14.5h5"/></svg>Recognise text…</button>
   </div>
   <button id="railPin" class="rail-show rail-hide" hidden title="Hide the page tools" aria-label="Hide the page tools"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
   <button id="railShow" class="rail-show" hidden title="Show the page tools" aria-label="Show the page tools"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
@@ -280,7 +286,7 @@
       <label class="check" id="tintRow"><input type="checkbox" id="sTint"> Tint pages to match the colours above</label>
       <label class="check" id="trimRow"><input type="checkbox" id="sTrim"> Trim white margins from pages</label>
       <p class="hint" id="pgHint">Text size, typeface and spacing apply when the PDF is shown as reflowed text.</p>
-      <div class="row pdftools" id="pdfTools" style="flex-wrap:wrap;gap:8px"><button class="btn" id="pdfPrintBtn">Print…</button><button class="btn" id="pdfSaveBtn">Download original</button><button class="btn" id="pdfInfoBtn">Document details</button></div>
+      <div class="row pdftools" id="pdfTools" style="flex-wrap:wrap;gap:8px"><button class="btn" id="pdfPrintBtn">Print…</button><button class="btn" id="pdfSaveBtn">Download original</button><button class="btn" id="pdfInfoBtn">Document details</button><button class="btn" id="pdfOcrBtn">Recognise text…</button></div>
     </div>
 
     <div class="grp">
@@ -437,6 +443,26 @@
     </div>
     <p class="hint" id="nvDlgSt" role="status"></p>
     <footer class="sh-foot"><a class="btn" href="licences.html" target="_blank" rel="noopener">Licences</a><button class="btn" id="nvCancel">Not now</button><button class="btn primary" id="nvGo">Download</button></footer>
+  </div>
+</div>
+
+<div id="ocrdlg" class="modal" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="ocrH">
+    <header class="sh-head"><h2 id="ocrH">Recognise text</h2><button class="btn" id="ocrClose">Close</button></header>
+    <p id="ocrLead"></p>
+    <div class="grp">
+      <span class="lbl">Before you start</span>
+      <ul class="nvinfo">
+        <li><strong>Runs on your device.</strong> Velvet Scroll reads the page images itself with Tesseract, an open-source text recogniser. Nothing from your book is uploaded.</li>
+        <li><strong>A one-time download</strong> of about <span class="ocrMB">7</span> MB (English language data<span class="ocrEng"> and the recognition engine</span>) from jsDelivr. Your browser keeps it, so it isn’t downloaded again unless you clear this site’s data.</li>
+        <li><strong>Takes a little while:</strong> a second or two per page on most computers, longer on phones. You can keep reading while it works and stop at any time. Finished pages are kept.</li>
+        <li><strong>Works best on clear, printed English.</strong> Other languages in the Latin alphabet come out less accurately, handwriting isn’t recognised, and there may be some mistakes.</li>
+        <li><strong>Openly licensed.</strong> Tesseract and Tesseract.js are free software under the Apache 2.0 licence. See Licences for details.</li>
+      </ul>
+      <p class="hint">The recognised text is saved in this browser with the book, so it’s ready next time. Removing the book removes it too.</p>
+    </div>
+    <p class="hint" id="ocrDlgSt" role="status"></p>
+    <footer class="sh-foot"><a class="btn" href="licences.html" target="_blank" rel="noopener">Licences</a><button class="btn" id="ocrCancel">Not now</button><button class="btn primary" id="ocrGo">Download and start</button></footer>
   </div>
 </div>
 

@@ -260,6 +260,12 @@ body.dragging .drop{display:grid}
 .findbar{position:absolute;z-index:5;top:12px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:4px;padding:4px 4px 4px 12px;width:min(520px,calc(100% - 24px));border-radius:14px;
   background:color-mix(in srgb,var(--rbg) 92%,var(--rfg));border:1px solid color-mix(in srgb,var(--rfg) 18%,transparent);box-shadow:0 8px 26px rgb(0 0 0 / .2)}
 .findbar[hidden]{display:none}
+.findbar:not([hidden]) ~ .ocrbar{top:64px}
+.ocrbar{gap:10px;padding:6px 6px 6px 14px;font:14px/1.3 var(--f-ui);color:var(--rfg);width:min(460px,calc(100% - 24px))}
+.ocrbar span{flex:1;min-width:0;font-variant-numeric:tabular-nums}
+.ocrbar progress{flex:0 0 72px;height:6px;accent-color:var(--accent)}
+.ocrbar .btn{padding:6px 12px;min-height:0}
+@media (max-width:480px){ .ocrbar progress{display:none} }
 .findbar > svg{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;opacity:.6}
 .findbar input{flex:1;min-width:0;border:0;background:transparent;color:var(--rfg);font:16px var(--f-ui);padding:8px 4px;outline:none}
 .findbar input::-webkit-search-cancel-button{display:none}

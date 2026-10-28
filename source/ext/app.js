@@ -589,11 +589,11 @@ const PDF = (() => {
     return out;
   }
 
-  async function extractLines(pdf, progress){
+  async function extractLines(pdf, progress, getText){
     const L = await lib(), pages = [];
     for(let n=1;n<=pdf.numPages;n++){
       const pg = await pdf.getPage(n), vp = pg.getViewport({scale:1});
-      const tc = await pg.getTextContent();
+      const tc = getText ? await getText(n) : await pg.getTextContent();
       const lines = []; let cur = null;
       for(const it of tc.items){
         if(!('str' in it)) continue;
@@ -1837,7 +1837,7 @@ function render(){
 function card(b){
   const p = progress[b.id]?.p || 0, st = status(b);
   const rm = !b.sample && el('button',{class:'ghost', text:'Remove'});
-  if(rm){ let t; rm.onclick = async ()=>{ if(rm.classList.contains('confirm')){ clearTimeout(t); await dbDel(b.id); books = books.filter(x=>x.id!==b.id); delete progress[b.id]; LS.set('progress',progress); if(notesAll[b.id]){ delete notesAll[b.id]; LS.set('notes', notesAll); } render(); toast(`Removed “${b.title}”.`); }
+  if(rm){ let t; rm.onclick = async ()=>{ if(rm.classList.contains('confirm')){ clearTimeout(t); await dbDel(b.id); books = books.filter(x=>x.id!==b.id); delete progress[b.id]; LS.set('progress',progress); if(notesAll[b.id]){ delete notesAll[b.id]; LS.set('notes', notesAll); } ocrDrop(b.id); render(); toast(`Removed “${b.title}”.`); }
     else { rm.classList.add('confirm'); rm.textContent='Confirm'; t=setTimeout(()=>{ rm.classList.remove('confirm'); rm.textContent='Remove'; }, 3000); } }; }
   const shelf = !b.sample && el('input',{class:'shelf', list:'shelfList', placeholder:'Add to shelf', 'aria-label':`Shelf for ${b.title}`, value:b.shelf||''});
   if(shelf) shelf.addEventListener('change', async ()=>{ b.shelf = shelf.value.trim(); b.upd = Date.now(); await dbPutMeta(b); render(); });
@@ -1934,6 +1934,154 @@ const pageName = n => (pdfLabels && pdfLabels[n - 1]) || String(n);
 const pgRot = pg => ((pg.rotate || 0) + pdfRot) % 360;   // the page's own turn plus the reader's
 const pdfModes = LS.get('pdfmode', {});
 const pdfTextCache = new Map();
+/* ---------- Recognising text in scanned PDFs: Tesseract, run on this device ----------
+   The engine is packaged with the extensions (the website loads it from jsDelivr); only the English language data downloads.
+   Recognised lines are kept per page in IndexedDB ('velvet-ocr'), in the PDF's own coordinates, and join the page's text,
+   so search, selection, highlights, reflow and read aloud all work as they do for a PDF with text. */
+const OCR = {ok: !!LS.get('ocrOk', false), w: null, wp: null, run: null, db: null, todo: null, log: null};   // ok: agreed on this device (never synced)
+const OCR_LANG = 'https://cdn.jsdelivr.net/npm/@tesseract.js-data/eng@1.0.0/4.0.0_best_int';
+const OCR_STYLE = {fontFamily: 'sans-serif', ascent: 0.8, descent: -0.2, vertical: false};
+function ocrPaths(){
+  const base = new URL('.', location.href).href, cdn = 'https://cdn.jsdelivr.net/npm/';
+  let simd = false; try{ simd = WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,0,0,1,5,1,96,0,1,123,3,2,1,0,10,10,1,8,0,65,0,253,15,253,98,11])); }catch(e){}
+  return IS_EXT
+    ? {lib: base + 'lib/tesseract/tesseract.min.js', worker: base + 'lib/tesseract/worker.min.js', core: base + 'lib/tesseract/tesseract-core-' + (simd ? 'simd-lstm' : 'lstm') + '.js', blob: false}
+    : {lib: cdn + 'tesseract.js@7.0.0/dist/tesseract.min.js', worker: cdn + 'tesseract.js@7.0.0/dist/worker.min.js', core: cdn + 'tesseract.js-core@7.0.0', blob: true};
+}
+function ocrScript(src){
+  return new Promise((res, rej) => { if(globalThis.Tesseract) return res();
+    const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => { s.remove(); rej(new Error('net')); }; document.head.append(s); });
+}
+function ocrWorker(){
+  if(OCR.w) return Promise.resolve(OCR.w);
+  return OCR.wp ||= (async () => {
+    const p = ocrPaths(); await ocrScript(p.lib);
+    let fail = null;
+    const w = await Tesseract.createWorker('eng', 1, {workerPath: p.worker, corePath: p.core, langPath: OCR_LANG, workerBlobURL: p.blob,
+      logger: m => OCR.log && OCR.log(m), errorHandler: e => { fail = e; }});
+    if(fail) throw new Error(String(fail));
+    return OCR.w = w;
+  })().catch(e => { OCR.wp = null; throw e; });
+}
+function ocrKill(){ try{ OCR.w && OCR.w.terminate(); }catch(e){} OCR.w = null; OCR.wp = null; }
+// storage
+function ocrDB(){
+  return OCR.db ||= new Promise((res, rej) => { const r = indexedDB.open('velvet-ocr', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('pages'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }).catch(e => { OCR.db = null; throw e; });
+}
+const ocrRange = id => IDBKeyRange.bound(id + '|', id + '|￿');
+async function ocrLoad(id){
+  const out = new Map(); if(!OCR.ok) return out;
+  try{ const st = (await ocrDB()).transaction('pages').objectStore('pages'), r = ocrRange(id);
+    const [keys, vals] = await Promise.all([rq(st.getAllKeys(r)), rq(st.getAll(r))]);
+    keys.forEach((k, i) => out.set(+String(k).split('|').pop(), vals[i])); }catch(e){}
+  return out;
+}
+async function ocrPut(id, n, lines){ try{ (await ocrDB()).transaction('pages', 'readwrite').objectStore('pages').put(lines, id + '|' + n); }catch(e){} }
+async function ocrDrop(id){ if(!OCR.ok) return; try{ (await ocrDB()).transaction('pages', 'readwrite').objectStore('pages').delete(ocrRange(id)); }catch(e){} }
+// recognised lines as pdf.js text items: {s: text, t: transform in PDF space, w: width}
+function ocrItems(lines){ return lines.map(l => ({str: l.s, dir: 'ltr', width: l.w, height: Math.hypot(l.t[2], l.t[3]), transform: l.t, fontName: 'vsocr', hasEOL: true})); }
+async function ocrPage(w, doc, n){
+  const pg = await doc.getPage(n), v1 = pg.getViewport({scale: 1});
+  const sc = Math.max(1, Math.min(250 / 72, 2600 / Math.max(v1.width, v1.height))), vp = pg.getViewport({scale: sc});   // about 250 dpi
+  const cv = document.createElement('canvas'); cv.width = Math.floor(vp.width); cv.height = Math.floor(vp.height);
+  const ctx = cv.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height);
+  await pg.render({canvasContext: ctx, viewport: vp}).promise; pg.cleanup();
+  const blob = await new Promise(r => cv.toBlob(r, 'image/png')); cv.width = cv.height = 0;
+  const r = await w.recognize(blob, {}, {blocks: true, text: false});
+  const out = [];
+  for(const b of r.data.blocks || []) for(const p of b.paragraphs || []) for(const l of p.lines || []){
+    const s = (l.text || '').replace(/\s+/g, ' ').trim(), bb = l.bbox;
+    if(!s || !bb || l.confidence < 45 || !/[\p{L}\p{N}]/u.test(s)) continue;   // skip guesses (often from pictures)
+    const bl = l.baseline && l.baseline.x1 > l.baseline.x0 ? l.baseline : {x0: bb.x0, y0: bb.y1 - (bb.y1 - bb.y0) * 0.2, x1: bb.x1, y1: bb.y1 - (bb.y1 - bb.y0) * 0.2};
+    const slope = (bl.y1 - bl.y0) / (bl.x1 - bl.x0), yb = x => bl.y0 + (x - bl.x0) * slope;
+    const a = vp.convertToPdfPoint(bb.x0, yb(bb.x0)), z = vp.convertToPdfPoint(bb.x1, yb(bb.x1));
+    const len = Math.hypot(z[0] - a[0], z[1] - a[1]) || 1, ux = (z[0] - a[0]) / len, uy = (z[1] - a[1]) / len;
+    const fs = Math.max(4, yb(bb.x0) - bb.y0) / 0.8 / sc;   // the font size whose ascent reaches the top of the line
+    const k = v => Math.round(v * 100) / 100;
+    out.push({s, t: [k(ux * fs), k(uy * fs), k(-uy * fs), k(ux * fs), k(a[0]), k(a[1])], w: k(len)});
+  }
+  return out;
+}
+// which pages have (almost) no text of their own
+async function ocrNeeded(doc){
+  const todo = [];
+  for(let n = 1; n <= doc.numPages; n++){
+    if(doc._ocr && doc._ocr.has(n)) continue;
+    let c = 0; try{ c = (await pdfRealText(doc, n)).items.reduce((a, it) => a + (it.str || '').trim().length, 0); }catch(e){}
+    if(c < 20) todo.push(n);
+    if(n % 50 === 0) await new Promise(r => setTimeout(r));
+  }
+  return todo;
+}
+async function ocrStart(){
+  if(!pdfDoc || !cur) return;
+  if(!pdfDoc.textAllowed){ toast('This PDF’s settings don’t allow its text to be extracted, so its text can’t be recognised either.', 6000); return; }
+  if(OCR.run){ toast('Already recognising text. Watch the progress at the bottom of the page.'); return; }
+  const doc = pdfDoc, todo = await ocrNeeded(doc);
+  if(doc !== pdfDoc) return;
+  if(!todo.length){ toast(doc._ocr && doc._ocr.size ? 'Text has already been recognised on every page that needed it.' : 'Every page of this PDF already has text, so there’s nothing to recognise.', 5000); return; }
+  OCR.todo = todo;
+  if(!OCR.ok){ ocrAsk(todo.length, doc.numPages); return; }
+  ocrRun(doc, todo);
+}
+function ocrAsk(need, total){
+  const pl = (k, w) => k === 1 ? `1 ${w}` : `${k} ${w}s`;
+  $('#ocrLead').textContent = (need === total ? `This PDF’s ${total === 1 ? 'page is a picture' : 'pages are pictures'} with no text, as in a scan or photo.` : `${pl(need, 'page')} of the ${total} in this PDF ${need === 1 ? 'is a picture' : 'are pictures'} with no text, as in a scan or photo.`)
+    + ' Velvet Scroll can recognise the words on ' + (need === 1 ? 'it' : 'them') + ' so you can search, select, copy, highlight, reflow and listen to them.';
+  document.querySelectorAll('#ocrdlg .ocrMB').forEach(e => e.textContent = IS_EXT ? '3' : '7');
+  document.querySelectorAll('#ocrdlg .ocrEng').forEach(e => e.hidden = IS_EXT);
+  $('#toast').hidden = true; $('#ocrDlgSt').textContent = ''; $('#ocrdlg').hidden = false; $('#ocrGo').focus();
+}
+function ocrClose(){ $('#ocrdlg').hidden = true; }
+$('#ocrClose').onclick = ocrClose; $('#ocrCancel').onclick = ocrClose;
+$('#ocrGo').onclick = () => { OCR.ok = true; LS.set('ocrOk', true); ocrClose(); if(pdfDoc && OCR.todo) ocrRun(pdfDoc, OCR.todo); };
+$('#ocrStop').onclick = () => ocrStop(false);
+function ocrStop(quiet){
+  const run = OCR.run; if(!run) return;
+  run.stop = true; ocrKill(); ocrEnd(run);
+  if(!quiet) toast(run.found ? `Stopped. The text recognised on ${run.found === 1 ? '1 page' : run.found + ' pages'} is kept. Choose Recognise text again to carry on.` : 'Stopped.', 6000);
+}
+function ocrEnd(run){ if(OCR.run !== run) return; OCR.run = null; OCR.log = null; $('#ocrBar').hidden = true; }
+function ocrRefreshPage(n){
+  const d = pageMode() && document.getElementById('sec0-pg' + n);
+  if(d){ delete d.dataset.r; if(nearView(d)) queuePage(d); }
+}
+async function ocrRun(doc, todo){
+  const id = cur.id, run = OCR.run = {stop: false, found: 0}, msg = $('#ocrMsg'), prog = $('#ocrProg');
+  const say = (t, v) => { msg.textContent = t; if(v == null) prog.removeAttribute('value'); else prog.value = v; };
+  $('#toast').hidden = true; $('#ocrBar').hidden = false; say('Getting the text recogniser ready…');
+  OCR.log = m => { if(/traineddata/.test(m.status) && m.progress < 1) say('Downloading the language data…'); };
+  let w;
+  try{ w = await ocrWorker(); }
+  catch(e){ if(run.stop) return; ocrEnd(run); ocrKill(); toast('Couldn’t load the text recogniser. Check your internet connection and try again.', 6000); return; }
+  OCR.log = null;
+  let done = 0;
+  for(const n of todo){
+    if(run.stop || doc !== pdfDoc) return;
+    say(`Recognising text: page ${done + 1} of ${todo.length}`, done / todo.length);
+    try{
+      const lines = await ocrPage(w, doc, n);
+      if(run.stop || doc !== pdfDoc) return;
+      (doc._ocr ||= new Map()).set(n, lines); ocrPut(id, n, lines);
+      if(doc._vsText) doc._vsText.delete(n);
+      if(lines.length){ run.found++; ocrRefreshPage(n); }
+    }catch(e){ if(run.stop) return; console.warn('Recognise text, page ' + n, e); }
+    done++;
+  }
+  ocrEnd(run);
+  pdfTextCache.delete(id);
+  const mb = $('#rMode'); if(pdfMode === 'pages' && run.found){ mb.disabled = false; mb.title = ''; }
+  const msgDone = !run.found ? 'No text was found on those pages.' : `Text recognised on ${run.found === 1 ? '1 page' : run.found + ' pages'}. You can now search, select and highlight it, or choose Reflow to read it as text or listen to it.`;
+  if(pdfMode === 'text' && run.found){   // reading reflowed text: rebuild it with the new pages, keeping the place
+    if(tts.on){ toast('Text recognised. It will appear in the reflowed text the next time you open this PDF.', 7000); return; }
+    const f = scroller.scrollTop / Math.max(1, scroller.scrollHeight);
+    await showPdf('text'); $('#loading').hidden = true; scroller.scrollTop = f * scroller.scrollHeight;
+    toast(`Text recognised on ${run.found === 1 ? '1 page' : run.found + ' pages'} and added to the reflowed text.`, 6000); return;
+  }
+  if(find.q) findRun(find.q);
+  toast(msgDone, 7000);
+}
 // in page view, one "line" is estimated from the page width (about 14pt leading on a letter-size page)
 const lineH = () => { if((pdfDoc && pdfMode === 'pages') || comic){ if(!pgLine){ const d = page.querySelector('.pdfpg'); pgLine = Math.max(8, (d ? d.clientWidth : 600) * 14/612); } return pgLine; } return S.size * S.lh; };
 const guideY = () => Math.round(stage.clientHeight * S.gpos/100);
@@ -2225,7 +2373,7 @@ async function openBook(b){
     } else {
       const buf = await dbGetFile(b.id); if(!buf) throw new Error('missing');
       if(PDF.isPdf(new Uint8Array(buf))){
-        pdfDoc = await PDF.load(buf); R.classList.add('is-pdf');
+        pdfDoc = await PDF.load(buf); R.classList.add('is-pdf'); pdfDoc._ocr = await ocrLoad(b.id);
         pdfOutline = await PDF.outline(pdfDoc); pdfLabels = await PDF.labels(pdfDoc); pdfRot = LS.get('pdfrot', {})[b.id] || 0;
         await showPdf(pdfModes[b.id] || 'text');
       } else if(MOBI.isMobi(new Uint8Array(buf))){
@@ -2285,7 +2433,7 @@ async function showPdf(mode){
     else {
       let html = pdfTextCache.get(cur.id);
       if(html === undefined){
-        const pages = await PDF.extractLines(pdfDoc, (i,n) => setLoading(`Reading page ${i} of ${n}…`));
+        const doc = pdfDoc, pages = await PDF.extractLines(doc, (i,n) => setLoading(`Reading page ${i} of ${n}…`), n => pdfPageText(doc, n));
         const r = PDF.build(pages);
         html = r.chars >= Math.min(200, pdfDoc.numPages*20) ? r.html : null;
         pdfTextCache.set(cur.id, html);
@@ -2295,7 +2443,7 @@ async function showPdf(mode){
         sec.append(...new DOMParser().parseFromString(html, 'text/html').body.childNodes);
         sec.querySelectorAll('[id]').forEach(e => e.id = 'sec0-'+e.id);
         page.replaceChildren(sec);
-      } else { mode = 'pages'; toast('This PDF has no text to reflow (it may be scanned), so it’s shown as original pages.', 6000); }
+      } else { mode = 'pages'; toast('This PDF has no text to reflow (it may be scanned), so it’s shown as original pages. To read its words, choose Recognise text in the ⋯ page tools or in Display.', 8000); }
     }
   }
   if(mode === 'pages'){ if(S.trim) await ensureTrim(); await renderPdfPages(); }
@@ -2305,7 +2453,7 @@ async function showPdf(mode){
   const mb = $('#rMode'); mb.hidden = false;
   mb.innerHTML = mode === 'text' ? '<span class="lng">Original pages</span><span class="sht">Pages</span>' : '<span class="lng">Reflow text</span><span class="sht">Reflow</span>'; mb.setAttribute('aria-label', mode === 'text' ? 'Original pages' : 'Reflow text');
   mb.disabled = mode === 'pages' && (!pdfDoc.textAllowed || pdfTextCache.get(cur.id) === null);
-  mb.title = mb.disabled ? 'This PDF can only be shown as original pages' : '';
+  mb.title = !mb.disabled ? '' : pdfDoc.textAllowed ? 'This PDF has no text yet: choose Recognise text to read its pages' : 'This PDF can only be shown as original pages';
   $('#pdfGroup').hidden = false; goPageSetup(pdfDoc.numPages);
   pgTops = null; pgLine = 0;
   tocItems = pdfOutline.filter(o => o.page <= pdfDoc.numPages).map(o => ({label:o.label || `Page ${o.page}`, target:'sec0-pg'+o.page, sec:0, depth:o.depth, page:o.page}));
@@ -2374,9 +2522,15 @@ async function pumpPages(){
   pdfBusy = false;
 }
 /* text and links over each PDF page */
-function pdfPageText(doc, n){   // the page's text (cached for search and the text layer)
+function pdfRealText(doc, n){   // the text stored in the PDF itself
+  doc._vsReal ||= new Map();
+  if(!doc._vsReal.has(n)) doc._vsReal.set(n, doc.getPage(n).then(pg => pg.getTextContent()));
+  return doc._vsReal.get(n);
+}
+function pdfPageText(doc, n){   // the page's text, plus any recognised from its picture (cached for search, the text layer and reflow)
   doc._vsText ||= new Map();
-  if(!doc._vsText.has(n)) doc._vsText.set(n, doc.getPage(n).then(pg => pg.getTextContent()));
+  if(!doc._vsText.has(n)) doc._vsText.set(n, pdfRealText(doc, n).then(tc => { const o = doc._ocr && doc._ocr.get(n);
+    return o && o.length ? {...tc, items:[...tc.items, ...ocrItems(o)], styles:{...tc.styles, vsocr:OCR_STYLE}} : tc; }));
   return doc._vsText.get(n);
 }
 async function pdfTextLayer(doc, pg, n, vp){
@@ -2794,7 +2948,7 @@ function closeReaderNow(){
   if(R.hidden) return;
   pause(); hidePanels(); sweepEnd();
   if(!R.hidden && page.childNodes.length) saveCur(); ready = false;
-  stopComic(); stopPdfPages(); try{ pdfDoc?.destroy(); }catch(e){} pdfDoc = null; pdfLabels = null; pdfRot = 0; pdfTrim = null; thumbsReset(); railMenu(false); pdfSizes = null; pgTops = null; pgLine = 0;
+  stopComic(); stopPdfPages(); ocrStop(true); try{ pdfDoc?.destroy(); }catch(e){} pdfDoc = null; pdfLabels = null; pdfRot = 0; pdfTrim = null; thumbsReset(); railMenu(false); pdfSizes = null; pgTops = null; pgLine = 0;
   R.classList.remove('is-pdf','pdf-pages'); page.classList.remove('pdfmode','tint-light','tint-dark');
   $('#rMode').hidden = true; $('#pdfGroup').hidden = true; findClose(); notesClear(); tocTab('toc'); $('#tabThumbs').hidden = true; $('#goPage').hidden = true; R.classList.remove('has-pages','rail-on'); $('#pdfRail').hidden = true; $('#railShow').hidden = true; $('#railPin').hidden = true;
   R.hidden = true; document.body.classList.remove('locked');
@@ -3157,7 +3311,7 @@ function ttsBeginAt(p){
 }
 function ttsStart(){
   if((!synth && !nvVoice()) || R.hidden) return;
-  if(comic || (pdfDoc && pdfMode === 'pages')){ toast(comic ? 'Comics have no text to read aloud.' : 'Read aloud needs text: switch this PDF to reflowed text first.', 5000); return; }
+  if(comic || (pdfDoc && pdfMode === 'pages')){ toast(comic ? 'Comics have no text to read aloud.' : $('#rMode').disabled && pdfDoc.textAllowed ? 'This PDF has no text yet. Choose Recognise text, then switch to reflowed text to read it aloud.' : 'Read aloud needs text: switch this PDF to reflowed text first.', 6000); return; }
   if(!ttsBeginAt(ttsStartPoint())) toast('There’s no text here to read aloud.');
 }
 // hush while the reader moves somewhere else, so the voice doesn't pull the page back (it carries on from the new place)
@@ -3824,6 +3978,8 @@ $('#mInfo').onclick = () => { railMenu(false); pdfInfo(); };
 $('#pdfPrintBtn').onclick = () => pdfPrint();
 $('#pdfSaveBtn').onclick = () => pdfDownload();
 $('#pdfInfoBtn').onclick = () => pdfInfo();
+$('#mOcr').onclick = () => { railMenu(false); ocrStart(); };
+$('#pdfOcrBtn').onclick = () => ocrStart();
 /* download the original file */
 async function pdfDownload(){
   if(!cur) return;
@@ -3921,6 +4077,7 @@ $('#rBack').onclick = closeReader;
 
 addEventListener('keydown', e=>{
   if(!$('#nvdlg').hidden){ if(e.key === 'Escape') nvClose(); return; }
+  if(!$('#ocrdlg').hidden){ if(e.key === 'Escape') ocrClose(); return; }
   if(!$('#dlg').hidden){ if(e.key === 'Escape') closeDetails(); return; }
   if(!$('#bk').hidden){ if(e.key === 'Escape') closeBackup(); return; }
   if(!$('#ax').hidden && e.key === 'Escape'){ closeAx(); return; }
