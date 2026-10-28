@@ -2529,6 +2529,15 @@ function titleCentre(){
   bar.classList.add('tcenter'); t.style.maxWidth = half * 2 + 'px';
 }
 new ResizeObserver(() => titleCentre()).observe(document.querySelector('.r-top'));
+function headerSpread(){
+  const row = document.querySelector('.top .hdrbtns'), brand = document.querySelector('.top .brand'); if(!row || !brand) return;
+  row.classList.remove('spread');
+  const kids = [...row.children].filter(k => k.offsetWidth);
+  const below = row.offsetTop > brand.offsetTop + brand.offsetHeight / 2, oneLine = kids.length && kids.every(k => Math.abs(k.offsetTop - kids[0].offsetTop) < 4);
+  if(below && oneLine){ row.classList.add('spread'); if(!kids.every(k => Math.abs(k.offsetTop - kids[0].offsetTop) < 4)) row.classList.remove('spread'); }
+}
+new ResizeObserver(() => headerSpread()).observe(document.querySelector('.top .wrap'));
+new MutationObserver(() => headerSpread()).observe(document.querySelector('.top .hdrbtns'), {attributes:true, subtree:true, attributeFilter:['hidden'], childList:true, characterData:true});
 
 /* ---------- highlights and notes (saved per book; found again from the quoted text and the words around it) ---------- */
 const NOTE_COLS = {y:'yellow', g:'green', b:'blue', p:'pink'};
