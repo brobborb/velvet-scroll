@@ -43,7 +43,7 @@ async function velvetStoreArticle(a){
 // read the article out of a browser tab (the toolbar menu or the right-click menu gives permission for that tab)
 async function velvetSaveTab(tabId){
   await velvetApi.scripting.executeScript({target:{tabId}, files:['lib/Readability.js', 'clip-core.js']});
-  const [r] = await velvetApi.scripting.executeScript({target:{tabId}, func: () => velvetArticle(document.cloneNode(true), location.href)});
+  const [r] = await velvetApi.scripting.executeScript({target:{tabId}, func: () => velvetArticle(document.cloneNode(true), location.href, {live: document})});
   const a = r && r.result;
   if(!a || a.error) return {status: a && a.error === 'noarticle' ? 'noarticle' : 'failed'};
   return velvetStoreArticle(a);
