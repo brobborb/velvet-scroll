@@ -21,7 +21,7 @@ function velvetImgSrc(im, base){
 // (the usual "featured image" under the headline) is lost. Find it before the first long paragraph, skipping
 // navigation, logos, avatars, adverts and "related" thumbnails, and small images.
 function velvetLead(doc, url, live){
-  const BAD = /(^|[\s_-])(nav|navbar|menu|footer|sidebar|related|recommend(ed|ations)?|promo|newsletter|subscribe|share|sharing|social|author|byline|avatar|logo|advert|ad|ads|sponsor(ed)?|comments?|widget|masthead|breadcrumbs?|popup|modal)([\s_-]|$)/i;
+  const BAD = /(^|[\s_-])(nav|navbar|menu|footer|sidebar|related|recommend(ed|ations)?|promo|newsletter|subscribe|share|sharing|social|author|byline|avatar|logo|advert|ad|ads|sponsor(ed)?|comments?|widget|breadcrumbs?|popup|modal)([\s_-]|$)/i;
   const imgs = [...doc.querySelectorAll('img')], limgs = live ? [...live.querySelectorAll('img')] : [];
   const firstP = [...doc.querySelectorAll('p')].find(p => (p.textContent || '').trim().length > 200);
   for(let i = 0; i < imgs.length && i < 60; i++){
@@ -40,6 +40,20 @@ function velvetLead(doc, url, live){
     if((L && w > 0 && w < 300) || (aw && aw < 280)) continue;
     const fig = im.closest('figure'), cap = fig && fig.querySelector('figcaption');
     return {src, alt: im.getAttribute('alt') || '', caption: cap ? cap.textContent.replace(/\s+/g, ' ').trim() : ''};
+  }
+  // a title picture drawn as a CSS background (common for full-width banners)
+  if(live){
+    const lfirst = [...live.querySelectorAll('p')].find(p => (p.textContent || '').trim().length > 200);
+    for(const el of [...live.body.querySelectorAll('*')].slice(0, 3000)){
+      if(lfirst && (lfirst.compareDocumentPosition(el) & 4)) break;
+      let bg = ''; try{ bg = getComputedStyle(el).backgroundImage || ''; }catch(e){}
+      const m = /url\(["']?([^"')]+)["']?\)/.exec(bg); if(!m || /gradient/.test(bg) && !m) continue;
+      const r = el.getBoundingClientRect(); if(r.width < 300 || r.height < 150) continue;
+      let bad = false; for(let a = el; a && a !== live.body; a = a.parentElement){ const cls = typeof a.className === 'string' ? a.className : ''; if(/^(NAV|FOOTER|ASIDE)$/.test(a.tagName) || BAD.test(cls) || BAD.test(a.id || '')){ bad = true; break; } }
+      if(bad) continue;
+      let src = ''; try{ src = new URL(m[1], url).href; }catch(e){}
+      if(src && !/\.svg(\?|#|$)/i.test(src) && !/(logo|icon|sprite|pattern|texture)\b/i.test(src)) return {src, alt: '', caption: ''};
+    }
   }
   return null;
 }
@@ -85,8 +99,14 @@ async function velvetArticle(doc, url, opts){
   // put back the lead picture if the text lost it; failing that, the page's own preview picture when the article has none
   imgs = imgs.filter(im => im.isConnected);
   const have = new Set(imgs.map(im => velvetImgKey(im.getAttribute('src'))));
-  let add = lead && !have.has(velvetImgKey(lead.src)) ? lead : null;
-  if(!add && !lead && !imgs.length && ogSrc && !/(logo|default|placeholder|icon)/i.test(ogSrc)) add = {src: abs(ogSrc), alt: '', caption: ''};
+  // no picture above the text: the page's own preview picture is almost always the article's title picture
+  const ogLead = ogSrc && !/(logo|default|placeholder|icon|fallback)/i.test(ogSrc) ? {src: abs(ogSrc), alt: '', caption: ''} : null;
+  // does the article itself open with a picture (fewer than 200 characters of text before its first one)?
+  let opensWithPicture = false;
+  { const first = body.querySelector('img'); if(first){ let n = 0; const w = body.ownerDocument.createTreeWalker(body, 4); let t;
+      while((t = w.nextNode()) && (first.compareDocumentPosition(t) & 2)){ n += t.data.trim().length; if(n >= 200) break; } opensWithPicture = n < 200; } }
+  const pick = lead || (opensWithPicture ? null : ogLead);
+  let add = pick && !have.has(velvetImgKey(pick.src)) ? pick : null;
   if(add){
     const fig = body.ownerDocument.createElement('figure'), im = body.ownerDocument.createElement('img');
     im.setAttribute('src', add.src); im.setAttribute('alt', add.alt || ''); fig.append(im);
