@@ -6,9 +6,50 @@ function velvetCleanUrl(u){
     [...x.searchParams.keys()].forEach(k => { if(/^(utm_\w+|fbclid|gclid|dclid|msclkid|mc_cid|mc_eid|igshid|ref_src|cmpid|ncid|smid|_ga)$/i.test(k)) x.searchParams.delete(k); });
     return x.href; }catch(e){ return u; }
 }
+// the best address for a picture: the largest in its srcset, lazy-loading attributes, or a <picture> source
+function velvetImgSrc(im, base){
+  const abs = u => { try{ return new URL(u, base).href; }catch(e){ return ''; } };
+  const real = u => u && !/^data:/i.test(u) || (u && /^data:image\//i.test(u) && u.length > 400);   // tiny data: images are lazy-loading placeholders
+  let ss = im.getAttribute('srcset') || im.getAttribute('data-srcset') || im.getAttribute('data-lazy-srcset') || '';
+  const pic = im.parentElement && im.parentElement.tagName === 'PICTURE' ? im.parentElement : null;
+  if(!ss && pic){ const so = [...pic.querySelectorAll('source[srcset],source[data-srcset]')].find(x => !/avif|jxl/i.test(x.getAttribute('type') || '')); if(so) ss = so.getAttribute('srcset') || so.getAttribute('data-srcset'); }
+  let src = [im.getAttribute('data-src'), im.getAttribute('data-lazy-src'), im.getAttribute('data-original'), im.getAttribute('src')].find(real) || '';
+  if(ss){ const best = ss.split(/,\s+(?=\S)/).map(x => x.trim().split(/\s+/)).filter(([u]) => real(u)).map(([u, w]) => [u, parseFloat(w) || 1]).sort((a, b) => b[1] - a[1])[0]; if(best && best[0]) src = best[0]; }
+  return src ? (/^data:/i.test(src) ? src : abs(src)) : '';
+}
+// the article's lead picture: Readability keeps only the text's own block, so a picture shown above the text
+// (the usual "featured image" under the headline) is lost. Find it before the first long paragraph, skipping
+// navigation, logos, avatars, adverts and "related" thumbnails, and small images.
+function velvetLead(doc, url, live){
+  const BAD = /(^|[\s_-])(nav|navbar|menu|footer|sidebar|related|recommend(ed|ations)?|promo|newsletter|subscribe|share|sharing|social|author|byline|avatar|logo|advert|ad|ads|sponsor(ed)?|comments?|widget|masthead|breadcrumbs?|popup|modal)([\s_-]|$)/i;
+  const imgs = [...doc.querySelectorAll('img')], limgs = live ? [...live.querySelectorAll('img')] : [];
+  const firstP = [...doc.querySelectorAll('p')].find(p => (p.textContent || '').trim().length > 200);
+  for(let i = 0; i < imgs.length && i < 60; i++){
+    const im = imgs[i];
+    if(firstP && (firstP.compareDocumentPosition(im) & 4)) break;   // pictures after the text starts are the article's own
+    let bad = false;
+    for(let a = im; a && a !== doc.body; a = a.parentElement){
+      const cls = typeof a.className === 'string' ? a.className : (a.getAttribute && a.getAttribute('class')) || '';
+      if(/^(NAV|FOOTER|ASIDE|FORM|BUTTON|A)$/.test(a.tagName) && a !== im && !(a.tagName === 'A' && a.querySelector('img') === im && /\.(jpe?g|png|webp|gif)(\?|$)/i.test(a.getAttribute('href') || '')) ? true : BAD.test(cls) || BAD.test(a.id || '')){ bad = true; break; }
+    }
+    if(bad) continue;
+    const src = velvetImgSrc(im, url); if(!src || /\.svg(\?|#|$)/i.test(src) || /(logo|icon|sprite|avatar|gravatar|pixel|spacer|blank)\b/i.test(src)) continue;
+    const L = limgs[i];
+    let w = 0; if(L){ const r = L.getBoundingClientRect(); w = Math.max(r.width, L.naturalWidth || 0); }
+    const aw = Math.max(+im.getAttribute('width') || 0, +im.getAttribute('data-width') || 0);
+    if((L && w > 0 && w < 300) || (aw && aw < 280)) continue;
+    const fig = im.closest('figure'), cap = fig && fig.querySelector('figcaption');
+    return {src, alt: im.getAttribute('alt') || '', caption: cap ? cap.textContent.replace(/\s+/g, ' ').trim() : ''};
+  }
+  return null;
+}
+const velvetImgKey = u => { try{ const x = new URL(u); return (x.pathname.split('/').pop() || '').replace(/-\d+x\d+(?=\.\w+$)/, '').replace(/@\dx(?=\.\w+$)/, '').toLowerCase(); }catch(e){ return ''; } };
 async function velvetArticle(doc, url, opts){
   opts = opts || {}; url = velvetCleanUrl(url);
   if(typeof Readability !== 'function') return {error:'nolib'};
+  let lead = null; try{ lead = velvetLead(doc, url, opts.live); }catch(e){}   // before Readability, which reshapes the page
+  const ogEl = doc.querySelector && doc.querySelector('meta[property="og:image"],meta[name="og:image"],meta[name="twitter:image"]');
+  const ogSrc = ogEl && ogEl.getAttribute('content') || '';
   const parsed = new Readability(doc, {charThreshold:300, keepClasses:false}).parse();
   const text = parsed && (parsed.textContent || '').trim();
   if(!parsed || !parsed.content || !text || text.split(/\s+/).length < 60) return {error:'noarticle'};
@@ -32,15 +73,25 @@ async function velvetArticle(doc, url, opts){
       return await new Promise(res => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = () => res(null); fr.readAsDataURL(b); });
     }catch(e){ return null; }
   };
-  const imgs = [...body.querySelectorAll('img')];
+  let imgs = [...body.querySelectorAll('img')];
   for(const im of imgs){
-    const ss = im.getAttribute('srcset') || im.getAttribute('data-srcset');
-    let src = im.getAttribute('data-src') || im.getAttribute('src') || '';
-    if(ss){ const best = ss.split(',').map(x => x.trim().split(/\s+/)).map(([u, w]) => [u, parseFloat(w) || 1]).sort((a, b) => b[1] - a[1])[0]; if(best && best[0]) src = best[0]; }
-    src = abs(src);
-    ['srcset','data-srcset','data-src','sizes','loading','width','height','style'].forEach(a => im.removeAttribute(a));
+    const src = velvetImgSrc(im, url);
+    ['srcset','data-srcset','data-lazy-srcset','data-src','data-lazy-src','data-original','sizes','loading','width','height','style'].forEach(a => im.removeAttribute(a));
+    const pic = im.parentElement && im.parentElement.tagName === 'PICTURE' ? im.parentElement : null;
+    if(pic) pic.querySelectorAll('source').forEach(x => x.remove());
     if(!/^https?:/i.test(src) && !/^data:image\//i.test(src)){ im.remove(); continue; }
     im.setAttribute('src', src);
+  }
+  // put back the lead picture if the text lost it; failing that, the page's own preview picture when the article has none
+  imgs = imgs.filter(im => im.isConnected);
+  const have = new Set(imgs.map(im => velvetImgKey(im.getAttribute('src'))));
+  let add = lead && !have.has(velvetImgKey(lead.src)) ? lead : null;
+  if(!add && !lead && !imgs.length && ogSrc && !/(logo|default|placeholder|icon)/i.test(ogSrc)) add = {src: abs(ogSrc), alt: '', caption: ''};
+  if(add){
+    const fig = body.ownerDocument.createElement('figure'), im = body.ownerDocument.createElement('img');
+    im.setAttribute('src', add.src); im.setAttribute('alt', add.alt || ''); fig.append(im);
+    if(add.caption){ const fc = body.ownerDocument.createElement('figcaption'); fc.textContent = add.caption; fig.append(fc); }
+    body.prepend(fig); imgs.unshift(im);
   }
   let budget = 12e6, copied = 0;
   for(const im of imgs.slice(0, 40)){
