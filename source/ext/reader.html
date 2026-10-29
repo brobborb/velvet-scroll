@@ -102,7 +102,7 @@
     <button id="fsBtn" class="rbtn icon" aria-label="Full screen" title="Full screen (F)"><svg id="icFs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><svg id="icFsOff" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg></button>
   </div>
   <div class="r-stage" id="stage">
-    <div id="scroller" class="scroller" tabindex="-1"><article id="page" class="page"></article></div>
+    <div id="scroller" class="scroller" tabindex="-1" role="region" aria-label="Book text"><article id="page" class="page"></article></div>
     <div id="sweepFoot" class="sweep-foot" hidden></div>
     <div id="sweepHead" class="sweep-head" hidden></div>
     <div id="sweepLine" class="sweep-line" hidden><span class="sweep-mark"></span></div>
@@ -413,6 +413,11 @@
       <div class="seg" id="axMotion" role="group" aria-labelledby="axMoL"><button data-v="auto">Match my device</button><button data-v="reduce">Reduce motion</button></div>
       <p class="hint" id="axMoHint"></p>
     </div>
+    <div class="grp">
+      <span class="lbl">Keyboard</span>
+      <label class="check"><input type="checkbox" id="axKeys"> Single-letter shortcuts (H, M, R, F, G, [ and ])</label>
+      <p class="hint">Turn these off if they clash with your screen reader or speech software. Space, the arrow keys and Page Up / Page Down still work, and every shortcut also has a button. With a screen reader, Read aloud (the speaker button in the reader) reads the book to you and follows along on the page.</p>
+    </div>
     <footer class="sh-foot"><button class="btn" id="axReset">Reset accessibility</button></footer>
   </div>
 </div>
@@ -561,7 +566,8 @@
   </div>
 </div>
 
-<div id="toast" class="toast" hidden role="status"></div>
+<div id="toast" class="toast" hidden aria-hidden="true"></div>
+<div id="srLive" class="vh" role="status" aria-live="polite"></div>
 <script src="lib/jszip.min.js"></script>
 <script src="lib/Readability.js"></script>
 <script src="clip-core.js"></script>
