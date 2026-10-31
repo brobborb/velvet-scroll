@@ -2399,7 +2399,7 @@ function applyHome(){
   if(!$('#ap').hidden) renderAppearance();
 }
 /* the tab's icon in the library's colours: light themes paint the tile in the accent, dark themes use the page colour
-   with the reading band in the accent. The default light theme keeps the usual icon. */
+   with the reading band in the accent. The default light theme keeps the usual (dark) icon. */
 let favLink = document.querySelector('link[rel~="icon"]'); const favOrig = favLink && favLink.getAttribute('href');
 let favLast = '';
 // some browsers (Firefox, Safari) only notice a new icon when the link itself is replaced
