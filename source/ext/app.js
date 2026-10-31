@@ -1770,7 +1770,7 @@ function render(){
   list.sort((a,b)=> s==='title' ? a.title.localeCompare(b.title) : s==='author' ? (a.author||'').localeCompare(b.author||'') : s==='year' ? (a.year||9999)-(b.year||9999) :
     s==='added' ? b.added-a.added : ((progress[b.id]?.t||0)-(progress[a.id]?.t||0)) || b.added-a.added);
   const notice = $('#notice');
-  if(!books.length){ notice.hidden=false; notice.textContent='Your library is empty. Open the sample to try the scroller, then add your own ebooks or comics.'; }
+  if(!books.length && LS.get('welcomeHidden', false)){ notice.hidden=false; notice.textContent='Your library is empty. Open the sample to try the scroller, then add your own ebooks or comics.'; }
   else if(!list.length){ notice.hidden=false; notice.textContent = view === 'articles' ? 'No saved articles match this search or filter.' : 'No books match this search or filter.'; }
   else notice.hidden=true;
   libLayoutShow();
@@ -1778,6 +1778,7 @@ function render(){
   if(libLayout === 'details'){ G.className = 'dlist'; G.replaceChildren(...list.map(detailRow)); }
   else if(libLayout === 'table'){ G.className = 'tview'; G.replaceChildren(list.length ? libTable(list) : ''); }
   else { G.className = 'grid' + (libSize < 140 ? ' compact' : ''); G.replaceChildren(...list.map(card)); }
+  welcomeShow();
   const reading = books.filter(b=>{ const s=status(b); return s==='reading'; }).sort((a,b)=>(progress[b.id]?.t||0)-(progress[a.id]?.t||0)), lastB = reading[0];
   const cb = $('#cont'); cb.hidden = !lastB;
   if(lastB){ const pc = Math.round(progress[lastB.id].p*100), when = progress[lastB.id].t ? ago(progress[lastB.id].t) : '';
@@ -1792,6 +1793,13 @@ function render(){
 // who a book is by; a saved article also names its website (once, if the author is the site)
 function byLine(b){ if(b.kind !== 'article') return b.author || '';
   const a = (b.author || '').trim(), st = (b.site || '').trim(); return a && st && a.toLowerCase() !== st.toLowerCase() ? `${a} · ${st}` : a || st; }
+/* the welcome: shown while the library is empty, until hidden */
+function welcomeShow(){ const w = $('#welcome'); w.hidden = !!books.length || LS.get('welcomeHidden', false); }
+$('#wSample').onclick = () => openBook(SAMPLE);
+$('#wAdd').onclick = () => $('#file').click();
+$('#wClose').onclick = () => { LS.set('welcomeHidden', true); welcomeShow(); };
+if(IS_EXT){ $('#wVidBox').remove(); $('#welcome').classList.add('novid'); $('#wExt').innerHTML = '<a href="https://velvetscroll.net/about.html" target="_blank" rel="noopener">More about Velvet Scroll</a>';
+  $('#footExt').hidden = true; $('#aboutLink').href = 'https://velvetscroll.net/about.html'; $('#aboutLink').target = '_blank'; $('#aboutLink').rel = 'noopener'; }
 function rmButton(b){
   const rm = !b.sample && el('button',{class:'ghost', text:'Remove', 'aria-label':`Remove ${b.title}`});
   if(rm){ let t; rm.onclick = async ()=>{ if(rm.classList.contains('confirm')){ clearTimeout(t); await dbDel(b.id); books = books.filter(x=>x.id!==b.id); delete progress[b.id]; LS.set('progress',progress); render(); toast(`Removed “${b.title}”.`); }
