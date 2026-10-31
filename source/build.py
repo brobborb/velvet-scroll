@@ -37,7 +37,7 @@ def ext_files(E):
 # Firefox
 E=S+'ext/'; ext_files(E)
 m=json.load(open(E+'manifest.json')); m['version']=VERSION;
-for perm in ('activeTab','scripting','contextMenus'):
+for perm in ('activeTab','scripting','contextMenus','identity'):  # identity: signing in to Google Drive for sync
     if perm not in m['permissions']: m['permissions'].append(perm)
 m['action']['default_popup']='popup.html'; m['action']['default_title']='Velvet Scroll'
 m['name']='Velvet Scroll – EPUB & Ebook Reader'   # the store name: says what it is, so searches for EPUB or ebook readers find it
