@@ -1776,6 +1776,18 @@ $('#syncOn').addEventListener('change', async e => {
   syncSettings(); await syncFlush();
 });
 
+/* ---------- Installing as an app (the website only): offline copy, an Install button, opening book files from the system ---------- */
+let installEvt = null;
+const isStandalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+if(!IS_EXT && !IN_CLAUDE && 'serviceWorker' in navigator && (location.protocol === 'https:' || /^(localhost|127\.0\.0\.1)$/.test(location.hostname)))
+  addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+addEventListener('beforeinstallprompt', e => { if(IS_EXT) return; e.preventDefault(); installEvt = e; $('#installBtn').hidden = isStandalone(); });
+addEventListener('appinstalled', () => { installEvt = null; $('#installBtn').hidden = true; toast('Velvet Scroll is installed. You’ll find it with your other apps.', 5000); });
+$('#installBtn').onclick = async () => { if(!installEvt) return; installEvt.prompt(); try{ await installEvt.userChoice; }catch(e){} installEvt = null; $('#installBtn').hidden = true; };
+// book files opened with Velvet Scroll from the computer's file manager (when installed)
+function launchFiles(){ if(IS_EXT || !('launchQueue' in window)) return;
+  launchQueue.setConsumer(async p => { if(!p || !p.files || !p.files.length) return; try{ const files = await Promise.all(p.files.map(h => h.getFile())); addFiles(files); }catch(e){} }); }
+
 /* ---------- Velvet Scroll Plus: a one-time licence that unlocks extra tools ----------
    Keys are signed with a private key that is not in this code; here only the public half checks them, on the device. */
 const PLUS_PUB = {kty:'EC', crv:'P-256', x:'F4IYp1bMFHb56FyejOzzsLUk2WsFKMNI4fq4xI_lXWM', y:'xbftLZvN-l7fSi-kCOkIMq4l3aZ0_ZpiERccsaFf_sE'};
@@ -4984,6 +4996,7 @@ setupDonate();
   books = await dbAll(); await loadProgress();
   initSync();
   await plusInit();
+  launchFiles();
   initGd();
   syncCodeFromAddress();
   try{ navigator.storage?.persist?.(); }catch(e){}
