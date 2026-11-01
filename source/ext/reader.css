@@ -359,6 +359,7 @@ main.wrap{padding-block:20px 48px;display:flex;flex-direction:column;gap:16px}
 .pluskeylbl textarea{font:13px/1.4 ui-monospace,monospace;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--fg);resize:vertical}
 #plusOff{display:flex;flex-direction:column;gap:10px}
 #plusBuy:disabled{opacity:.55;cursor:default}
+#plusDlg .hint a{color:var(--accent);font-weight:600}
 #plusOff[hidden],#plusOnBox[hidden]{display:none}
 .plustag{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:999px;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;background:var(--accent);color:var(--accent-fg);vertical-align:middle}
 #plusOpen.on{color:var(--accent)}
