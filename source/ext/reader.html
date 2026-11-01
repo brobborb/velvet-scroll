@@ -526,6 +526,15 @@
     <div class="grp">
       <span class="lbl">Save a backup</span>
       <p class="hint">One file with your books, covers, reading positions, shelves and settings. Keep it on a USB drive or in your own cloud storage, then restore it in Velvet Scroll on another computer or browser.</p>
+      <div class="bkwhich" role="radiogroup" aria-label="Which books to back up">
+        <label class="check"><input type="radio" name="bkWhich" id="bkAll" value="all" checked> All books <span id="bkAllN" class="muted"></span></label>
+        <label class="check"><input type="radio" name="bkWhich" id="bkSome" value="some"> Choose books…</label>
+      </div>
+      <div id="bkPick" class="bkpick" hidden>
+        <div class="bkpick-top"><input type="search" id="bkFind" placeholder="Filter by title or author" aria-label="Filter the list of books">
+          <button type="button" class="btn" id="bkSelAll">Select all</button><button type="button" class="btn" id="bkSelNone">Select none</button></div>
+        <div class="bklist" id="bkList" role="group" aria-label="Books to include"></div>
+      </div>
       <label class="check"><input type="checkbox" id="bkBooks" checked> Include the books themselves <span id="bkSize" class="muted"></span></label>
       <div class="pwrow">
         <label for="bkPw">Password (optional)<input type="password" id="bkPw" autocomplete="new-password"></label>

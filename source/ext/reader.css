@@ -244,6 +244,21 @@ main.wrap{padding-block:20px 48px;display:flex;flex-direction:column;gap:16px}
 #dlg .drow2{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,3fr);gap:10px}
 #dlg .isbnmsg:empty,#dlg #dModesHint:empty{display:none}
 #dlg .isbnmsg{margin:-4px 0 0}
+.bkwhich{display:flex;flex-wrap:wrap;gap:4px 20px}
+.bkpick[hidden]{display:none}
+.bkpick{display:flex;flex-direction:column;gap:8px}
+.bkpick-top{display:flex;gap:8px;flex-wrap:wrap}
+.bkpick-top input{flex:1;min-width:160px;border:1px solid var(--line);border-radius:8px;padding:7px 10px;background:var(--bg);color:var(--fg);font:inherit;font-size:15px}
+.bkpick-top .btn{padding:6px 12px}
+.bklist{max-height:240px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;padding:4px 0;background:var(--bg)}
+.bklist label{display:flex;align-items:center;gap:10px;padding:6px 12px;cursor:pointer;font-size:14px;line-height:1.3}
+.bklist label:hover{background:var(--accent-soft)}
+.bklist label[hidden]{display:none}
+.bklist .bt{flex:1;min-width:0}
+.bklist .bt b{font-weight:600}
+.bklist .bt span,.bklist .bz{color:var(--muted);font-size:12.5px}
+.bklist .bz{white-space:nowrap}
+html.ax-hc .bklist{border:2px solid var(--fg)}
 .dbio{display:flex;flex-direction:column;gap:4px;margin:-3px 0 2px;padding:8px 10px;border-radius:8px;background:color-mix(in srgb,var(--accent) 6%,var(--bg));font-size:13.5px;line-height:1.45}
 .dbio[hidden]{display:none}
 .dbio p{margin:0}

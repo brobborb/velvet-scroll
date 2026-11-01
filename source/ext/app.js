@@ -1463,18 +1463,42 @@ async function decryptBytes(u8, pw){
   try{ return new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM', iv}, await keyFrom(pw, salt, iter), ct)); }
   catch(e){ throw new Error('badpw'); }
 }
+let bkChosen = null;   // ids picked for a backup, or null for all of them
+const bkBooksList = () => bkChosen ? books.filter(b => bkChosen.has(b.id)) : books;
+function bkSummary(){
+  const list = bkBooksList(), total = list.reduce((a, b) => a + (b.size || 0), 0);
+  $('#bkSize').textContent = list.length ? `(${list.length === books.length ? '' : list.length + ' of '}${books.length} book${books.length === 1 ? '' : 's'}, about ${fmtMB(total)})` : '(no books chosen)';
+  $('#bkAllN').textContent = `(${books.length})`;
+}
+function bkRenderList(){
+  const q = $('#bkFind').value.trim().toLowerCase();
+  const sorted = [...books].sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+  $('#bkList').replaceChildren(...sorted.map(b => { const cb = el('input', {type:'checkbox'}); cb.checked = bkChosen.has(b.id);
+    cb.onchange = () => { cb.checked ? bkChosen.add(b.id) : bkChosen.delete(b.id); bkSummary(); };
+    const lab = el('label', {}, cb, el('span', {class:'bt'}, el('b', {text:b.title || 'Untitled'}), b.author ? el('span', {text:' · ' + b.author}) : null), el('span', {class:'bz', text: b.size ? fmtMB(b.size) : ''}));
+    lab.hidden = !!q && !((b.title || '') + ' ' + (b.author || '')).toLowerCase().includes(q); lab.dataset.id = b.id; return lab; }));
+}
+document.querySelectorAll('input[name="bkWhich"]').forEach(r => r.addEventListener('change', () => {
+  const some = $('#bkSome').checked; $('#bkPick').hidden = !some;
+  if(some){ if(!bkChosen) bkChosen = new Set(); bkRenderList(); $('#bkFind').focus(); } else bkChosen = null;
+  bkSummary();
+}));
+$('#bkFind').addEventListener('input', () => { const q = $('#bkFind').value.trim().toLowerCase(); $('#bkList').querySelectorAll('label').forEach(l => { const b = books.find(x => x.id === l.dataset.id); l.hidden = !!q && !((b.title || '') + ' ' + (b.author || '')).toLowerCase().includes(q); }); });
+// select all/none act on the books showing (so a filter can pick, say, one author's books)
+$('#bkSelAll').onclick = () => { $('#bkList').querySelectorAll('label:not([hidden])').forEach(l => { bkChosen.add(l.dataset.id); l.querySelector('input').checked = true; }); bkSummary(); };
+$('#bkSelNone').onclick = () => { $('#bkList').querySelectorAll('label:not([hidden])').forEach(l => { bkChosen.delete(l.dataset.id); l.querySelector('input').checked = false; }); bkSummary(); };
 async function buildBackup(withBooks, pw, onStep){
-  const zip = new JSZip(), metas = [];
+  const zip = new JSZip(), metas = [], list = bkBooksList(), ids = new Set(list.map(b => b.id));
   let i = 0;
-  for(const b of books){
-    onStep && onStep(++i, books.length);
+  for(const b of list){
+    onStep && onStep(++i, list.length);
     await ensureFp(b);
     const m = {...b}; delete m.coverBuf;
     if(b.coverBuf){ zip.file('covers/' + b.id, b.coverBuf); m.hasCover = true; }
     if(withBooks){ const f = await dbGetFile(b.id); if(f){ zip.file('books/' + b.id, f); m.hasFile = true; } }
     metas.push(m);
   }
-  zip.file('library.json', JSON.stringify({app:'Velvet Scroll', format:1, exported:new Date().toISOString(), withBooks, books:metas, progress, settings:S, settingsT:LS.get('settingsT',0), pdfModes, notes:notesAll, authors:authorsAll}));
+  zip.file('library.json', JSON.stringify({app:'Velvet Scroll', format:1, exported:new Date().toISOString(), withBooks, books:metas, progress: bkChosen ? Object.fromEntries(Object.entries(progress).filter(([k]) => ids.has(k))) : progress, settings:S, settingsT:LS.get('settingsT',0), pdfModes, notes: bkChosen ? Object.fromEntries(Object.entries(notesAll).filter(([k]) => ids.has(k))) : notesAll, authors:authorsAll}));
   let out = await zip.generateAsync({type:'uint8array', compression:'STORE'});
   if(pw){
     const z = new JSZip();
@@ -1504,8 +1528,8 @@ async function openBackup(){
   $('#syncGrp').hidden = !SY; if(SY){ $('#syncOn').checked = syncOn; showSyncStatus(); }
   $('#bkSize').textContent = ''; $('#scSt').textContent = ''; $('#scInSt').textContent = ''; $('#scOut').hidden = true; $('#scPw').value = '';
   for(const b of books) if(!b.size){ const f = await dbGetFile(b.id); if(f){ b.size = f.byteLength; await dbPutMeta(b); } }
-  const total = books.reduce((a, b) => a + (b.size || 0), 0);
-  $('#bkSize').textContent = books.length ? `(${books.length} book${books.length===1?'':'s'}, about ${fmtMB(total)})` : '';
+  bkChosen = null; $('#bkAll').checked = true; $('#bkPick').hidden = true; $('#bkFind').value = '';
+  bkSummary(); if(!books.length) $('#bkSize').textContent = '';
 }
 function closeBackupNow(){ $('#bk').hidden = true; pendingRestore = null; $('#bkInPw').value = ''; }
 function closeBackup(){ popLayer('backup'); }
@@ -1515,6 +1539,7 @@ $('#bk').addEventListener('click', e => { if(e.target === $('#bk')) closeBackup(
 $('#bkSave').onclick = async () => {
   const st = $('#bkSaveSt'), pw = $('#bkPw').value;
   if(!books.length){ st.textContent = 'Your library is empty, so there’s nothing to back up yet.'; return; }
+  if(bkChosen && !bkChosen.size){ st.textContent = 'Choose at least one book to back up, or choose All books.'; return; }
   if(pw !== $('#bkPw2').value){ st.textContent = 'The two passwords don’t match.'; return; }
   if(pw && pw.length < 8){ st.textContent = 'Use a password of at least 8 characters.'; return; }
   $('#bkSave').disabled = true;
@@ -1523,7 +1548,8 @@ $('#bkSave').onclick = async () => {
     if(pw) st.textContent = 'Encrypting…';
     const d = new Date(), stamp = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     st.textContent = 'Saving…';
-    const ok = await saveFile(`Velvet Scroll backup ${stamp}${pw ? ' (encrypted)' : ''}.zip`, bytes);
+    const part = bkChosen ? ` (${bkChosen.size} book${bkChosen.size === 1 ? '' : 's'})` : '';
+    const ok = await saveFile(`Velvet Scroll backup ${stamp}${part}${pw ? ' (encrypted)' : ''}.zip`, bytes);
     st.textContent = ok ? `Backup saved (${fmtMB(bytes.length)}).` : 'Save cancelled.';
   }catch(e){
     st.textContent = e.message === 'toolarge' ? 'The backup is too large to save here. Try saving it without the books.' :
