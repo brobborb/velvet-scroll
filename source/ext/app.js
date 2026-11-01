@@ -2860,6 +2860,7 @@ function applySettings(save=true){
   $('#bookRow').hidden = !isSweep(); $('#sBook').checked = S.book !== false;
   page.classList.toggle("bookgrid", gridOn()); gridSnapSoon();
   R.classList.toggle('paged', isPages()); $('#pgProg').hidden = true;
+  if(isPages()) setTimeout(() => { if(!R.hidden && cur && ready && !playing){ pagesEnsure(); pagesArrows(); } }, 80);
   $('#styleHint').textContent = isPages() ? 'Turn the pages like a book: tap or click the right side of the page, swipe, or press → or Page Down. The left side, ← or Page Up goes back. Play turns the pages for you at your reading speed.'
     : isSweep() ? 'The page stays still. A blank band, with a line along its top, drifts down at your reading speed and the next page appears above it. Read the new page above the line, or the rest of this page below the band. Smooth motion and refresh rate only apply to Cinema.'
     : 'The text glides up the screen past the reading guide.';
@@ -3048,6 +3049,7 @@ async function openBook(b){
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
     if(pdfDoc && pr.pg && pr.mode && pr.mode !== pdfMode) goTo('sec0-pg'+pr.pg); else setFrac(p);
     gridSnap(); ready = true; updateStatus(); lastAnchor = null; noteAnchor(); notesTm = null; notesPaint();
+    if(isPages()){ pgStack = []; sweepBegin(); }
     // images can shift the layout as they load; re-apply the saved spot once they settle
     const imgs = [...page.querySelectorAll('img')].filter(i=>!i.complete);
     if(imgs.length && p > 0) Promise.all(imgs.map(i=>new Promise(r=>{ i.onload=i.onerror=r; }))).then(()=>{ if(cur && !playing && Math.abs(frac()-p) < 0.02) setFrac(p); });
@@ -3797,6 +3799,7 @@ function sweepBegin(){
   else { const pl = parseFloat(cs.paddingLeft), pw = pr.width - pl - parseFloat(cs.paddingRight); swMark.style.left = Math.max(0, pr.left - sr.left + pl - 16) + 'px'; swMark.style.width = Math.min(sr.width, pw + 32) + 'px'; }
   swLine.style.height = Math.round(lh) + 'px';
   const pagesOnly = isPages(); if(pagesOnly) pgElapsed = 0;
+  if(pagesOnly) setTimeout(pagesArrows, 0);
   swNext.hidden = last || pagesOnly; swLine.hidden = pagesOnly; swCover.hidden = pagesOnly;
   if(!pagesOnly) sweepClone();
   // a line cut off at the bottom belongs to the next page: hide it here
@@ -3854,7 +3857,7 @@ function pagesTurn(dir){
     if(sw.last){ toast('End of book.'); return false; }
     pgStack.push(sw.start); pgTurning = true; scroller.scrollTop = sw.next;
   } else {
-    if(sw.start <= 1){ toast('This is the first page.'); return false; }
+    if(pagesAtStart()){ toast('This is the first page.'); return false; }
     const back = pgStack.length ? pgStack.pop() : Math.max(0, sw.start - (sw.next - sw.start));
     pgTurning = true; scroller.scrollTop = back;
   }
@@ -3875,6 +3878,10 @@ function pagesTick(t){
   if(lensOn) lensDraw();
   raf = requestAnimationFrame(tick);
 }
+$('#pgPrev').onclick = e => { e.stopPropagation(); pause(); pagesTurn(-1); };
+$('#pgNext').onclick = e => { e.stopPropagation(); pause(); pagesTurn(1); };
+const pagesAtStart = () => !sw || sw.start < sw.lh * 2;   // only the page's top margin above: the first page
+function pagesArrows(){ $('#pgPrev').disabled = pagesAtStart(); $('#pgNext').disabled = !sw || !!sw.last; }
 // a jump (search, contents, the slider) lands mid-page: line the page up again once it settles
 function pagesAlignSoon(){ clearTimeout(pgAlignT); pgAlignT = setTimeout(() => { if(isPages() && !R.hidden && cur && !pgTurning){ pgStack = []; sweepBegin(); } }, 180); }
 // the wheel and trackpad turn pages instead of scrolling
