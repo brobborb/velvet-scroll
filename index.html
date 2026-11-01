@@ -2777,6 +2777,7 @@ async function decryptBytes(u8, pw){
 let bkChosen = null;   // ids picked for a backup, or null for all of them
 const bkBooksList = () => bkChosen ? books.filter(b => bkChosen.has(b.id)) : books;
 function bkSummary(){
+  if(/at least one book/.test($('#bkSaveSt').textContent)) $('#bkSaveSt').textContent = '';
   const list = bkBooksList(), total = list.reduce((a, b) => a + (b.size || 0), 0);
   $('#bkSize').textContent = list.length ? `(${list.length === books.length ? '' : list.length + ' of '}${books.length} book${books.length === 1 ? '' : 's'}, about ${fmtMB(total)})` : '(no books chosen)';
   $('#bkAllN').textContent = `(${books.length})`;
