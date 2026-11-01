@@ -342,8 +342,14 @@
 <div id="dlg" class="modal" hidden>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="dlgH">
     <header class="sh-head"><h2 id="dlgH">Book details</h2><button class="btn" id="dClose">Close</button></header>
-    <div class="dgrid">
+    <div class="dbody">
+    <div class="dprev">
       <div class="dcover" id="dCover"></div>
+      <div id="dFit" hidden>
+        <div class="seg" role="group" aria-label="How the image fits the cover"><button data-m="fill">Fill the cover</button><button data-m="fit">Show the whole image</button></div>
+        <p class="hint" id="dFitHint">Drag the large preview to choose which part of the image shows.</p>
+      </div>
+    </div>
       <div class="dfields">
         <label for="dTitle">Title<input id="dTitle" autocomplete="off"></label>
         <label for="dAuthor">Author<input id="dAuthor" autocomplete="off"></label>
@@ -361,26 +367,28 @@
         </div>
         <p class="hint" id="dModesHint" aria-live="polite"></p>
       </div>
-    </div>
-    <div class="grp">
+
+    <div class="grp dcov">
       <span class="lbl">Cover</span>
+      <div class="dcovrow">
       <div class="covers" id="dCovers" role="group" aria-label="Choose a cover"></div>
+      <div class="dcovside">
       <div class="cadd">
         <label class="btn" for="dImg">Upload image</label><input type="file" id="dImg" accept="image/*" hidden>
         <div class="urlrow" id="dUrlRow"><input id="dUrl" type="url" inputmode="url" placeholder="Or paste an image’s web address" aria-label="Cover image web address" autocomplete="off"><button class="btn" id="dUrlGo">Use</button></div>
       </div>
-      <div id="dFit" hidden>
-        <div class="seg" role="group" aria-label="How the image fits the cover"><button data-m="fill">Fill the cover</button><button data-m="fit">Show the whole image</button></div>
-        <p class="hint" id="dFitHint">Drag the large preview to choose which part of the image shows.</p>
-      </div>
+      <p class="hint dplusnote" id="dPlusNote" hidden>Genre designs are part of Velvet Scroll Plus. Try them here as much as you like; saving one asks for Plus.</p>
       <p class="hint" id="dCoverHint">Images are shaped to a 2:3 cover. You can also paste an image, or drop one onto the preview.</p>
+      </div>
+      </div>
     </div>
-    <div class="grp">
+    <div class="grp ddb">
       <span class="lbl">Public databases</span>
       <p class="hint" id="dHint"></p>
       <div class="row"><button class="btn" id="dSearch">Search Open Library, Wikidata and Gutenberg</button></div>
       <p class="hint" id="dStatus" role="status"></p>
       <ul class="results" id="dResults"></ul>
+    </div>
     </div>
     <footer class="sh-foot"><button class="btn" id="dCancel">Cancel</button><button class="btn primary" id="dSave">Save</button></footer>
   </div>
@@ -609,7 +617,7 @@
       <div class="pluscol"><span class="lbl">Free for everyone, always</span>
         <ul><li>Auto-scrolling and the reading guide</li><li>Read aloud, including the natural voices</li><li>Every display and accessibility setting</li><li>Your library, shelves, covers and author bios</li><li>Search, highlights and notes in your books</li><li>Backups and sync codes</li></ul></div>
       <div class="pluscol plus"><span class="lbl">Plus</span>
-        <ul><li>Google Drive sync across all your devices</li><li>Recognise text in scanned PDFs</li><li>Download PDFs with your highlights</li><li>Export all your notes</li><li>Story mode: illustrated themes for your books <span class="soon">coming soon</span></li></ul></div>
+        <ul><li>Google Drive sync across all your devices</li><li>Recognise text in scanned PDFs</li><li>Download PDFs with your highlights</li><li>Export all your notes</li><li>Genre cover designs: horror, fantasy and 1960s science fiction</li><li>Story mode: illustrated themes for your books <span class="soon">coming soon</span></li></ul></div>
     </div>
     <p class="hint">One payment, no subscription. One licence key unlocks Plus on the website and in the Chrome, Firefox and Edge extensions, on all your devices. Checking the key happens on your device, and nothing about it is sent anywhere.</p>
     <div id="plusOff">

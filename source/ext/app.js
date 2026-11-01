@@ -1044,11 +1044,14 @@ function renderCoverChoices(){
   const b = dlg.b, tiles = [];
   if(dlg.custom) tiles.push({kind:'custom', label:'Your image', node:() => customCanvas(84, 126)});
   if(b.coverBuf) tiles.push({kind:'own', label: b.coverSrc==='custom' || b.prevSrc==='custom' ? 'Your cover' : b.coverSrc==='online' || b.prevSrc==='online' ? 'Current cover' : (b.coverSrc==='page' || b.prevSrc==='page') ? 'First page' : 'Book’s own cover', node:() => coverImg(b.coverBuf, b.coverType)});
-  tiles.push({kind:'classic', label:'Classic leather', node:() => classicCover(dlgPreview())});
+  tiles.push({kind:'classic', style:'', label:'Classic leather', node:() => classicCover(dlgPreview())});
+  for(const [k, v] of Object.entries(COVER_STYLES)) tiles.push({kind:'classic', style:k, label:v.label, plus:!PLUS, node:() => classicCover({...dlgPreview(), coverStyle:k}, true)});
   for(const r of dlg.results) if(r.thumb) tiles.push({kind:'online', url:r.cover, thumb:r.thumb, label: r.source + (r.year ? ` · ${r.year}` : '') + (r.openCover ? '' : ' (copyright may apply)'), node:() => el('img', {src:r.thumb, alt:'', loading:'lazy', referrerpolicy:'no-referrer', onerror:e => { const t = e.target.closest('.ctile'); if(t) t.hidden = true; }})});
-  const isSel = t => dlg.choice.kind === t.kind && (t.kind !== 'online' || dlg.choice.url === t.url);
-  $('#dCovers').replaceChildren(...tiles.map(t => el('button', {class:'ctile', 'aria-pressed':String(isSel(t)), onclick:() => { dlg.choice = {kind:t.kind, url:t.url, thumb:t.thumb}; renderCoverChoices(); }},
-    el('span', {class:'th', 'aria-hidden':'true'}, t.node()), el('span', {text:t.label}))));
+  const isSel = t => dlg.choice.kind === t.kind && (t.kind !== 'online' || dlg.choice.url === t.url) && (t.kind !== 'classic' || (dlg.choice.style || '') === t.style);
+  $('#dCovers').replaceChildren(...tiles.map(t => el('button', {class:'ctile', 'aria-pressed':String(isSel(t)), onclick:() => { dlg.choice = {kind:t.kind, url:t.url, thumb:t.thumb, style:t.style || ''}; renderCoverChoices(); }},
+    el('span', {class:'th', 'aria-hidden':'true'}, t.node()), el('span', {}, t.label, t.plus ? el('span', {class:'plustag', text:'Plus'}) : null))));
+  const pst = dlg.choice.kind === 'classic' && dlg.choice.style && !PLUS;
+  $('#dPlusNote').hidden = !pst;
   const sel = tiles.find(isSel) || tiles[0];
   if(sel.kind === 'custom'){ const box = $('#dCover'), w = box.clientWidth || 128, cv = customCanvas(w, w*1.5); box.replaceChildren(cv); wireCoverDrag(cv); }
   else $('#dCover').replaceChildren(sel.kind === 'online' ? el('img', {src:sel.url, alt:'', referrerpolicy:'no-referrer'}) : sel.node());
@@ -1081,7 +1084,7 @@ async function openDetails(b){
     $('#dStatus').replaceChildren('Saved from ', el('a', {href:b.source, target:'_blank', rel:'noopener', text:host}), '.'); } }, 0);
   $('#dUrl').value = ''; $('#dUrlRow').hidden = IN_CLAUDE;
   pushLayer('details');
-  dlg = {b, results:[], custom:null, choice: b.coverBuf && b.coverSrc !== 'classic' ? {kind:'own'} : {kind:'classic'}};
+  dlg = {b, results:[], custom:null, choice: b.coverBuf && b.coverSrc !== 'classic' ? {kind:'own'} : {kind:'classic', style: coverStyleOf(b)}};
   dModesSet(b.vis || '');
   $('#dTitle').value = b.title; $('#dAuthor').value = b.author || ''; $('#dYear').value = b.year || ''; $('#dIsbn').value = b.isbn || ''; isbnMsg();
   $('#dResults').replaceChildren(); $('#dStatus').textContent = '';
@@ -1151,7 +1154,10 @@ $('#dSave').onclick = async () => {
     const img = await fetchCover(ch.url) || (ch.thumb && await fetchCover(ch.thumb));
     if(!img){ $('#dStatus').textContent = 'Couldn’t download that cover. Choose another one.'; return; }
     b.coverBuf = img.buf; b.coverType = img.type; b.coverSrc = 'online'; b.prevSrc = undefined;
-  } else if(ch.kind === 'classic'){ if(b.coverSrc !== 'classic'){ b.prevSrc = b.coverSrc; b.coverSrc = 'classic'; } }
+  } else if(ch.kind === 'classic'){
+    if(ch.style && !needPlus('Keeping a genre cover design')) return;   // try them out freely; keeping one needs Plus
+    if(b.coverSrc !== 'classic'){ b.prevSrc = b.coverSrc; b.coverSrc = 'classic'; }
+    if(ch.style) b.coverStyle = ch.style; else delete b.coverStyle; }
   else if(b.coverSrc === 'classic'){ b.coverSrc = b.prevSrc || 'own'; }
   b.title = $('#dTitle').value.trim() || b.title; b.author = $('#dAuthor').value.trim(); b.isbn = isbnClean($('#dIsbn').value);
   const y = parseInt($('#dYear').value, 10); b.year = Number.isFinite(y) ? y : null;
@@ -1588,7 +1594,7 @@ async function restore(zip){
     if(local){
       if((m.upd || 0) > (local.upd || 0)){ for(const k of ['title','author','year','isbn','shelf','needsCheck','looked','upd']) if(k in m) local[k] = m[k]; }
       if(m.hasCover && (!local.coverBuf || ((m.upd||0) > (local.upd||0) && (m.coverSrc === 'online' || m.coverSrc === 'custom')))){ const c = zip.file('covers/' + m.id); if(c){ local.coverBuf = await c.async('arraybuffer'); local.coverType = m.coverType; local.coverSrc = m.coverSrc; } }
-      if(m.coverSrc === 'classic' && (m.upd||0) > (local.upd||0)){ local.prevSrc = local.coverSrc; local.coverSrc = 'classic'; }
+      if(m.coverSrc === 'classic' && (m.upd||0) > (local.upd||0)){ local.prevSrc = local.coverSrc; local.coverSrc = 'classic'; if(m.coverStyle) local.coverStyle = m.coverStyle; else delete local.coverStyle; }
       if(!local.fp && m.fp) local.fp = m.fp;
       await dbPutMeta(local);
       if(rp && (!progress[local.id] || (rp.t || 0) > (progress[local.id].t || 0))) setProgressRec(local.id, rp);
@@ -1827,10 +1833,10 @@ $('#plusApply').onclick = async () => {
   if(!key){ st.textContent = 'Paste your licence key first.'; $('#plusKey').focus(); return; }
   const p = await plusVerify(key);
   if(!p){ st.textContent = 'That key isn’t valid. Check it was copied in full, starting with VSP1-.'; return; }
-  PLUS = p; LS.set('plusKey', key.replace(/\s+/g, '')); $('#plusKey').value = ''; plusShow(); toast('Velvet Scroll Plus is unlocked. Thank you!', 4000);
+  PLUS = p; LS.set('plusKey', key.replace(/\s+/g, '')); $('#plusKey').value = ''; plusShow(); render(); if(dlg) renderCoverChoices(); toast('Velvet Scroll Plus is unlocked. Thank you!', 4000);
   if(gdOn) gdSync(false);
 };
-$('#plusRemove').onclick = () => { LS.set('plusKey', ''); PLUS = null; plusShow(); $('#plusSt').textContent = 'The key was removed from this device. You can enter it again at any time.'; };
+$('#plusRemove').onclick = () => { LS.set('plusKey', ''); PLUS = null; plusShow(); render(); $('#plusSt').textContent = 'The key was removed from this device. You can enter it again at any time.'; };
 
 /* ---------- Google Drive sync: places, shelves, details, notes and settings in one small file in the reader's own Drive ----------
    Uses the drive.file permission, so Velvet Scroll can only see files it created. Books are never uploaded.
@@ -2300,18 +2306,29 @@ function clipCover(b){
   d.style.setProperty('--clip', `hsl(${h} 45% 34%)`); d.style.setProperty('--ts', ts.toFixed(2) + 'cqw');
   return el('div', {class:'lbox'}, d);
 }
-function classicCover(b){
+// genre designs (Plus): [base, second, third, fourth] colours, chosen by the title so a shelf of them varies
+const COVER_STYLES = {
+  gothic: {label:'Horror', pal:[['#24090c','#060203'],['#17161d','#040405'],['#1c1226','#060309'],['#0e1a16','#030706']]},
+  fantasy: {label:'Fantasy', pal:[['#173a2a','#08180f'],['#1b2a5a','#0a1028'],['#48183a','#1b0815'],['#123a3f','#061a1d']]},
+  space: {label:'Science fiction', pal:[['#13294b','#e4572e','#f3e6c8','#2a9d8f'],['#0f3b3a','#f2a541','#f3e6c8','#e4572e'],['#1d1b2e','#e8c547','#f3e6c8','#d1495b'],['#3d1c2b','#2a9d8f','#f3e6c8','#f2a541']]}
+};
+const coverStyleOf = (b, force) => b.coverStyle && COVER_STYLES[b.coverStyle] && (force || PLUS) ? b.coverStyle : '';
+function classicCover(b, force){
   if(b.kind === 'article') return clipCover(b);
-  const t = b.title || 'Untitled', [c1, c2] = LEATHERS[hue(t + (b.author||'')) % LEATHERS.length];
+  const st = coverStyleOf(b, force), pals = st ? COVER_STYLES[st].pal : LEATHERS;
+  const t = b.title || 'Untitled', [c1, c2, c3, c4] = pals[hue(t + (b.author||'')) % pals.length];
   // size by overall length and by the longest word, so long words never break
   const lw = Math.max(...t.split(/[\s\-–—/]+/).map(w => w.length)), lv = ['l','m','s','xs'];
   const size = lv[t.length > 42 ? 3 : t.length > 24 ? 2 : t.length > 11 ? 1 : 0];
   // the lettering area is about 68% of the cover's width; capitals here run about 0.95em each
-  const fit = Math.min({l:14, m:11, s:8.8, xs:7.2}[size], 66 / (lw * 0.95));
+  // genre typefaces differ in width: blackletter is narrow and set larger, Michroma is very wide
+  const [mul, cw] = {gothic:[1.3, 0.47], fantasy:[0.95, 0.86], space:[0.8, 1.08]}[st] || [1, 0.95];
+  const fit = Math.min({l:14, m:11, s:8.8, xs:7.2}[size] * mul, 66 / (lw * cw));
   const d = el('div', {class:'leather', 'data-size':size},
     el('span', {class:'lt-frame'}), el('span', {class:'lt-orn'}), el('strong', {class:'lt-title', text:t}), el('span', {class:'lt-rule'}),
     b.author ? el('span', {class:'lt-author', text:b.author}) : null, b.year ? el('span', {class:'lt-year', text:String(b.year)}) : null, el('span', {class:'lt-orn'}));
   d.style.setProperty('--l1', c1); d.style.setProperty('--l2', c2); d.style.setProperty('--ts', fit.toFixed(2) + 'cqw');
+  if(st){ d.dataset.style = st; if(c3) d.style.setProperty('--l3', c3); if(c4) d.style.setProperty('--l4', c4); }
   return el('div', {class:'lbox'}, d);
 }
 function render(){
