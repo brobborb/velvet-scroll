@@ -572,6 +572,11 @@ html.ax-hc .rail,html.ax-hc .rail-show{border:2px solid var(--rfg)}
 .sweep-head{position:absolute;left:0;right:0;top:0;z-index:2;pointer-events:none;background:var(--rbg)}
 .sweep-head[hidden]{display:none}
 .sweep-next[hidden],.sweep-line[hidden],.sweep-foot[hidden]{display:none}
+/* Pages: the text holds still and turns a page at a time; it can't be scrolled by hand */
+.reader.paged .scroller{overflow:hidden;scrollbar-width:none}
+.reader.paged .scroller::-webkit-scrollbar{display:none}
+.pg-prog{position:absolute;left:0;bottom:0;height:3px;width:0;z-index:3;pointer-events:none;background:var(--accent);opacity:.55;border-radius:0 2px 2px 0}
+.pg-prog[hidden]{display:none}
 .dim{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none;z-index:4}
 
 .panel{position:absolute;top:0;bottom:0;width:min(370px,94vw);z-index:6;background:var(--surface);color:var(--fg);overflow-y:auto;box-shadow:0 0 40px rgb(0 0 0 / .3);font-family:var(--f-ui);display:flex;flex-direction:column;gap:18px;padding-top:max(16px,env(safe-area-inset-top,0px));padding-bottom:max(24px,env(safe-area-inset-bottom,0px))}
