@@ -14,6 +14,13 @@
 <meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#2c6a57" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#101715" media="(prefers-color-scheme: dark)">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Velvet Scroll">
 <style>*,*::before,*::after{box-sizing:border-box}:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>Velvet Scroll</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -239,24 +246,79 @@ main.wrap{padding-block:20px 48px;display:flex;flex-direction:column;gap:16px}
 .sh-head,.sh-foot{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .sh-foot{justify-content:flex-end}
 .sheet h2{font-family:var(--f-display);font-weight:400;font-size:22px;margin:0}
-.dgrid{display:grid;grid-template-columns:128px minmax(0,1fr);gap:18px;align-items:start}
 .dcover{aspect-ratio:2/3;max-width:100%;border-radius:3px 7px 7px 3px;overflow:hidden;box-shadow:0 8px 20px -10px rgb(0 0 0 / .5);background:var(--line)}
 .dcover img{width:100%;height:100%;object-fit:cover;display:block}
 .dfields{display:flex;flex-direction:column;gap:12px;min-width:0}
 /* Book details: compact, with Save always in view */
 #dlg .sheet{gap:12px;padding:16px 20px 0;width:min(700px,100%)}
-#dlg .dgrid{gap:16px}
 #dlg .dfields{gap:9px}
 #dlg .dfields label{gap:3px}
 #dlg .dfields input{padding:6px 10px}
 #dlg .drow2{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,3fr);gap:10px}
 #dlg .isbnmsg:empty{display:none}
 #dlg .isbnmsg{margin:-4px 0 0}
+.bkwhich{display:flex;flex-wrap:wrap;gap:4px 20px}
+.bkpick[hidden]{display:none}
+.bkpick{display:flex;flex-direction:column;gap:8px}
+.bkpick-top{display:flex;gap:8px;flex-wrap:wrap}
+.bkpick-top input{flex:1;min-width:160px;border:1px solid var(--line);border-radius:8px;padding:7px 10px;background:var(--bg);color:var(--fg);font:inherit;font-size:15px}
+.bkpick-top .btn{padding:6px 12px}
+.bklist{max-height:240px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;padding:4px 0;background:var(--bg)}
+.bklist label{display:flex;align-items:center;gap:10px;padding:6px 12px;cursor:pointer;font-size:14px;line-height:1.3}
+.bklist label:hover{background:var(--accent-soft)}
+.bklist label[hidden]{display:none}
+.bklist .bt{flex:1;min-width:0}
+.bklist .bt b{font-weight:600}
+.bklist .bt span,.bklist .bz{color:var(--muted);font-size:12.5px}
+.bklist .bz{white-space:nowrap}
+html.ax-hc .bklist{border:2px solid var(--fg)}
+.dbio{display:flex;flex-direction:column;gap:4px;margin:-3px 0 2px;padding:8px 10px;border-radius:8px;background:color-mix(in srgb,var(--accent) 6%,var(--bg));font-size:13.5px;line-height:1.45}
+.dbio[hidden]{display:none}
+.dbio p{margin:0}
+.dbio .bdesc{font-weight:700}
+.dbio .btext.clamp{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.dbio .bmeta{font-size:12.5px;color:var(--muted)}
+.dbio .blink{border:0;background:none;padding:0;color:var(--accent);font:inherit;font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:2px;align-self:flex-start}
+.dbio .bmeta a{color:var(--accent);font-weight:600}
+.dbio .bpick{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.dbio .bedit{width:100%;box-sizing:border-box;font:14px/1.5 var(--f-ui);padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--fg);resize:vertical}
+html.ax-hc .dbio{border:2px solid var(--fg)}
 #dlg .grp{gap:6px}
 #dlg .covers{grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px}
 #dlg .hint{font-size:12.5px;margin:0}
 #dlg .sh-foot{position:sticky;bottom:0;z-index:2;background:var(--surface);margin:0 -20px;padding:10px 20px 14px;border-top:1px solid var(--line)}
 @media (max-width:480px){ #dlg .drow2{grid-template-columns:minmax(0,1fr)} #dlg .sheet{padding:14px 14px 0} #dlg .sh-foot{margin:0 -14px;padding:10px 14px 12px} }
+/* layout: cover preview | fields, then cover choices, then public databases; wide screens use three columns so nothing scrolls */
+#dlg .dbody{display:grid;grid-template-columns:128px minmax(0,1fr);grid-template-areas:"prev fields" "cov cov" "db db";gap:14px 16px;align-items:start}
+.dprev{grid-area:prev;display:flex;flex-direction:column;gap:8px;min-width:0}
+#dlg .dfields{grid-area:fields}
+#dlg .dcov{grid-area:cov;min-width:0}
+#dlg .ddb{grid-area:db;min-width:0}
+.dcovrow{display:flex;flex-direction:column;gap:8px;min-width:0}
+.dcovside{display:flex;flex-direction:column;gap:6px;min-width:0}
+.dprev .seg{flex-direction:column}
+.dprev .seg button{font-size:12.5px;padding:5px 8px}
+@media (min-width:1000px) and (min-height:560px){
+  #dlg .sheet{width:min(1240px,100%);overflow:hidden}
+  #dlg .dbody{flex:0 1 auto;min-height:0;overflow:hidden;grid-template-columns:clamp(170px,16vw,210px) minmax(0,1.15fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto;
+    grid-template-areas:"prev fields db" "cov cov cov";gap:16px 26px;align-items:stretch}
+  #dlg .dfields,#dlg .ddb{min-height:0;overflow-y:auto;overscroll-behavior:contain;padding-right:4px}
+  #dlg .dcov{border-top:1px solid var(--line);padding-top:12px}
+  .dcovrow{flex-direction:row;align-items:flex-start;gap:24px}
+  #dlg .dcov .covers{flex:1;grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:86px;overflow-x:auto;padding-bottom:4px}
+  .dcovside{flex:0 0 min(440px,36%)}
+  .dprev .seg{flex-direction:row}
+}
+@media (min-width:1000px) and (max-height:740px){ #dlg .dcov .covers{grid-auto-columns:66px} #dlg .sheet{gap:8px;padding-top:12px} #dlg .dfields{gap:6px} #dlg .dbody{row-gap:10px}
+  #dlg .dcov{padding-top:8px} #dlg #dCoverHint{display:none} #dlg .sh-foot{padding:8px 20px 10px} #dlg .dfields input{padding:5px 10px} }
+@media (max-width:640px){
+  #dlg.modal{padding:0}
+  #dlg .sheet{width:100%;height:100dvh;max-height:none;border-radius:0;padding-top:max(14px,env(safe-area-inset-top,0px))}
+  #dlg .dbody{grid-template-columns:96px minmax(0,1fr)}
+  #dlg .dcov .covers{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:74px;overflow-x:auto;padding-bottom:4px;scroll-snap-type:x proximity}
+  #dlg .ctile{scroll-snap-align:start}
+  #dlg .sh-foot{padding-bottom:max(12px,env(safe-area-inset-bottom,0px))}
+}
 .dfields label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);font-weight:700}
 .dfields input{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--bg);color:var(--fg);font-size:15px;font-weight:400;min-width:0}
 .cadd{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
@@ -278,7 +340,6 @@ main.wrap{padding-block:20px 48px;display:flex;flex-direction:column;gap:16px}
 .results strong{font-family:var(--f-read);font-weight:600;overflow-wrap:anywhere}
 .results .meta{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
 .results a{color:var(--accent)}
-@media (max-width:480px){ .dgrid{grid-template-columns:92px minmax(0,1fr)} }
 .modal.side{background:transparent;place-items:stretch end;pointer-events:none}
 .modal.side .sheet{pointer-events:auto;width:min(380px,100%);max-height:none;height:100%;border-radius:14px;box-shadow:0 10px 50px rgb(0 0 0 / .3);border:1px solid var(--line)}
 .swrow{display:flex;flex-wrap:wrap;gap:10px}
@@ -443,6 +504,23 @@ body.dragging .drop{display:grid}
 .sweep-head{position:absolute;left:0;right:0;top:0;z-index:2;pointer-events:none;background:var(--rbg)}
 .sweep-head[hidden]{display:none}
 .sweep-next[hidden],.sweep-line[hidden],.sweep-foot[hidden]{display:none}
+/* Pages: the text holds still and turns a page at a time; it can't be scrolled by hand */
+.reader.paged .scroller{overflow:hidden;scrollbar-width:none}
+.reader.paged .scroller::-webkit-scrollbar{display:none}
+.pg-prog{position:absolute;left:0;bottom:0;height:3px;width:0;z-index:3;pointer-events:none;background:var(--accent);opacity:.55;border-radius:0 2px 2px 0}
+.pg-prog[hidden]{display:none}
+/* Pages: previous and next arrows at the sides, for a mouse or trackpad (touch screens tap or swipe instead) */
+.pgarrow{display:none;position:absolute;top:50%;z-index:4;width:44px;height:88px;margin-top:-44px;border:0;border-radius:12px;padding:0;cursor:pointer;
+  background:color-mix(in srgb,var(--rfg) 5%,transparent);color:var(--rfg);opacity:.35;transition:opacity .15s,background .15s}
+.pgarrow svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.pgarrow.prev{left:12px} .pgarrow.next{right:12px}
+.pgarrow:hover,.pgarrow:focus-visible{opacity:1;background:color-mix(in srgb,var(--rfg) 12%,transparent)}
+.pgarrow:disabled{opacity:.08;cursor:default;background:transparent}
+.reader.playing .pgarrow:not(:hover){opacity:.15}
+@media (hover:hover) and (pointer:fine){ .reader.paged .pgarrow{display:grid;place-items:center} }
+.reader.rail-on .pgarrow.next{right:calc(var(--railw, 48px) + 24px)}
+html.ax-large .pgarrow{width:54px;height:104px;margin-top:-52px}
+html.ax-hc .pgarrow{border:2px solid var(--rfg);opacity:.8;background:var(--rbg)}
 .dim{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none;z-index:4}
 
 .panel{position:absolute;top:0;bottom:0;width:min(370px,94vw);z-index:6;background:var(--surface);color:var(--fg);overflow-y:auto;box-shadow:0 0 40px rgb(0 0 0 / .3);font-family:var(--f-ui);display:flex;flex-direction:column;gap:18px;padding-top:max(16px,env(safe-area-inset-top,0px));padding-bottom:max(24px,env(safe-area-inset-bottom,0px))}
@@ -551,6 +629,7 @@ html.ax-still *,html.ax-still *::before,html.ax-still *::after{transition:none!i
       <button id="apOpen" class="qbtn" title="Appearance: theme, colours and fonts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.2 0 2-.9 2-2 0-.6-.3-1-.6-1.4-.3-.4-.6-.8-.6-1.4 0-1.1.9-2 2-2H17a4 4 0 0 0 4-4c0-4-4-7.2-9-7.2z"/><circle cx="7.5" cy="11" r="1.1"/><circle cx="10" cy="7" r="1.1"/><circle cx="14.5" cy="7" r="1.1"/></svg><span>Appearance</span></button>
       <button id="axOpen" class="qbtn" title="Accessibility: larger text, contrast and motion"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="4.5" r="1.8"/><path d="M5 8.5l7 1.5 7-1.5M12 10v5M12 15l-3 6M12 15l3 6"/></svg><span>Accessibility</span></button>
       <button id="bkOpen" class="qbtn" title="Backup, restore and sync codes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16v3H4zM5.5 10v9h13v-9M10 13.5h4"/></svg><span>Backup</span></button>
+      <button id="installBtn" class="qbtn" hidden title="Install Velvet Scroll as an app on this device"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M12 7v7M9 11.5l3 3 3-3M10 18.5h4"/></svg><span>Install app</span></button>
     </nav>
     <div class="addsplit">
       <label class="btn primary addmain" for="file"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add books</label>
@@ -635,6 +714,9 @@ html.ax-still *,html.ax-still *::before,html.ax-still *::after{transition:none!i
   <div class="r-stage" id="stage">
     <div id="scroller" class="scroller" tabindex="-1"><article id="page" class="page"></article></div>
     <div id="sweepFoot" class="sweep-foot" hidden></div>
+    <div id="pgProg" class="pg-prog" hidden></div>
+    <button type="button" id="pgPrev" class="pgarrow prev" aria-label="Previous page" title="Previous page (←)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <button type="button" id="pgNext" class="pgarrow next" aria-label="Next page" title="Next page (→)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
     <div id="sweepHead" class="sweep-head" hidden></div>
     <div id="sweepLine" class="sweep-line" hidden><span class="sweep-mark"></span></div>
     <div id="sweepCover" class="sweep-cover" hidden></div>
@@ -746,7 +828,7 @@ html.ax-still *,html.ax-still *::before,html.ax-still *::after{transition:none!i
 
     <div class="grp">
       <span class="lbl">Scroll style</span>
-      <div class="seg" id="styles" role="group" aria-label="Scroll style"><button data-v="cinema">Cinema (free scroll)</button><button data-v="sweep">Page sweep</button></div>
+      <div class="seg" id="styles" role="group" aria-label="Scroll style"><button data-v="cinema">Cinema (free scroll)</button><button data-v="sweep">Page sweep</button><button data-v="pages">Pages</button></div>
       <label class="check" id="bookRow"><input type="checkbox" id="sBook"> Book layout: keep every line on the same grid</label>
       <p class="hint" id="styleHint"></p>
     </div>
@@ -792,37 +874,45 @@ html.ax-still *,html.ax-still *::before,html.ax-still *::after{transition:none!i
 <div id="dlg" class="modal" hidden>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="dlgH">
     <header class="sh-head"><h2 id="dlgH">Book details</h2><button class="btn" id="dClose">Close</button></header>
-    <div class="dgrid">
+    <div class="dbody">
+    <div class="dprev">
       <div class="dcover" id="dCover"></div>
+      <div id="dFit" hidden>
+        <div class="seg" role="group" aria-label="How the image fits the cover"><button data-m="fill">Fill the cover</button><button data-m="fit">Show the whole image</button></div>
+        <p class="hint" id="dFitHint">Drag the large preview to choose which part of the image shows.</p>
+      </div>
+    </div>
       <div class="dfields">
         <label for="dTitle">Title<input id="dTitle" autocomplete="off"></label>
         <label for="dAuthor">Author<input id="dAuthor" autocomplete="off"></label>
+        <div class="dbio" id="dBio" aria-live="polite" hidden></div>
         <div class="drow2">
           <label for="dYear">First published<input id="dYear" inputmode="numeric" placeholder="e.g. 1890" autocomplete="off"></label>
           <label for="dIsbn">ISBN<input id="dIsbn" placeholder="e.g. 978-0-14-118776-1" autocomplete="off" spellcheck="false" aria-describedby="dIsbnMsg"></label>
         </div>
         <p class="hint isbnmsg" id="dIsbnMsg" aria-live="polite"></p>
       </div>
-    </div>
-    <div class="grp">
+
+    <div class="grp dcov">
       <span class="lbl">Cover</span>
+      <div class="dcovrow">
       <div class="covers" id="dCovers" role="group" aria-label="Choose a cover"></div>
+      <div class="dcovside">
       <div class="cadd">
         <label class="btn" for="dImg">Upload image</label><input type="file" id="dImg" accept="image/*" hidden>
         <div class="urlrow" id="dUrlRow"><input id="dUrl" type="url" inputmode="url" placeholder="Or paste an image’s web address" aria-label="Cover image web address" autocomplete="off"><button class="btn" id="dUrlGo">Use</button></div>
       </div>
-      <div id="dFit" hidden>
-        <div class="seg" role="group" aria-label="How the image fits the cover"><button data-m="fill">Fill the cover</button><button data-m="fit">Show the whole image</button></div>
-        <p class="hint" id="dFitHint">Drag the large preview to choose which part of the image shows.</p>
-      </div>
       <p class="hint" id="dCoverHint">Images are shaped to a 2:3 cover. You can also paste an image, or drop one onto the preview.</p>
+      </div>
+      </div>
     </div>
-    <div class="grp">
+    <div class="grp ddb">
       <span class="lbl">Public databases</span>
       <p class="hint" id="dHint"></p>
       <div class="row"><button class="btn" id="dSearch">Search Open Library, Wikidata and Gutenberg</button></div>
       <p class="hint" id="dStatus" role="status"></p>
       <ul class="results" id="dResults"></ul>
+    </div>
     </div>
     <footer class="sh-foot"><button class="btn" id="dCancel">Cancel</button><button class="btn primary" id="dSave">Save</button></footer>
   </div>
@@ -920,6 +1010,15 @@ html.ax-still *,html.ax-still *::before,html.ax-still *::after{transition:none!i
     <div class="grp">
       <span class="lbl">Save a backup</span>
       <p class="hint">One file with your books, covers, reading positions, shelves and settings. Keep it on a USB drive or in your own cloud storage, then restore it in Velvet Scroll on another computer or browser.</p>
+      <div class="bkwhich" role="radiogroup" aria-label="Which books to back up">
+        <label class="check"><input type="radio" name="bkWhich" id="bkAll" value="all" checked> All books <span id="bkAllN" class="muted"></span></label>
+        <label class="check"><input type="radio" name="bkWhich" id="bkSome" value="some"> Choose books…</label>
+      </div>
+      <div id="bkPick" class="bkpick" hidden>
+        <div class="bkpick-top"><input type="search" id="bkFind" placeholder="Filter by title or author" aria-label="Filter the list of books">
+          <button type="button" class="btn" id="bkSelAll">Select all</button><button type="button" class="btn" id="bkSelNone">Select none</button></div>
+        <div class="bklist" id="bkList" role="group" aria-label="Books to include"></div>
+      </div>
       <label class="check"><input type="checkbox" id="bkBooks" checked> Include the books themselves <span id="bkSize" class="muted"></span></label>
       <div class="pwrow">
         <label for="bkPw">Password (optional)<input type="password" id="bkPw" autocomplete="new-password"></label>
@@ -1967,7 +2066,7 @@ async function openDetails(b){
   $('#dSearch').hidden = !IS_EXT;
   $('#dHint').textContent = IS_EXT ? 'Searches using the title and author above. Only those words are sent. Covers from Wikimedia Commons and Project Gutenberg are openly licensed.'
     : 'Looking up details online needs the Velvet Scroll browser extension.';
-  renderCoverChoices(); $('#dlg').hidden = false; $('#dTitle').focus();
+  renderCoverChoices(); $('#dlg').hidden = false; $('#dTitle').focus(); bioOpen(b);
   if(!b.isbn){ const t = await openingText(b), found = findIsbn(t);
     if(found && dlg && dlg.b === b && !$('#dIsbn').value){ $('#dIsbn').value = found; isbnMsg(); $('#dStatus').textContent = 'ISBN found in the book.'; } }
   if(LOOKUP.weakTitle(b.title, b.file) || !b.author){
@@ -2026,6 +2125,125 @@ $('#dSave').onclick = async () => {
   b.needsCheck = false; b.looked = true; b.upd = Date.now();
   await dbPutMeta(b); closeDetails(); render(); toast('Details saved.');
 };
+
+/* ---------- Author bios: a one-line summary from Wikidata and a short bio from Wikipedia, kept once per author ----------
+   Stored in authorsAll[key] = {name, desc, bio, url, qid, src:'wiki'|'own', t} or {none:true, t} after a lookup that found nothing,
+   or {cleared:true, t} when the reader removed it. Only the author's name is sent, and only to Wikidata and Wikipedia. */
+let authorsAll = LS.get('authors', {});
+const BIO_HOSTS = ['https://www.wikidata.org/*', 'https://*.wikipedia.org/*'];
+const WRITERS = new Set(['Q36180','Q6625963','Q49757','Q482980','Q4853732','Q214917','Q11774202','Q18844224','Q333634','Q1930187','Q28389','Q3745071','Q15949613','Q201788','Q4964182','Q1234713','Q12144794','Q1607826','Q18939491','Q6430706','Q10297252','Q37226','Q1622272','Q20669601','Q12406482','Q2526255','Q8178443','Q14467526']);
+const WRITER_RX = /\b(writer|novelist|poet|author|playwright|dramatist|essayist|journalist|philosopher|historian|critic|screenwriter|lyricist|diarist|translator|biographer|storyteller|cartoonist|illustrator|theologian|scientist|naturalist|explorer|economist|mathematician)\b/i;
+function authorFirst(a){ let n = String(a || '').split(/\s*(?:&|;|\band\b|\bwith\b)\s*/i)[0].trim(); if(/^[^,]+,\s*[^,]+$/.test(n)) n = n.replace(/^([^,]+),\s*(.+)$/, '$2 $1'); return n.replace(/\s*\(.*?\)\s*/g, ' ').replace(/\s+/g, ' ').trim(); }
+const authorKey = a => authorFirst(a).normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+function authorsSave(){ LS.set('authors', authorsAll); }
+function bioTrim(t, max = 900){ t = String(t || '').replace(/\s+/g, ' ').trim(); if(t.length <= max) return t; const cut = t.slice(0, max), i = cut.lastIndexOf('. '); return (i > 200 ? cut.slice(0, i + 1) : cut.replace(/\s+\S*$/, '') + '…'); }
+const yearOf = cl => { const v = cl && cl[0] && cl[0].mainsnak && cl[0].mainsnak.datavalue && cl[0].mainsnak.datavalue.value; const m = v && /^([+-])0*(\d+)/.exec(v.time || ''); return m ? (m[1] === '-' ? -m[2] : +m[2]) : null; };
+async function bioCandidates(name, bookYear, signal){
+  const s = await (await fetch('https://www.wikidata.org/w/api.php?' + new URLSearchParams({action:'wbsearchentities', search:name, language:'en', uselang:'en', type:'item', limit:'8', format:'json', origin:'*'}), {signal, credentials:'omit'})).json();
+  const ids = (s.search || []).map(x => x.id); if(!ids.length) return [];
+  const e = await (await fetch('https://www.wikidata.org/w/api.php?' + new URLSearchParams({action:'wbgetentities', ids:ids.join('|'), props:'claims|descriptions|labels|sitelinks', languages:'en', sitefilter:'enwiki', format:'json', origin:'*'}), {signal, credentials:'omit'})).json();
+  const out = [];
+  for(const id of ids){
+    const it = e.entities && e.entities[id]; if(!it || !it.claims) continue;
+    const isHuman = (it.claims.P31 || []).some(c => c.mainsnak.datavalue && c.mainsnak.datavalue.value.id === 'Q5'); if(!isHuman) continue;
+    const desc = it.descriptions && it.descriptions.en ? it.descriptions.en.value : '';
+    const occ = (it.claims.P106 || []).map(c => c.mainsnak.datavalue && c.mainsnak.datavalue.value.id).filter(Boolean);
+    const writer = occ.some(o => WRITERS.has(o)) || WRITER_RX.test(desc);
+    const born = yearOf(it.claims.P569), died = yearOf(it.claims.P570);
+    // a book can't predate its author by much; old books by modern namesakes are unlikely
+    let fits = true; if(bookYear && born && bookYear < born + 8) fits = false; if(bookYear && died && bookYear > died + 300) fits = false;
+    out.push({qid:id, name:it.labels && it.labels.en ? it.labels.en.value : name, desc, born, died, writer, fits, wiki: it.sitelinks && it.sitelinks.enwiki ? it.sitelinks.enwiki.title : ''});
+  }
+  return out.filter(x => x.writer && x.fits).concat(out.filter(x => x.writer && !x.fits));
+}
+function bioLine(c){
+  let d = c.desc ? c.desc[0].toUpperCase() + c.desc.slice(1) : '';
+  if((c.born || c.died) && !/\d{3,4}/.test(d)) d += c.died ? ` (${c.born || '?'}–${c.died})` : ` (born ${c.born})`;
+  return d.trim();
+}
+async function bioFetch(c, signal){
+  let bio = '', url = c.wiki ? 'https://en.wikipedia.org/wiki/' + encodeURIComponent(c.wiki.replace(/ /g, '_')) : 'https://www.wikidata.org/wiki/' + c.qid;
+  if(c.wiki){ try{ const r = await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(c.wiki.replace(/ /g, '_')), {signal, credentials:'omit'});
+    if(r.ok){ const j = await r.json(); if(j.type !== 'disambiguation') bio = bioTrim(j.extract); if(j.content_urls && j.content_urls.desktop) url = j.content_urls.desktop.page; } }catch(e){ if(e.name === 'AbortError') throw e; } }
+  return {name:c.name, desc:bioLine(c), bio, url, qid:c.qid, src:'wiki', wiki:!!bio, t:Date.now()};
+}
+async function bioAllowed(ask){
+  if(!IS_EXT) return true;
+  try{ if(await browser.permissions.contains({origins:BIO_HOSTS})) return true; if(!ask) return false;
+    try{ return await browser.permissions.request({origins:BIO_HOSTS, data_collection:['searchTerms']}); }catch(e){ return await browser.permissions.request({origins:BIO_HOSTS}); } }
+  catch(e){ return false; }
+}
+let bioCtl = null, bioAlt = [];
+async function bioLookup(name, ask){
+  const key = authorKey(name); if(!key) return;
+  if(!await bioAllowed(ask)){ bioShow(name, ask ? 'Velvet Scroll wasn’t given permission to contact Wikipedia.' : ''); return; }
+  if(bioCtl) bioCtl.abort(); const ctl = bioCtl = new AbortController();
+  bioShow(name, 'Looking up the author…');
+  try{
+    const year = dlg ? parseInt($('#dYear').value, 10) || null : null;
+    const cands = await bioCandidates(authorFirst(name), year, ctl.signal);
+    if(ctl !== bioCtl) return;
+    if(!cands.length){ authorsAll[key] = {none:true, t:Date.now()}; authorsSave(); bioShow(name, ask ? 'No writer by that name was found on Wikidata.' : ''); return; }
+    bioAlt = cands;
+    authorsAll[key] = await bioFetch(cands[0], ctl.signal); authorsSave();
+    if(ctl === bioCtl) bioShow(name);
+  }catch(e){ if(e.name !== 'AbortError' && ctl === bioCtl) bioShow(name, ask ? 'Couldn’t reach Wikipedia. Check your connection and try again.' : ''); }
+}
+function bioShow(name, msg){
+  const box = $('#dBio'), key = authorKey(name), a = key && authorsAll[key];
+  box.hidden = !key; if(!key) return;
+  const kids = [];
+  if(a && (a.bio || a.desc) && !a.none && !a.cleared){
+    if(a.desc) kids.push(el('p', {class:'bdesc', text:a.desc}));
+    if(a.bio){ const p = el('p', {class:'btext clamp', text:a.bio}); kids.push(p);
+      if(a.bio.length > 220){ const more = el('button', {class:'blink', type:'button', text:'Show more'}); more.onclick = () => { const c = p.classList.toggle('clamp'); more.textContent = c ? 'Show more' : 'Show less'; }; kids.push(more); } }
+    const meta = el('p', {class:'bmeta'});
+    if(a.src === 'wiki') meta.append(a.wiki ? 'From Wikipedia · ' : 'From Wikidata · ', el('a', {href:a.url, target:'_blank', rel:'noopener', text: a.wiki ? 'Read the full article' : 'View on Wikidata'}));
+    else meta.append('Your own note');
+    const ed = el('button', {class:'blink', type:'button', text:'Edit'}); ed.onclick = () => bioEdit(name); meta.append(' · ', ed);
+    if(a.src === 'wiki' && bioAlt.length > 1){ const nt = el('button', {class:'blink', type:'button', text:'Wrong person?'}); nt.onclick = () => bioPick(name); meta.append(' · ', nt); }
+    kids.push(meta);
+  } else {
+    const row = el('p', {class:'bmeta'});
+    row.append(a && a.cleared ? 'No author bio. ' : 'No author bio yet. ');
+    const lk = el('button', {class:'blink', type:'button', text:'Look up on Wikipedia'}); lk.onclick = () => bioLookup($('#dAuthor').value, true);
+    const wr = el('button', {class:'blink', type:'button', text:'Write one'}); wr.onclick = () => bioEdit(name);
+    row.append(lk, ' · ', wr); kids.push(row);
+  }
+  if(msg) kids.push(el('p', {class:'bmeta', text:msg}));
+  box.replaceChildren(...kids);
+}
+function bioPick(name){
+  const box = $('#dBio'), key = authorKey(name), list = el('ul', {class:'bpick'});
+  for(const c of bioAlt.slice(0, 6)){ const b = el('button', {type:'button', class:'blink', text: c.name + (c.desc ? ' — ' + bioLine(c) : '')});
+    b.onclick = async () => { box.replaceChildren(el('p', {class:'bmeta', text:'Loading…'})); try{ authorsAll[key] = await bioFetch(c); authorsSave(); }catch(e){} bioShow(name); };
+    const li = el('li'); li.append(b); list.append(li); }
+  const cancel = el('button', {type:'button', class:'blink', text:'Cancel'}); cancel.onclick = () => bioShow(name);
+  box.replaceChildren(el('p', {class:'bmeta', text:'Which person wrote this book?'}), list, cancel);
+}
+function bioEdit(name){
+  const box = $('#dBio'), key = authorKey(name), a = authorsAll[key] || {};
+  const ta = el('textarea', {class:'bedit', rows:'4', 'aria-label':'Author bio'}); ta.value = a.bio || a.desc || '';
+  const save = el('button', {type:'button', class:'btn primary', text:'Save bio'}), cancel = el('button', {type:'button', class:'btn', text:'Cancel'}), rm = el('button', {type:'button', class:'btn', text:'Remove bio'});
+  save.onclick = () => { const v = ta.value.trim(); authorsAll[key] = v ? {name:authorFirst(name), desc:'', bio:bioTrim(v, 4000), url:'', src:'own', t:Date.now()} : {cleared:true, t:Date.now()}; authorsSave(); bioShow(name); };
+  rm.onclick = () => { authorsAll[key] = {cleared:true, t:Date.now()}; authorsSave(); bioShow(name); };
+  cancel.onclick = () => bioShow(name);
+  const row = el('div', {class:'row'}); row.style.cssText = 'gap:8px;flex-wrap:wrap'; row.append(save, cancel); if(a.bio || a.desc) row.append(rm);
+  box.replaceChildren(ta, row); ta.focus();
+}
+// open the details window: show what's saved, and look the author up once if nothing is known yet
+async function bioOpen(b){
+  bioAlt = []; const name = b.author || ''; bioKey = authorKey(name);
+  bioShow(name);
+  const key = authorKey(name), a = key && authorsAll[key];
+  if(!key || b.sample || b.kind === 'article') { $('#dBio').hidden = !key || b.sample; return; }
+  const stale = a && a.none && Date.now() - a.t > 30 * 864e5;
+  if(!a || stale) bioLookup(name, false);
+}
+let bioKey = '';
+$('#dAuthor').addEventListener('change', () => { if(!dlg) return; const n = $('#dAuthor').value, k = authorKey(n); if(k === bioKey) return; bioKey = k; bioAlt = []; bioShow(n); if(k && !authorsAll[k]) bioLookup(n, false); });
+// merging bios from another device or a backup: the newer one wins
+function authorsMerge(other){ let n = 0; for(const [k, v] of Object.entries(other || {})){ const h = authorsAll[k]; if(v && (!h || (v.t || 0) > (h.t || 0))){ authorsAll[k] = v; n++; } } if(n) LS.set('authors', authorsAll); return n; }
 
 /* ---------- Saving web articles (extension) ---------- */
 /* the Add books menu */
@@ -2109,18 +2327,43 @@ async function decryptBytes(u8, pw){
   try{ return new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM', iv}, await keyFrom(pw, salt, iter), ct)); }
   catch(e){ throw new Error('badpw'); }
 }
+let bkChosen = null;   // ids picked for a backup, or null for all of them
+const bkBooksList = () => bkChosen ? books.filter(b => bkChosen.has(b.id)) : books;
+function bkSummary(){
+  if(/at least one book/.test($('#bkSaveSt').textContent)) $('#bkSaveSt').textContent = '';
+  const list = bkBooksList(), total = list.reduce((a, b) => a + (b.size || 0), 0);
+  $('#bkSize').textContent = list.length ? `(${list.length === books.length ? '' : list.length + ' of '}${books.length} book${books.length === 1 ? '' : 's'}, about ${fmtMB(total)})` : '(no books chosen)';
+  $('#bkAllN').textContent = `(${books.length})`;
+}
+function bkRenderList(){
+  const q = $('#bkFind').value.trim().toLowerCase();
+  const sorted = [...books].sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+  $('#bkList').replaceChildren(...sorted.map(b => { const cb = el('input', {type:'checkbox'}); cb.checked = bkChosen.has(b.id);
+    cb.onchange = () => { cb.checked ? bkChosen.add(b.id) : bkChosen.delete(b.id); bkSummary(); };
+    const lab = el('label', {}, cb, el('span', {class:'bt'}, el('b', {text:b.title || 'Untitled'}), b.author ? el('span', {text:' · ' + b.author}) : null), el('span', {class:'bz', text: b.size ? fmtMB(b.size) : ''}));
+    lab.hidden = !!q && !((b.title || '') + ' ' + (b.author || '')).toLowerCase().includes(q); lab.dataset.id = b.id; return lab; }));
+}
+document.querySelectorAll('input[name="bkWhich"]').forEach(r => r.addEventListener('change', () => {
+  const some = $('#bkSome').checked; $('#bkPick').hidden = !some;
+  if(some){ if(!bkChosen) bkChosen = new Set(); bkRenderList(); $('#bkFind').focus(); } else bkChosen = null;
+  bkSummary();
+}));
+$('#bkFind').addEventListener('input', () => { const q = $('#bkFind').value.trim().toLowerCase(); $('#bkList').querySelectorAll('label').forEach(l => { const b = books.find(x => x.id === l.dataset.id); l.hidden = !!q && !((b.title || '') + ' ' + (b.author || '')).toLowerCase().includes(q); }); });
+// select all/none act on the books showing (so a filter can pick, say, one author's books)
+$('#bkSelAll').onclick = () => { $('#bkList').querySelectorAll('label:not([hidden])').forEach(l => { bkChosen.add(l.dataset.id); l.querySelector('input').checked = true; }); bkSummary(); };
+$('#bkSelNone').onclick = () => { $('#bkList').querySelectorAll('label:not([hidden])').forEach(l => { bkChosen.delete(l.dataset.id); l.querySelector('input').checked = false; }); bkSummary(); };
 async function buildBackup(withBooks, pw, onStep){
-  const zip = new JSZip(), metas = [];
+  const zip = new JSZip(), metas = [], list = bkBooksList(), ids = new Set(list.map(b => b.id));
   let i = 0;
-  for(const b of books){
-    onStep && onStep(++i, books.length);
+  for(const b of list){
+    onStep && onStep(++i, list.length);
     await ensureFp(b);
     const m = {...b}; delete m.coverBuf;
     if(b.coverBuf){ zip.file('covers/' + b.id, b.coverBuf); m.hasCover = true; }
     if(withBooks){ const f = await dbGetFile(b.id); if(f){ zip.file('books/' + b.id, f); m.hasFile = true; } }
     metas.push(m);
   }
-  zip.file('library.json', JSON.stringify({app:'Velvet Scroll', format:1, exported:new Date().toISOString(), withBooks, books:metas, progress, settings:S, settingsT:LS.get('settingsT',0), pdfModes}));
+  zip.file('library.json', JSON.stringify({app:'Velvet Scroll', format:1, exported:new Date().toISOString(), withBooks, books:metas, progress: bkChosen ? Object.fromEntries(Object.entries(progress).filter(([k]) => ids.has(k))) : progress, settings:S, settingsT:LS.get('settingsT',0), pdfModes, authors:authorsAll}));
   let out = await zip.generateAsync({type:'uint8array', compression:'STORE'});
   if(pw){
     const z = new JSZip();
@@ -2150,8 +2393,8 @@ async function openBackup(){
   $('#syncGrp').hidden = !SY; if(SY){ $('#syncOn').checked = syncOn; showSyncStatus(); }
   $('#bkSize').textContent = ''; $('#scSt').textContent = ''; $('#scInSt').textContent = ''; $('#scOut').hidden = true; $('#scPw').value = '';
   for(const b of books) if(!b.size){ const f = await dbGetFile(b.id); if(f){ b.size = f.byteLength; await dbPutMeta(b); } }
-  const total = books.reduce((a, b) => a + (b.size || 0), 0);
-  $('#bkSize').textContent = books.length ? `(${books.length} book${books.length===1?'':'s'}, about ${fmtMB(total)})` : '';
+  bkChosen = null; $('#bkAll').checked = true; $('#bkPick').hidden = true; $('#bkFind').value = '';
+  bkSummary(); if(!books.length) $('#bkSize').textContent = '';
 }
 function closeBackupNow(){ $('#bk').hidden = true; pendingRestore = null; $('#bkInPw').value = ''; }
 function closeBackup(){ popLayer('backup'); }
@@ -2161,6 +2404,7 @@ $('#bk').addEventListener('click', e => { if(e.target === $('#bk')) closeBackup(
 $('#bkSave').onclick = async () => {
   const st = $('#bkSaveSt'), pw = $('#bkPw').value;
   if(!books.length){ st.textContent = 'Your library is empty, so there’s nothing to back up yet.'; return; }
+  if(bkChosen && !bkChosen.size){ st.textContent = 'Choose at least one book to back up, or choose All books.'; return; }
   if(pw !== $('#bkPw2').value){ st.textContent = 'The two passwords don’t match.'; return; }
   if(pw && pw.length < 8){ st.textContent = 'Use a password of at least 8 characters.'; return; }
   $('#bkSave').disabled = true;
@@ -2169,7 +2413,8 @@ $('#bkSave').onclick = async () => {
     if(pw) st.textContent = 'Encrypting…';
     const d = new Date(), stamp = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     st.textContent = 'Saving…';
-    const ok = await saveFile(`Velvet Scroll backup ${stamp}${pw ? ' (encrypted)' : ''}.zip`, bytes);
+    const part = bkChosen ? ` (${bkChosen.size} book${bkChosen.size === 1 ? '' : 's'})` : '';
+    const ok = await saveFile(`Velvet Scroll backup ${stamp}${part}${pw ? ' (encrypted)' : ''}.zip`, bytes);
     st.textContent = ok ? `Backup saved (${fmtMB(bytes.length)}).` : 'Save cancelled.';
   }catch(e){
     st.textContent = e.message === 'toolarge' ? 'The backup is too large to save here. Try saving it without the books.' :
@@ -2221,6 +2466,7 @@ async function restore(zip){
     if(rp) setProgressRec(nb.id, rp);
   }
   if(lib.pdfModes) for(const [k,v] of Object.entries(lib.pdfModes)) if(!pdfModes[k]) pdfModes[k] = v;
+  if(lib.authors) authorsMerge(lib.authors);
   LS.set('pdfmode', pdfModes);
   if(wasEmpty && lib.settings){ Object.assign(S, lib.settings); applySettings(); }
   render();
@@ -2385,6 +2631,18 @@ $('#syncOn').addEventListener('change', async e => {
   for(const b of books) syncBook(b);
   syncSettings(); await syncFlush();
 });
+
+/* ---------- Installing as an app (the website only): offline copy, an Install button, opening book files from the system ---------- */
+let installEvt = null;
+const isStandalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+if(!IS_EXT && !IN_CLAUDE && 'serviceWorker' in navigator && (location.protocol === 'https:' || /^(localhost|127\.0\.0\.1)$/.test(location.hostname)))
+  addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+addEventListener('beforeinstallprompt', e => { if(IS_EXT) return; e.preventDefault(); installEvt = e; $('#installBtn').hidden = isStandalone(); });
+addEventListener('appinstalled', () => { installEvt = null; $('#installBtn').hidden = true; toast('Velvet Scroll is installed. You’ll find it with your other apps.', 5000); });
+$('#installBtn').onclick = async () => { if(!installEvt) return; installEvt.prompt(); try{ await installEvt.userChoice; }catch(e){} installEvt = null; $('#installBtn').hidden = true; };
+// book files opened with Velvet Scroll from the computer's file manager (when installed)
+function launchFiles(){ if(IS_EXT || !('launchQueue' in window)) return;
+  launchQueue.setConsumer(async p => { if(!p || !p.files || !p.files.length) return; try{ const files = await Promise.all(p.files.map(h => h.getFile())); addFiles(files); }catch(e){} }); }
 
 /* ---------- ISBN ---------- */
 function isbnClean(s){ return String(s || '').toUpperCase().replace(/^\s*(URN:)?ISBN[:\s-]*/, '').replace(/[^0-9X]/g, ''); }
@@ -2921,7 +3179,8 @@ if(S.guideAuto === undefined) S.guideAuto = S.guide === '#e0a72e';
 const R = $('#reader'), stage = $('#stage'), scroller = $('#scroller'), page = $('#page'), guide = $('#guide');
 const swNext = $('#sweepNext'), swClip = swNext.firstElementChild, swContent = swClip.firstElementChild, swLine = $('#sweepLine'), swMark = swLine.firstElementChild, swCover = $('#sweepCover'), swFoot = $('#sweepFoot'), swHead = $('#sweepHead');
 let sw = null, swMO = null;   // the page sweep in progress
-function isSweep(){ return S.style === 'sweep'; }
+function isSweep(){ return S.style === 'sweep' || S.style === 'pages'; }   // pages share the sweep's page layout
+function isPages(){ return S.style === 'pages'; }
 function sweepPad(){ return Math.max(10, Math.round(lineH() * 0.4)); }
 // where the reader's eyes are: the guide in cinema mode; the sweep line (or the top of the page) in page sweep
 function readY(){ if(!isSweep()) return guideY(); return Math.round(Math.max(sw && Math.abs(scroller.scrollTop - sw.start) <= 1 ? sw.y : 0, sweepPad())); }
@@ -3109,7 +3368,10 @@ function applySettings(save=true){
   document.querySelectorAll('#styles button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === (S.style || 'cinema'))));
   $('#bookRow').hidden = !isSweep(); $('#sBook').checked = S.book !== false;
   page.classList.toggle("bookgrid", gridOn()); gridSnapSoon();
-  $('#styleHint').textContent = isSweep() ? 'The page stays still. A blank band, with a line along its top, drifts down at your reading speed and the next page appears above it. Read the new page above the line, or the rest of this page below the band. Smooth motion and refresh rate only apply to Cinema.'
+  R.classList.toggle('paged', isPages()); $('#pgProg').hidden = true;
+  if(isPages()) setTimeout(() => { if(!R.hidden && cur && ready && !playing){ pagesEnsure(); pagesArrows(); } }, 80);
+  $('#styleHint').textContent = isPages() ? 'Turn the pages like a book: tap or click the right side of the page, swipe, or press → or Page Down. The left side, ← or Page Up goes back. Play turns the pages for you at your reading speed.'
+    : isSweep() ? 'The page stays still. A blank band, with a line along its top, drifts down at your reading speed and the next page appears above it. Read the new page above the line, or the rest of this page below the band. Smooth motion and refresh rate only apply to Cinema.'
     : 'The text glides up the screen past the reading guide.';
   if(!S.smooth || isSweep()) clearShift(); else if(playing) page.style.willChange='transform';
   $('#sPgw').value=S.pgw; $('#oPgw').value=S.pgw+'%'; $('#sTint').checked=!!S.tint;
@@ -3292,6 +3554,7 @@ async function openBook(b){
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
     if(pdfDoc && pr.pg && pr.mode && pr.mode !== pdfMode) goTo('sec0-pg'+pr.pg); else setFrac(p);
     gridSnap(); ready = true; updateStatus(); lastAnchor = null; noteAnchor();
+    if(isPages()){ pgStack = []; sweepBegin(); }
     // images can shift the layout as they load; re-apply the saved spot once they settle
     const imgs = [...page.querySelectorAll('img')].filter(i=>!i.complete);
     if(imgs.length && p > 0) Promise.all(imgs.map(i=>new Promise(r=>{ i.onload=i.onerror=r; }))).then(()=>{ if(cur && !playing && Math.abs(frac()-p) < 0.02) setFrac(p); });
@@ -3506,7 +3769,7 @@ function pause(){
 }
 function tick(t){
   if(!playing) return;
-  if(isSweep()) return sweepTick(t);
+  if(isSweep()) return isPages() ? pagesTick(t) : sweepTick(t);
   const fm = frameMs();
   let dt = t - last; last = t;
   dt = Math.min(6, Math.max(1, Math.round(dt / fm))) * fm;   // whole frames only
@@ -3621,8 +3884,10 @@ function sweepBegin(){
   if(imagePages() && pg){ const q = pg.getBoundingClientRect(); swMark.style.left = (q.left - sr.left) + 'px'; swMark.style.width = q.width + 'px'; }
   else { const pl = parseFloat(cs.paddingLeft), pw = pr.width - pl - parseFloat(cs.paddingRight); swMark.style.left = Math.max(0, pr.left - sr.left + pl - 16) + 'px'; swMark.style.width = Math.min(sr.width, pw + 32) + 'px'; }
   swLine.style.height = Math.round(lh) + 'px';
-  swNext.hidden = last; swLine.hidden = false; swCover.hidden = false;
-  sweepClone();
+  const pagesOnly = isPages(); if(pagesOnly) pgElapsed = 0;
+  if(pagesOnly) setTimeout(pagesArrows, 0);
+  swNext.hidden = last || pagesOnly; swLine.hidden = pagesOnly; swCover.hidden = pagesOnly;
+  if(!pagesOnly) sweepClone();
   // a line cut off at the bottom belongs to the next page: hide it here
   swHead.hidden = !grid; swHead.style.height = Math.max(0, m - 1) + 'px';   // the foot of the row above the page
   swFoot.hidden = last || !(lines.length || grid); swFoot.style.height = Math.max(0, H - (grid ? m + rows * lh : next - s)) + 'px';
@@ -3665,10 +3930,69 @@ function sweepTick(t){
   if(lensOn) lensDraw();
   raf = requestAnimationFrame(tick);
 }
+/* ---------- Pages: turning a page at a time (manually, or automatically at reading speed) ---------- */
+let pgStack = [], pgTurning = false, pgElapsed = 0, pgWheel = 0, pgWheelT = 0, pgAlignT = 0;
+function pagesEnsure(){ if(!sw || Math.abs(scroller.scrollTop - sw.start) > 1 || sw.sig !== sweepSig()){ pgStack = []; sweepBegin(); } return !!sw; }
+function pagesAnim(dir){
+  if(stillOn() || !page.animate) return;
+  try{ page.animate([{transform:`translateX(${dir * 26}px)`, opacity:0}, {transform:'none', opacity:1}], {duration:200, easing:'cubic-bezier(.2,.7,.3,1)'}); }catch(e){}
+}
+function pagesTurn(dir){
+  if(R.hidden || !cur || !pagesEnsure()) return false;
+  if(dir > 0){
+    if(sw.last){ toast('End of book.'); return false; }
+    pgStack.push(sw.start); pgTurning = true; scroller.scrollTop = sw.next;
+  } else {
+    if(pagesAtStart()){ toast('This is the first page.'); return false; }
+    const back = pgStack.length ? pgStack.pop() : Math.max(0, sw.start - (sw.next - sw.start));
+    pgTurning = true; scroller.scrollTop = back;
+  }
+  sweepBegin(); pgTurning = false; pgElapsed = 0; pagesAnim(dir); saveCur(); noteAnchor(); updateStatus();
+  return true;
+}
+function pagesSecs(){ if(!sw) return 1; const lines = Math.max(1, Math.round((sw.next - sw.start) / sw.lh)); return lines * 60 / Math.max(1, S.lpm); }
+function pagesTick(t){
+  const dt = Math.min(250, t - last); last = t;
+  if(!pagesEnsure()){ pause(); return; }
+  pgElapsed += dt / 1000;
+  const total = pagesSecs(), bar = $('#pgProg');
+  bar.hidden = false; bar.style.width = Math.min(100, pgElapsed / total * 100) + '%';
+  if(pgElapsed >= total){
+    if(sw.last){ bar.hidden = true; pause(); toast('End of book.'); return; }
+    pagesTurn(1);
+  }
+  if(lensOn) lensDraw();
+  raf = requestAnimationFrame(tick);
+}
+$('#pgPrev').onclick = e => { e.stopPropagation(); pause(); pagesTurn(-1); };
+$('#pgNext').onclick = e => { e.stopPropagation(); pause(); pagesTurn(1); };
+const pagesAtStart = () => !sw || sw.start < sw.lh * 2;   // only the page's top margin above: the first page
+function pagesArrows(){ $('#pgPrev').disabled = pagesAtStart(); $('#pgNext').disabled = !sw || !!sw.last; }
+// a jump (search, contents, the slider) lands mid-page: line the page up again once it settles
+function pagesAlignSoon(){ clearTimeout(pgAlignT); pgAlignT = setTimeout(() => { if(isPages() && !R.hidden && cur && !pgTurning){ pgStack = []; sweepBegin(); } }, 180); }
+// the wheel and trackpad turn pages instead of scrolling
+scroller.addEventListener('wheel', e => {
+  if(!isPages() || e.ctrlKey) return;
+  e.preventDefault(); const now = performance.now();
+  if(now - pgWheelT > 400) pgWheel = 0;
+  pgWheel += Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+  if(Math.abs(pgWheel) > 40 && now - pgWheelT > 350){ pgWheelT = now; const d = Math.sign(pgWheel); pgWheel = 0; pause(); if(pagesTurn(d) && tts.on) ttsUserMoved(); }
+}, {passive:false});
+// swipes on touch screens
+let pgTouch = null;
+scroller.addEventListener('pointerdown', e => { if(isPages() && e.pointerType === 'touch') pgTouch = {x:e.clientX, y:e.clientY, t:performance.now()}; });
+scroller.addEventListener('pointerup', e => {
+  if(!pgTouch || e.pointerType !== 'touch') return; const dx = e.clientX - pgTouch.x, dy = e.clientY - pgTouch.y, fast = performance.now() - pgTouch.t < 700; pgTouch = null;
+  if(!fast || (Math.abs(dx) < 45 && Math.abs(dy) < 60)) return;
+  const d = Math.abs(dx) > Math.abs(dy) ? -Math.sign(dx) : -Math.sign(dy);
+  suppressClick = true; setTimeout(() => suppressClick = false, 350); pause(); if(pagesTurn(d) && tts.on) ttsUserMoved();
+});
+
 // a typeface finishing loading moves the text: measure the page again
 try{ document.fonts?.addEventListener('loadingdone', () => { if(sw){ sw.sig = ''; if(!playing) sweepEnd(); } }); }catch(e){}
 // scrolling by hand while stopped puts the page back to normal; play starts a new sweep from there
-scroller.addEventListener('scroll', () => { if(sw && !playing && !tts.on && Math.abs(scroller.scrollTop - sw.start) > 1) sweepEnd(); }, {passive:true});
+scroller.addEventListener('scroll', () => { if(isPages()){ if(!pgTurning && sw && Math.abs(scroller.scrollTop - sw.start) > 1) pagesAlignSoon(); return; }
+  if(sw && !playing && !tts.on && Math.abs(scroller.scrollTop - sw.start) > 1) sweepEnd(); }, {passive:true});
 
 /* ---------- Read aloud (the browser's own speech voices) ---------- */
 const synth = window.speechSynthesis || null;
@@ -4205,6 +4529,8 @@ scroller.addEventListener('click', e=>{
       const node = c && (c.offsetNode || c.startContainer), off = c ? (c.offset ?? c.startOffset) : 0;
       if(node && node.nodeType === 3 && page.contains(node) && ttsBlockOf(node)){ ttsFromTap(node, off); return; } }catch(_){}
     ttsStop(); return; }
+  if(isPages() && !S.hand){ const r = scroller.getBoundingClientRect(), fx = (e.clientX - r.left) / r.width;
+    if(fx < .28 || fx > .72){ pause(); pagesTurn(fx > .5 ? 1 : -1); return; } }
   toggle();
 });
 
@@ -4273,10 +4599,12 @@ addEventListener('keydown', e=>{
   if(e.key===' ' || e.code==='Space'){ if(tag==='BUTTON') return; e.preventDefault(); toggle(); }
   else if(tag==='INPUT') return;
   else if(e.key==='PageDown' || e.key==='PageUp'){ e.preventDefault();
-    if(e.key==='PageDown' && isSweep()){ if(!sw || Math.abs(scroller.scrollTop - sw.start) > 1) sweepBegin(); if(sw && !sw.last) sweepFlip(); }
+    if(isPages()){ pause(); pagesTurn(e.key==='PageDown' ? 1 : -1); }
+    else if(e.key==='PageDown' && isSweep()){ if(!sw || Math.abs(scroller.scrollTop - sw.start) > 1) sweepBegin(); if(sw && !sw.last) sweepFlip(); }
     else scroller.scrollTop += (e.key==='PageDown' ? 1 : -1) * Math.max(lineH(), scroller.clientHeight - lineH() * 2);
     if(tts.on) ttsUserMoved(); }
   else if((e.key==='ArrowLeft' || e.key==='ArrowRight') && tts.on){ e.preventDefault(); ttsSkip(e.key==='ArrowRight' ? 1 : -1); }
+  else if((e.key==='ArrowLeft' || e.key==='ArrowRight') && isPages() && !e.ctrlKey && !e.metaKey && !e.altKey){ e.preventDefault(); pause(); pagesTurn(e.key==='ArrowRight' ? 1 : -1); }
   else if(e.key==='ArrowUp'){ e.preventDefault(); S.lpm=Math.min(120,S.lpm+2); applySettings(); }
   else if(e.key==='ArrowDown'){ e.preventDefault(); S.lpm=Math.max(2,S.lpm-2); applySettings(); }
   else if(e.key===']'){ keepPlace(()=>{ S.size=Math.min(56,S.size+1); applySettings(); }); }
@@ -4322,6 +4650,7 @@ setupDonate();
   if(!ok){ const n=$('#notice'); n.hidden=false; n.textContent='This browser isn’t allowing storage here, so books you add will only last until you close the page.'; }
   books = await dbAll(); await loadProgress();
   initSync();
+  launchFiles();
   syncCodeFromAddress();
   try{ navigator.storage?.persist?.(); }catch(e){}
   render();
