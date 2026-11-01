@@ -1,3 +1,4 @@
+if(/Android|iPhone|Mobile/i.test(navigator.userAgent)) document.documentElement.classList.add('phone');
 const $ = s => document.querySelector(s);
 const readerUrl = velvetApi.runtime.getURL('reader.html');
 let tab = null;
