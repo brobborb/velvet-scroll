@@ -23,6 +23,7 @@
       <button id="apOpen" class="qbtn" title="Appearance: theme, colours and fonts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.2 0 2-.9 2-2 0-.6-.3-1-.6-1.4-.3-.4-.6-.8-.6-1.4 0-1.1.9-2 2-2H17a4 4 0 0 0 4-4c0-4-4-7.2-9-7.2z"/><circle cx="7.5" cy="11" r="1.1"/><circle cx="10" cy="7" r="1.1"/><circle cx="14.5" cy="7" r="1.1"/></svg><span>Appearance</span></button>
       <button id="axOpen" class="qbtn" title="Accessibility: larger text, contrast and motion"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="4.5" r="1.8"/><path d="M5 8.5l7 1.5 7-1.5M12 10v5M12 15l-3 6M12 15l3 6"/></svg><span>Accessibility</span></button>
       <button id="bkOpen" class="qbtn" title="Backup, restore and sync codes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16v3H4zM5.5 10v9h13v-9M10 13.5h4"/></svg><span>Backup</span></button>
+      <button id="plusOpen" class="qbtn" title="Velvet Scroll Plus: a one-time purchase for extra features"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg><span id="plusLbl">Plus</span></button>
     </nav>
     <div class="addsplit">
       <label class="btn primary addmain" for="file"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add books</label>
@@ -83,7 +84,7 @@
   <div id="fmts" class="fmts" role="group" aria-label="File formats" hidden></div>
   <div id="notice" class="notice" hidden></div>
   <section id="grid" class="grid" aria-label="Books"></section>
-  <p class="foot"><a class="plink" href="https://velvetscroll.net/about.html" target="_blank" rel="noopener">About</a> · <span id="footExt">Extensions: <a class="plink" href="https://chromewebstore.google.com/detail/lcddfbbfeahgjlilbmclahmfgolpoknf" target="_blank" rel="noopener">Chrome</a> · <a class="plink" href="https://addons.mozilla.org/firefox/addon/velvet-scroll/" target="_blank" rel="noopener">Firefox</a> · </span><a class="plink" href="https://velvetscroll.net/privacy.html" target="_blank" rel="noopener">Privacy</a> · <a class="plink" href="https://velvetscroll.net/licences.html" target="_blank" rel="noopener">Licences</a> · <a class="plink" href="https://velvetscroll.net/terms.html" target="_blank" rel="noopener">Terms</a> · Books stay in this browser on this device; nothing is uploaded. Opens EPUB, KEPUB, MOBI, AZW3, PDF, TXT, HTML, FB2 and CBZ comic files, including zipped ones. Drag them anywhere on the page to add them. DRM-protected and password-locked books, including Kindle store purchases, can't be opened.</p>
+  <p class="foot"><a class="plink" href="https://velvetscroll.net/about.html" target="_blank" rel="noopener">About</a> · <span id="footExt">Extensions: <a class="plink" href="https://chromewebstore.google.com/detail/lcddfbbfeahgjlilbmclahmfgolpoknf" target="_blank" rel="noopener">Chrome</a> · <a class="plink" href="https://addons.mozilla.org/firefox/addon/velvet-scroll/" target="_blank" rel="noopener">Firefox</a> · </span><a class="plink" href="https://velvetscroll.net/privacy.html" target="_blank" rel="noopener">Privacy</a> · <a class="plink" href="https://velvetscroll.net/licences.html" target="_blank" rel="noopener">Licences</a> · <a class="plink" href="https://velvetscroll.net/terms.html" target="_blank" rel="noopener">Terms</a> · <a class="plink" href="#" id="footPlus">Velvet Scroll Plus</a> · Books stay in this browser on this device; nothing is uploaded. Opens EPUB, KEPUB, MOBI, AZW3, PDF, TXT, HTML, FB2 and CBZ comic files, including zipped ones. Drag them anywhere on the page to add them. DRM-protected and password-locked books, including Kindle store purchases, can't be opened.</p>
   <section id="donate" class="donate" hidden aria-labelledby="donH">
     <div class="don-text"><h2 id="donH">Support Velvet Scroll</h2><p>Velvet Scroll is free. If you enjoy it, you can help keep it going.</p></div>
     <div class="don-ways">
@@ -591,6 +592,31 @@
       <p class="hint" id="syncHint">Uses your browser's own sync between computers where you're signed in to the browser with extension syncing turned on. The books themselves aren't synced: copy them once with a backup, and after that your place follows you.</p>
       <p class="hint" id="syncSt" role="status"></p>
       <div id="syncMissing" hidden><p class="hint">In your synced library but not on this computer:</p><ul class="missing" id="syncList"></ul></div>
+    </div>
+  </div>
+</div>
+
+<div id="plusDlg" class="modal" hidden>
+  <div class="sheet plussheet" role="dialog" aria-modal="true" aria-labelledby="plusH">
+    <header class="sh-head"><h2 id="plusH">Velvet Scroll Plus</h2><button class="btn" id="plusClose">Close</button></header>
+    <p class="plusctx" id="plusCtx" hidden></p>
+    <p class="pluslede">Velvet Scroll has no ads and never will. The reader, read aloud and every accessibility setting are free for everyone. Velvet Scroll Plus is a one-time purchase that unlocks extra tools for study, syncing and atmosphere. It supports the time that goes into building and maintaining Velvet Scroll, and keeps it independent.</p>
+    <div class="plusgrid">
+      <div class="pluscol"><span class="lbl">Free for everyone, always</span>
+        <ul><li>Auto-scrolling and the reading guide</li><li>Read aloud, including the natural voices</li><li>Every display and accessibility setting</li><li>Your library, shelves, covers and author bios</li><li>Search, highlights and notes in your books</li><li>Backups and sync codes</li></ul></div>
+      <div class="pluscol plus"><span class="lbl">Plus</span>
+        <ul><li>Google Drive sync across all your devices</li><li>Recognise text in scanned PDFs</li><li>Download PDFs with your highlights</li><li>Export all your notes</li><li>Story mode: illustrated themes for your books <span class="soon">coming soon</span></li></ul></div>
+    </div>
+    <p class="hint">One payment, no subscription. One licence key unlocks Plus on the website and in the Chrome, Firefox and Edge extensions, on all your devices. Checking the key happens on your device, and nothing about it is sent anywhere.</p>
+    <div id="plusOff">
+      <div class="row"><button class="btn primary" id="plusBuy" disabled>Buy Plus: coming soon</button></div>
+      <label for="plusKey" class="pluskeylbl">Have a licence key?<textarea id="plusKey" rows="2" spellcheck="false" placeholder="Paste your key, starting VSP1-"></textarea></label>
+      <div class="row end"><button class="btn primary" id="plusApply">Unlock Plus</button></div>
+      <p class="hint" id="plusSt" role="status"></p>
+    </div>
+    <div id="plusOnBox" hidden>
+      <p class="pluson"><strong>Plus is unlocked on this device.</strong> <span id="plusWho"></span> Thank you for supporting Velvet Scroll.</p>
+      <div class="row"><button class="btn" id="plusRemove">Remove the key from this device</button></div>
     </div>
   </div>
 </div>

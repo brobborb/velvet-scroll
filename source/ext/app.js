@@ -1071,7 +1071,7 @@ function renderResults(){
 /* ---------- Back button: every open book, panel and window adds a history step, so Back closes it ---------- */
 const layers = [];
 function pushLayer(name){ try{ history.pushState({bookroll:true, depth:layers.length + 1}, ''); layers.push(name); }catch(e){} }
-function closeLayerNow(name){ ({reader:closeReaderNow, panel:hidePanels, details:closeDetailsNow, backup:closeBackupNow, ap:closeApNow, ax:closeAxNow, art:closeArtNow, url:closeUrlNow, pinfo:closePinfoNow, note:closeNoteNow}[name] || (() => {}))(); }
+function closeLayerNow(name){ ({reader:closeReaderNow, panel:hidePanels, details:closeDetailsNow, backup:closeBackupNow, plus:closePlusNow, ap:closeApNow, ax:closeAxNow, art:closeArtNow, url:closeUrlNow, pinfo:closePinfoNow, note:closeNoteNow}[name] || (() => {}))(); }
 // close a layer from a button: step history back to just below it, and popstate does the closing
 function popLayer(name){ const i = layers.lastIndexOf(name); if(i < 0){ closeLayerNow(name); return; } history.go(-(layers.length - i)); }
 addEventListener('popstate', e => { const d = e.state && e.state.bookroll ? e.state.depth : 0; while(layers.length > d) closeLayerNow(layers.pop()); });
@@ -1776,6 +1776,50 @@ $('#syncOn').addEventListener('change', async e => {
   syncSettings(); await syncFlush();
 });
 
+/* ---------- Velvet Scroll Plus: a one-time licence that unlocks extra tools ----------
+   Keys are signed with a private key that is not in this code; here only the public half checks them, on the device. */
+const PLUS_PUB = {kty:'EC', crv:'P-256', x:'F4IYp1bMFHb56FyejOzzsLUk2WsFKMNI4fq4xI_lXWM', y:'xbftLZvN-l7fSi-kCOkIMq4l3aZ0_ZpiERccsaFf_sE'};
+const PLUS_ITEMS = ['pdfOcrBtn', 'mOcr', 'pdfSaveHlBtn', 'mSaveHl', 'notesPdf', 'notesExport', 'gdConnect'];
+let PLUS = null;
+async function plusVerify(key){
+  const m = /^VSP1-([A-Za-z0-9_-]+)\.([A-Za-z0-9_-]+)$/.exec(String(key || '').replace(/\s+/g, '')); if(!m) return null;
+  try{
+    const pub = await crypto.subtle.importKey('jwk', {...PLUS_PUB, ext:true}, {name:'ECDSA', namedCurve:'P-256'}, false, ['verify']);
+    const ok = await crypto.subtle.verify({name:'ECDSA', hash:'SHA-256'}, pub, b64u.dec(m[2]), new TextEncoder().encode(m[1]));
+    if(!ok) return null;
+    const p = JSON.parse(new TextDecoder().decode(b64u.dec(m[1]))); return p && p.v === 1 ? p : null;
+  }catch(e){ return null; }
+}
+function plusShow(){
+  $('#plusOff').hidden = !!PLUS; $('#plusOnBox').hidden = !PLUS;
+  $('#plusWho').textContent = PLUS ? `Licensed to ${PLUS.n}${PLUS.d ? ', ' + new Date(PLUS.d).toLocaleDateString([], {day:'numeric', month:'long', year:'numeric'}) : ''}.` : '';
+  $('#plusOpen').classList.toggle('on', !!PLUS); $('#plusLbl').textContent = PLUS ? 'Plus ✓' : 'Plus';
+  for(const id of PLUS_ITEMS){ const b = document.getElementById(id); if(!b) continue; let t = b.querySelector('.plustag');
+    if(!PLUS && !t){ t = el('span', {class:'plustag', text:'Plus'}); b.append(t); } else if(PLUS && t) t.remove(); }
+}
+function plusOpen(feature){
+  if($('#plusDlg').hidden) pushLayer('plus');
+  $('#plusCtx').hidden = !feature; $('#plusCtx').textContent = feature ? `${feature} is part of Velvet Scroll Plus.` : '';
+  $('#plusSt').textContent = ''; plusShow(); $('#plusDlg').hidden = false; (PLUS ? $('#plusClose') : $('#plusKey')).focus();
+}
+function closePlusNow(){ $('#plusDlg').hidden = true; }
+// gate a feature: true when Plus is on, otherwise explain and offer it
+function needPlus(feature){ if(PLUS) return true; plusOpen(feature); return false; }
+async function plusInit(){ const k = LS.get('plusKey', ''); PLUS = k ? await plusVerify(k) : null; plusShow(); }
+$('#plusOpen').onclick = () => plusOpen('');
+$('#footPlus').onclick = e => { e.preventDefault(); plusOpen(''); };
+$('#plusClose').onclick = () => popLayer('plus');
+$('#plusDlg').addEventListener('click', e => { if(e.target === $('#plusDlg')) popLayer('plus'); });
+$('#plusApply').onclick = async () => {
+  const st = $('#plusSt'), key = $('#plusKey').value.trim();
+  if(!key){ st.textContent = 'Paste your licence key first.'; $('#plusKey').focus(); return; }
+  const p = await plusVerify(key);
+  if(!p){ st.textContent = 'That key isn’t valid. Check it was copied in full, starting with VSP1-.'; return; }
+  PLUS = p; LS.set('plusKey', key.replace(/\s+/g, '')); $('#plusKey').value = ''; plusShow(); toast('Velvet Scroll Plus is unlocked. Thank you!', 4000);
+  if(gdOn) gdSync(false);
+};
+$('#plusRemove').onclick = () => { LS.set('plusKey', ''); PLUS = null; plusShow(); $('#plusSt').textContent = 'The key was removed from this device. You can enter it again at any time.'; };
+
 /* ---------- Google Drive sync: places, shelves, details, notes and settings in one small file in the reader's own Drive ----------
    Uses the drive.file permission, so Velvet Scroll can only see files it created. Books are never uploaded.
    Website: Google Identity Services (a pop-up). Extension: the browser's identity API. Tokens last about an hour and stay in memory only. */
@@ -1862,6 +1906,7 @@ async function gdMerge(remote){
 }
 async function gdSync(interactive){
   if(!gdOn || gdBusy) return;
+  if(!PLUS){ gdShow('Google Drive sync is part of Velvet Scroll Plus. Your sync file is still in your Drive, ready when you unlock Plus.'); return; }
   gdBusy = true; gdShow('Syncing with Google Drive…');
   try{
     let id = await gdFindFile(interactive), remote = null;
@@ -1906,10 +1951,11 @@ function gdShow(msg){ if(msg !== undefined) gdMsg = msg;
   $('#gdConnect').hidden = gdOn; $('#gdNow').hidden = $('#gdOff').hidden = !gdOn;
   $('#gdSt').textContent = gdOn ? gdMsg || 'Connected to Google Drive.' : ''; }
 $('#gdConnect').onclick = async () => {
+  if(!needPlus('Google Drive sync')) return;
   try{ await gdToken(true); }catch(e){ gdOn = false; gdShow(); $('#gdSt').textContent = e.message === 'popup' ? 'Your browser blocked the Google sign-in window. Allow pop-ups for this site, then try again.' : e.message === 'noidentity' ? 'This browser doesn’t support signing in to Google from extensions. Use velvetscroll.net instead.' : 'Google Drive wasn’t connected. Make sure the Google Drive box is ticked when you sign in.'; return; }
   gdOn = true; LS.set('gdOn', true); gdShow('Connected.'); await gdSync(true);
 };
-$('#gdNow').onclick = () => gdSync(true);
+$('#gdNow').onclick = () => { if(needPlus('Google Drive sync')) gdSync(true); };
 $('#gdOff').onclick = async () => {
   const t = gdTok; gdOn = false; gdTok = ''; gdExp = 0; LS.set('gdTok', null); LS.set('gdOn', false); LS.set('gdFile', ''); gdShow();
   if(t) try{ await fetch('https://oauth2.googleapis.com/revoke?token=' + encodeURIComponent(t), {method:'POST'}); }catch(e){}
@@ -2565,6 +2611,7 @@ async function ocrNeeded(doc){
 }
 async function ocrStart(){
   if(!pdfDoc || !cur) return;
+  if(!needPlus('Recognising text in scanned PDFs')) return;
   if(!pdfDoc.textAllowed){ toast('This PDF’s settings don’t allow its text to be extracted, so its text can’t be recognised either.', 6000); return; }
   if(OCR.run){ toast('Already recognising text. Watch the progress at the bottom of the page.'); return; }
   const doc = pdfDoc, todo = await ocrNeeded(doc);
@@ -3488,6 +3535,7 @@ async function noteGo(nt){
   scroller.scrollTop += rc.top - (st.top + readY()); pgTops = null; updateStatus();
 }
 $('#notesExport').onclick = () => {
+  if(!needPlus('Exporting your notes')) return;
   const list = notesSorted(); if(!cur || !list.length) return;
   let md = `# ${cur.title}${cur.author ? ' — ' + cur.author : ''}\n\nHighlights and notes from Velvet Scroll, ${new Date().toLocaleDateString(undefined, {day:'numeric', month:'long', year:'numeric'})}\n\n`;
   for(const nt of list){
@@ -4661,6 +4709,7 @@ async function hlQuads(doc, nt, cache){
 }
 async function pdfSaveHighlights(){
   if(!cur || !pdfDoc) return;
+  if(!needPlus('Downloading a PDF with your highlights')) return;
   const list = notesSorted(); if(!list.length){ toast('Highlight some text first, then save a copy with your highlights.', 5000); return; }
   if(pdfDoc.encrypted){ toast('This PDF is protected, so a copy with highlights can’t be made. Use Export notes in Contents → Notes instead.', 7000); return; }
   const buf = await dbGetFile(cur.id); if(!buf){ toast('Couldn’t find the original file.'); return; }
@@ -4864,6 +4913,7 @@ setupDonate();
   if(!ok){ const n=$('#notice'); n.hidden=false; n.textContent='This browser isn’t allowing storage here, so books you add will only last until you close the page.'; }
   books = await dbAll(); await loadProgress();
   initSync();
+  await plusInit();
   initGd();
   syncCodeFromAddress();
   try{ navigator.storage?.persist?.(); }catch(e){}
