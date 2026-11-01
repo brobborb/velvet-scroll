@@ -2310,7 +2310,10 @@ function clipCover(b){
 const COVER_STYLES = {
   gothic: {label:'Horror', pal:[['#24090c','#060203'],['#17161d','#040405'],['#1c1226','#060309'],['#0e1a16','#030706']]},
   fantasy: {label:'Fantasy', pal:[['#173a2a','#08180f'],['#1b2a5a','#0a1028'],['#48183a','#1b0815'],['#123a3f','#061a1d']]},
-  space: {label:'Science fiction', pal:[['#13294b','#e4572e','#f3e6c8','#2a9d8f'],['#0f3b3a','#f2a541','#f3e6c8','#e4572e'],['#1d1b2e','#e8c547','#f3e6c8','#d1495b'],['#3d1c2b','#2a9d8f','#f3e6c8','#f2a541']]}
+  space: {label:'Science fiction', pal:[['#13294b','#e4572e','#f3e6c8','#2a9d8f'],['#0f3b3a','#f2a541','#f3e6c8','#e4572e'],['#1d1b2e','#e8c547','#f3e6c8','#d1495b'],['#3d1c2b','#2a9d8f','#f3e6c8','#f2a541']]},
+  romance: {label:'Romance', pal:[['#7e3b4f','#4a1e2c'],['#5d4a7a','#33284a'],['#55705f','#2f4236'],['#2c3a5e','#161e36']]},
+  noir: {label:'Mystery & noir', pal:[['#16171a','#f2c230'],['#121821','#e0443a'],['#1a1714','#ece6d6'],['#0f1716','#7fc8a9']]},
+  story: {label:'Children’s classic', pal:[['#c4472f','#7e2716'],['#c99417','#6e4a06'],['#3f6fb0','#1f3f73'],['#4f8a4a','#2b5528']]}
 };
 const coverStyleOf = (b, force) => b.coverStyle && COVER_STYLES[b.coverStyle] && (force || PLUS) ? b.coverStyle : '';
 function classicCover(b, force){
@@ -2322,7 +2325,7 @@ function classicCover(b, force){
   const size = lv[t.length > 42 ? 3 : t.length > 24 ? 2 : t.length > 11 ? 1 : 0];
   // the lettering area is about 68% of the cover's width; capitals here run about 0.95em each
   // genre typefaces differ in width: blackletter is narrow and set larger, Michroma is very wide
-  const [mul, cw] = {gothic:[1.3, 0.47], fantasy:[0.95, 0.86], space:[0.8, 1.08]}[st] || [1, 0.95];
+  const [mul, cw] = {gothic:[1.3, 0.47], fantasy:[0.95, 0.86], space:[0.8, 1.08], romance:[1.4, 0.44], noir:[1.5, 0.44], story:[1, 0.7]}[st] || [1, 0.95];
   const fit = Math.min({l:14, m:11, s:8.8, xs:7.2}[size] * mul, 66 / (lw * cw));
   const d = el('div', {class:'leather', 'data-size':size},
     el('span', {class:'lt-frame'}), el('span', {class:'lt-orn'}), el('strong', {class:'lt-title', text:t}), el('span', {class:'lt-rule'}),
