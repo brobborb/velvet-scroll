@@ -746,6 +746,48 @@ const PDF = (() => {
 })();
 
 /* ---------- Book details from public databases (Open Library, Wikidata/Wikimedia Commons, Project Gutenberg) ---------- */
+/* ---------- Fiction or non-fiction, and genre: chosen in Book details, or suggested from the subjects public databases list ---------- */
+const GENRES = {
+  f: [['literary','Literary & classics'],['adventure','Adventure'],['children','Children’s'],['fantasy','Fantasy'],['gothic','Gothic & horror'],['historical','Historical fiction'],
+      ['humour','Humour & satire'],['mystery','Mystery & crime'],['myth','Myth, legend & fairy tale'],['poetry','Poetry & drama'],['romance','Romance'],['scifi','Science fiction'],
+      ['short','Short stories'],['thriller','Thriller & suspense'],['war','War'],['western','Western'],['ya','Young adult']],
+  n: [['art','Art, music & film'],['biography','Biography & memoir'],['business','Business & economics'],['education','Education & study'],['essays','Essays & letters'],
+      ['food','Food & home'],['health','Health & wellbeing'],['history','History'],['language','Language & writing'],['law','Law'],['nature','Nature & environment'],
+      ['philosophy','Philosophy'],['politics','Politics & society'],['psychology','Psychology'],['reference','Reference'],['religion','Religion & spirituality'],
+      ['science','Science & maths'],['selfhelp','Self-help'],['tech','Technology & computing'],['travel','Travel & places'],['truecrime','True crime']]
+};
+const genreName = (fic, g) => (GENRES[fic] || []).find(x => x[0] === g)?.[1] || '';
+// matched against database subjects, most specific first; ties go to the earlier one
+const GENRE_RX = [
+  ['f','gothic',/horror|gothic|ghost stor|vampire|supernatural|haunted|monsters/i], ['f','scifi',/science fiction|space opera|dystopia|time travel|interplanetary|life on other planets/i],
+  ['f','fantasy',/fantasy|magic|dragons|wizards|imaginary (places|wars)/i], ['f','mystery',/detective|mystery|crime fiction|murder|whodunit|police/i],
+  ['f','thriller',/thriller|suspense|spy stor|espionage/i], ['f','romance',/romance|love stor|courtship|man-woman relationships/i],
+  ['f','western',/western stor|westerns|cowboys|frontier and pioneer life/i], ['f','adventure',/adventure|sea stor|pirates|survival|treasure|shipwrecks|voyages/i],
+  ['f','children',/juvenile fiction|children'?s (stor|lit|book)|picture books|nursery rhymes|toys/i], ['f','ya',/young adult|teen/i],
+  ['f','historical',/historical fiction/i], ['f','humour',/humou?r|satire|comic/i], ['f','myth',/mytholog|legends|folklore|fairy tales|sagas|epic/i],
+  ['f','poetry',/poetry|poems|drama|plays|tragedies|comedies/i], ['f','short',/short stories/i], ['f','war',/war stories|war fiction/i],
+  ['n','biography',/biograph|memoir|diaries|personal narratives/i], ['n','truecrime',/true crime|trials \(|criminal cases/i],
+  ['n','philosophy',/philosoph|ethics|metaphysics|stoic|epistemolog/i], ['n','politics',/politic|government|sociology|social (conditions|problems|sciences)|democracy|socialism|political science/i],
+  ['n','history',/\bhistory\b|antiquities|civili[sz]ation|world war|archaeolog/i], ['n','science',/\bscience\b|physics|chemistry|mathemat|astronomy|biology|evolution/i],
+  ['n','nature',/natural history|nature|botany|birds|animals|ecology|gardening/i], ['n','religion',/religio|theolog|bible|christian|buddhis|islam|spiritual/i],
+  ['n','psychology',/psycholog|mental/i], ['n','business',/business|management|finance|economics|marketing/i], ['n','health',/health|medicine|nutrition|fitness|diet/i],
+  ['n','selfhelp',/self-help|success|conduct of life|self-realization/i], ['n','tech',/computer|programming|technology|engineering|software/i],
+  ['n','travel',/description and travel|voyages and travels|guidebooks|travel/i], ['n','art',/\bart\b|painting|music|architecture|motion pictures|photograph/i],
+  ['n','food',/cook(ery|ing)|recipes|household|domestic economy/i], ['n','education',/education|study and teaching|textbooks/i],
+  ['n','language',/language|grammar|dictionar|rhetoric|authorship/i], ['n','law',/\blaw\b|legal|constitution/i], ['n','reference',/encyclopedias|handbooks|reference/i],
+  ['n','essays',/essays|letters|speeches|addresses/i]
+];
+const FIC_RX = /fiction|stories|novels?\b|tales\b|romances\b|literature, (english|american)|poetry|drama/i;
+const NONFIC_DESC = /essay|memoir|biograph|treatise|history of|study of|non-fiction|textbook/i, FIC_DESC = /novel|novella|short stor|poem|play\b|fairy tale|epic|tale\b/i;
+function genreGuess(subjects, desc){
+  const subj = (subjects || []).map(String);
+  let fic = subj.some(s => FIC_RX.test(s) && !/juvenile literature/i.test(s)) || (desc && FIC_DESC.test(desc)) ? 'f' : (desc && NONFIC_DESC.test(desc)) ? 'n' : '';
+  const score = {};
+  for(const s of subj) for(const [k, g, rx] of GENRE_RX) if((!fic || k === fic) && rx.test(s)) score[k + ':' + g] = (score[k + ':' + g] || 0) + 1;
+  let top = '', n = 0; for(const [k, g] of GENRE_RX){ const v = score[k + ':' + g] || 0; if(v > n){ n = v; top = k + ':' + g; } }
+  if(top){ const [k, g] = top.split(':'); return {fic: fic || k, genre: g}; }
+  return {fic, genre: fic === 'f' && subj.length ? 'literary' : ''};
+}
 const LOOKUP = (() => {
   const HOSTS = ['https://openlibrary.org/*', 'https://covers.openlibrary.org/*', 'https://*.archive.org/*',
     'https://www.wikidata.org/*', 'https://commons.wikimedia.org/*', 'https://upload.wikimedia.org/*',
@@ -791,18 +833,18 @@ const LOOKUP = (() => {
 
   async function getJSON(url, signal){ const r = await fetch(url, {signal, credentials:'omit'}); if(!r.ok) throw new Error('http '+r.status); return r.json(); }
   async function openLibrary(q, signal){
-    const p = new URLSearchParams({fields:'key,title,author_name,first_publish_year,cover_i', limit:'8'});
+    const p = new URLSearchParams({fields:'key,title,author_name,first_publish_year,cover_i,subject', limit:'8'});
     if(q.author){ p.set('title', q.title); p.set('author', q.author); } else p.set('q', q.title);
     const j = await getJSON('https://openlibrary.org/search.json?' + p, signal);
     return (j.docs||[]).map(d => ({source:'Open Library', title:d.title, author:(d.author_name||[]).slice(0,3).join(' & '), year:d.first_publish_year || null,
       thumb: d.cover_i ? `https://covers.openlibrary.org/b/id/${d.cover_i}-M.jpg` : null, cover: d.cover_i ? `https://covers.openlibrary.org/b/id/${d.cover_i}-L.jpg` : null,
-      openCover:false, link:'https://openlibrary.org' + d.key}));
+      openCover:false, link:'https://openlibrary.org' + d.key, ...genreGuess((d.subject || []).slice(0, 40))}));
   }
   async function gutenberg(q, signal){
     const j = await getJSON('https://gutendex.com/books/?search=' + encodeURIComponent([q.title, surname(q.author)].filter(Boolean).join(' ')), signal);
     return (j.results||[]).slice(0,5).map(b => { const img = b.formats && (b.formats['image/jpeg'] || null);
       return {source:'Project Gutenberg', title:(b.title||'').split(/[:;]/)[0].trim(), author:(b.authors||[]).map(a => flip(a.name)).join(' & '), year:null,
-        thumb:img, cover:img, openCover:!!img, link:'https://www.gutenberg.org/ebooks/' + b.id}; });
+        thumb:img, cover:img, openCover:!!img, link:'https://www.gutenberg.org/ebooks/' + b.id, ...genreGuess([...(b.subjects || []), ...(b.bookshelves || [])])}; });
   }
   const WORK = /novel|novella|book|poem|poetry|play|short stor|literary work|collection|essay|memoir|biograph|fairy tale|epic|tale|treatise|written work/i;
   async function wikidata(q, signal){
@@ -820,7 +862,7 @@ const LOOKUP = (() => {
       const by = /\bby\s+(.+)$/i.exec(h.description||'');
       const fp = file ? 'https://commons.wikimedia.org/wiki/Special:FilePath/' + encodeURIComponent(String(file).replace(/ /g,'_')) : null;
       return {source:'Wikidata', title:h.label, author: by ? by[1] : '', year: year || null,
-        thumb: fp && fp + '?width=240', cover: fp && fp + '?width=700', openCover:!!fp, link:'https://www.wikidata.org/wiki/' + h.id};
+        thumb: fp && fp + '?width=240', cover: fp && fp + '?width=700', openCover:!!fp, link:'https://www.wikidata.org/wiki/' + h.id, ...genreGuess([], h.description)};
     });
   }
 
@@ -857,7 +899,8 @@ const LOOKUP = (() => {
     const years = ok.map(c => c.year).filter(y => y && y > 0);
     const cover = ok.find(c => c.openCover && c.source === 'Wikidata') || ok.find(c => c.openCover) || null;
     const main = ok.find(c => c.isbnMatch) || ok.find(c => c.source === 'Open Library') || ok[0];
-    return {title:main.title, author:main.author || ok.find(c => c.author)?.author || '', year: years.length ? Math.min(...years) : null, cover};
+    const g = ok.find(c => c.genre) || ok.find(c => c.fic) || {};
+    return {title:main.title, author:main.author || ok.find(c => c.author)?.author || '', year: years.length ? Math.min(...years) : null, cover, fic:g.fic || '', genre:g.genre || ''};
   }
   return {HOSTS, guessFromText, weakTitle, search, best, titleScore, authorMatch, surname};
 })();
@@ -923,6 +966,7 @@ async function autoLookup(list, onEach){
       if(LOOKUP.weakTitle(b.title, b.file)) b.title = best.title;
       if(!b.author) b.author = best.author || q.author;
       if(best.year && !b.year) b.year = best.year;
+      if(best.fic && !b.fic){ b.fic = best.fic; if(best.genre) b.genre = best.genre; }
       let got = false;
       if(noRealCover && best.cover){ const img = await fetchCover(best.cover.cover); if(img){ b.coverBuf = img.buf; b.coverType = img.type; b.coverSrc = 'online'; got = true; } }
       if(noRealCover && !got && b.coverSrc === 'page'){ b.prevSrc = 'page'; b.coverSrc = 'classic'; }
@@ -952,6 +996,15 @@ $('#find').onclick = async () => {
 /* details dialog */
 let dlg = null;
 function coverImg(buf, type){ const u = URL.createObjectURL(new Blob([buf], {type:type || 'image/jpeg'})); coverUrls.push(u); return el('img', {src:u, alt:''}); }
+function genreUI(fic, g){
+  $('#dFic').setAttribute('aria-pressed', String(fic === 'f')); $('#dNon').setAttribute('aria-pressed', String(fic === 'n'));
+  const s = $('#dGenre'), list = GENRES[fic] || [];
+  s.replaceChildren(el('option', {value:'', text: fic ? 'Choose a genre' : 'Choose Fiction or Non-fiction first'}), ...list.map(([k, n]) => el('option', {value:k, text:n})));
+  s.value = list.some(x => x[0] === g) ? g : ''; s.disabled = !fic; dlg.fic = fic || ''; dlg.genre = s.value;
+}
+$('#dFic').onclick = () => { if(dlg) genreUI(dlg.fic === 'f' ? '' : 'f', ''); };
+$('#dNon').onclick = () => { if(dlg) genreUI(dlg.fic === 'n' ? '' : 'n', ''); };
+$('#dGenre').onchange = e => { if(dlg) dlg.genre = e.target.value; };
 function dlgPreview(){ return {title: $('#dTitle').value.trim() || dlg.b.title, author: $('#dAuthor').value.trim(), year: parseInt($('#dYear').value,10) || null}; }
 /* ---------- Your own cover image: upload, web address, paste or drop; shaped to 2:3 ---------- */
 const COVER_W = 600, COVER_H = 900, IN_CLAUDE = !!(window.claude && typeof window.claude.use === 'function');
@@ -1063,10 +1116,11 @@ function renderResults(){
   $('#dResults').replaceChildren(...dlg.results.map(r => {
     const use = el('button', {class:'btn', text:'Use'});
     use.onclick = () => { $('#dTitle').value = r.title || $('#dTitle').value; if(r.author) $('#dAuthor').value = r.author; if(r.year) $('#dYear').value = r.year;
+      if(r.fic && (!dlg.fic || !dlg.genre)) genreUI(r.fic, r.genre || '');
       if(r.thumb) dlg.choice = {kind:'online', url:r.cover, thumb:r.thumb}; renderCoverChoices(); $('#dStatus').textContent = 'Details filled in. Choose Save to keep them.'; };
     return el('li', {},
       r.thumb ? el('img', {class:'rt', src:r.thumb, alt:'', loading:'lazy', referrerpolicy:'no-referrer', onerror:e => e.target.style.visibility = 'hidden'}) : el('span', {class:'rt'}),
-      el('div', {}, el('strong', {text:r.title}), el('div', {class:'meta', text:[r.author, r.year].filter(Boolean).join(' · ')}),
+      el('div', {}, el('strong', {text:r.title}), el('div', {class:'meta', text:[r.author, r.year, r.fic && (genreName(r.fic, r.genre) || (r.fic === 'f' ? 'Fiction' : 'Non-fiction'))].filter(Boolean).join(' · ')}),
         el('div', {class:'meta'}, el('a', {href:r.link, target:'_blank', rel:'noopener', text:r.source}))),
       use);
   }));
@@ -1084,7 +1138,8 @@ async function openDetails(b){
     $('#dStatus').replaceChildren('Saved from ', el('a', {href:b.source, target:'_blank', rel:'noopener', text:host}), '.'); } }, 0);
   $('#dUrl').value = ''; $('#dUrlRow').hidden = IN_CLAUDE;
   pushLayer('details');
-  dlg = {b, results:[], custom:null, choice: b.coverBuf && b.coverSrc !== 'classic' ? {kind:'own'} : {kind:'classic', style: coverStyleOf(b)}};
+  dlg = {b, fic:'', genre:'', results:[], custom:null, choice: b.coverBuf && b.coverSrc !== 'classic' ? {kind:'own'} : {kind:'classic', style: coverStyleOf(b)}};
+  genreUI(b.fic || '', b.genre || '');
   dModesSet(b.vis || '');
   $('#dTitle').value = b.title; $('#dAuthor').value = b.author || ''; $('#dYear').value = b.year || ''; $('#dIsbn').value = b.isbn || ''; isbnMsg();
   $('#dResults').replaceChildren(); $('#dStatus').textContent = '';
@@ -1160,6 +1215,7 @@ $('#dSave').onclick = async () => {
     if(ch.style) b.coverStyle = ch.style; else delete b.coverStyle; }
   else if(b.coverSrc === 'classic'){ b.coverSrc = b.prevSrc || 'own'; }
   b.title = $('#dTitle').value.trim() || b.title; b.author = $('#dAuthor').value.trim(); b.isbn = isbnClean($('#dIsbn').value);
+  if(dlg.fic) b.fic = dlg.fic; else delete b.fic; if(dlg.fic && dlg.genre) b.genre = dlg.genre; else delete b.genre;
   const y = parseInt($('#dYear').value, 10); b.year = Number.isFinite(y) ? y : null;
   const vis = dModes();
   if(vis) b.vis = vis; else delete b.vis;
@@ -1592,7 +1648,7 @@ async function restore(zip){
     const rp = lib.progress && lib.progress[m.id];
     const local = books.find(b => b.id === m.id || (m.fp && b.fp === m.fp) || (b.title === m.title && (b.author||'') === (m.author||'')));
     if(local){
-      if((m.upd || 0) > (local.upd || 0)){ for(const k of ['title','author','year','isbn','shelf','needsCheck','looked','upd']) if(k in m) local[k] = m[k]; }
+      if((m.upd || 0) > (local.upd || 0)){ for(const k of ['title','author','year','isbn','shelf','fic','genre','needsCheck','looked','upd']) if(k in m) local[k] = m[k]; }
       if(m.hasCover && (!local.coverBuf || ((m.upd||0) > (local.upd||0) && (m.coverSrc === 'online' || m.coverSrc === 'custom')))){ const c = zip.file('covers/' + m.id); if(c){ local.coverBuf = await c.async('arraybuffer'); local.coverType = m.coverType; local.coverSrc = m.coverSrc; } }
       if(m.coverSrc === 'classic' && (m.upd||0) > (local.upd||0)){ local.prevSrc = local.coverSrc; local.coverSrc = 'classic'; if(m.coverStyle) local.coverStyle = m.coverStyle; else delete local.coverStyle; }
       if(!local.fp && m.fp) local.fp = m.fp;

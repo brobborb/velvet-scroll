@@ -354,6 +354,10 @@
         <label for="dTitle">Title<input id="dTitle" autocomplete="off"></label>
         <label for="dAuthor">Author<input id="dAuthor" autocomplete="off"></label>
         <div class="dbio" id="dBio" aria-live="polite" hidden></div>
+        <div class="dgenre">
+          <div class="modeseg dkind" role="group" aria-label="Fiction or non-fiction"><button type="button" id="dFic" aria-pressed="false">Fiction</button><button type="button" id="dNon" aria-pressed="false">Non-fiction</button></div>
+          <label for="dGenre" class="dgl"><span class="vh">Genre</span><select id="dGenre"></select></label>
+        </div>
         <div class="drow2">
           <label for="dYear">First published<input id="dYear" inputmode="numeric" placeholder="e.g. 1890" autocomplete="off"></label>
           <label for="dIsbn">ISBN<input id="dIsbn" placeholder="e.g. 978-0-14-118776-1" autocomplete="off" spellcheck="false" aria-describedby="dIsbnMsg"></label>
