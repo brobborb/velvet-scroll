@@ -143,9 +143,12 @@ def find_layout(ink):
     return dict(W=Ww, H=Hh, lw=lw, rx=rx, tx=max(tx0 - pad, 0), tw=min(tx1 - tx0 + 2*pad, Ww),
                 th=min(th + pad, Hh//2), by=max(by - pad, Hh//2), bh=Hh - max(by - pad, Hh//2)), top_end
 
-def to_dark(light):
-    blur = np.asarray(Image.fromarray((light*255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(5))).astype(np.float32)/255
-    return np.clip(.45*light + .75*np.clip((light - .55*blur)*1.6, 0, 1), 0, 1)
+def to_dark(light, r=3):
+    """Dark pages: keep the linework and drop the broad shading, so nothing glows like a photo negative.
+    The reader shows it as gold or silver foil, like the stamping on a cloth-bound book."""
+    blur = np.asarray(Image.fromarray((light*255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(r))).astype(np.float32)/255
+    lines = np.clip((light - blur)*2.4, 0, 1); lines = np.clip(lines + .12*light, 0, 1); lines[lines < .06] = 0
+    return lines
 
 def save(arr, path):
     st = Image.new('LA', (arr.shape[1], arr.shape[0]), (255, 0)); st.putalpha(Image.fromarray((arr*255).astype(np.uint8)))
