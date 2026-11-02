@@ -1,0 +1,201 @@
+#!/usr/bin/env python3
+"""Make a Story mode theme from ONE landscape drawing (16:9, ideally 2560 x 1440, pencil or pen on plain light paper).
+
+    python3 story_theme.py NAME drawing.png --border braid --motif star [--out ../../story]
+
+Writes four stencils to the output folder and prints the numbers the reader needs:
+  NAME-land-light.webp / NAME-land-dark.webp   the whole drawing, for computers and tablets held sideways
+  NAME-slim-light.webp / NAME-slim-dark.webp   for phones and upright tablets: the drawing's top strip, plus
+                                               slim side borders and a small bottom flourish drawn here
+Light versions are the pencil lines; dark versions thin broad shading so it doesn't glow on dark pages.
+Borders: thorn, braid, rope, stars.  Motifs: quatrefoil, star, anchor, moon.
+"""
+import math, sys
+import numpy as np
+from PIL import Image, ImageDraw, ImageFilter
+
+W, H, K = 1440, 2560, 3                       # 9:16 canvas; K = supersampling for smooth lines
+BX = 40                                        # border centre, from each edge (2.8% of the width)
+INK = 215                                      # drawn lines a little lighter than solid, to sit with pencil
+
+
+def stencil(img):
+    a = np.asarray(img).astype(np.float32)
+    paper = np.asarray(img.filter(ImageFilter.MaxFilter(15)).filter(ImageFilter.GaussianBlur(40))).astype(np.float32)
+    ink = np.clip((paper - a) / np.maximum(paper - 30, 1), 0, 1)
+    return np.clip((ink - 0.06) / 0.94, 0, 1) ** 0.8
+
+class Pen:
+    def __init__(s): s.im = Image.new('L', (W*K, H*K), 0); s.d = ImageDraw.Draw(s.im)
+    def P(s, x, y): return (x*K, y*K)
+    def line(s, pts, w, a=INK):
+        s.d.line([s.P(*p) for p in pts], fill=a, width=max(1, round(w*K)), joint='curve')
+    def dot(s, x, y, r, a=INK): s.d.ellipse([s.P(x-r, y-r), s.P(x+r, y+r)], fill=a)
+    def circle(s, x, y, r, w, a=INK): s.d.ellipse([s.P(x-r, y-r), s.P(x+r, y+r)], outline=a, width=max(1, round(w*K)))
+    def poly(s, pts, a=INK): s.d.polygon([s.P(*p) for p in pts], fill=a)
+    def taper(s, pts, w0, w1, a=INK):
+        for i in range(len(pts)-1):
+            w = w0 + (w1-w0)*i/(len(pts)-1); s.line([pts[i], pts[i+1]], w, a); s.dot(*pts[i+1], w/2, a)
+    def star4(s, x, y, r, a=INK):
+        s.poly([(x, y-r), (x+r*.22, y-r*.22), (x+r, y), (x+r*.22, y+r*.22), (x, y+r), (x-r*.22, y+r*.22), (x-r, y), (x-r*.22, y-r*.22)], a)
+
+# ---------- side patterns: all centred on BX, about 22 px wide, with a hairline rule just inside ----------
+def side(p, x, y0, y1, kind, flip):
+    inward = 1 if flip else -1          # which way is the page centre
+    p.line([(x - inward*17, y0 + 30), (x - inward*17, y1 - 30)], .9, 120)      # the shared hairline rule
+    if kind == 'thorn':
+        pts = [(x + 4*math.sin(y/38), y) for y in range(int(y0), int(y1), 4)]
+        p.taper(pts, 2.2, 2.2)
+        for i, y in enumerate(range(int(y0)+20, int(y1)-20, 26)):
+            sx = x + 4*math.sin(y/38); d = 1 if i % 2 else -1
+            p.taper([(sx, y), (sx + d*7, y - 6), (sx + d*10, y - 11)], 1.6, .3)
+        for i, y in enumerate(range(int(y0)+120, int(y1)-120, 210)):   # a small ivy leaf now and then
+            sx = x + 4*math.sin(y/38); d = 1 if i % 2 else -1; cx, cy = sx + d*11, y + 4
+            leaf = [(cx + math.cos(t)*7*(.55 + .45*abs(math.cos(1.5*t))), cy + math.sin(t)*7*(.55 + .45*abs(math.cos(1.5*t)))) for t in [k/24*2*math.pi for k in range(25)]]
+            p.line(leaf, 1.2); p.line([(sx, y), (cx, cy)], 1.1)
+    elif kind == 'braid':
+        for ph in (0, math.pi):
+            pts = [(x + 7*math.sin(y/22 + ph), y) for y in range(int(y0), int(y1), 3)]
+            p.taper(pts, 2.0, 2.0)
+        for y in range(int(y0) + 35, int(y1) - 20, int(math.pi*22)):        # a bead at every other crossing
+            p.dot(x, y, 2.4)
+    elif kind == 'rope':
+        p.line([(x - 7, y0), (x - 7, y1)], 1.3); p.line([(x + 7, y0), (x + 7, y1)], 1.3)
+        for y in range(int(y0) + 4, int(y1) - 4, 9):
+            p.taper([(x - 6, y + 5), (x, y + 1), (x + 6, y - 3)], 1.5, 1.1)
+    elif kind == 'stars':
+        for i, y in enumerate(range(int(y0) + 10, int(y1) - 10, 15)):
+            jitter = 3*math.sin(i*1.7)
+            if i % 12 == 6: p.star4(x + jitter, y, 9 if i % 24 == 6 else 6)
+            else: p.dot(x + jitter, y, 1.5 if i % 3 else 2.1)
+    # shared end-caps: a small diamond and a dot at each end
+    for (yy, d) in ((y0, -1), (y1, 1)):
+        p.poly([(x, yy - 9), (x + 6, yy), (x, yy + 9), (x - 6, yy)]); p.dot(x, yy + d*18, 2.2)
+
+# ---------- the shared bottom flourish, with each theme's motif in the middle ----------
+def flourish(p, cy, motif, gap=46):
+    cx = W/2
+    for m in (1, -1):
+        pts = []
+        for k in range(120):
+            t = k/119; x = cx + m*(gap + t*330); y = cy + math.sin(t*math.pi*2)*7*(1 - t*.5)
+            pts.append((x, y))
+        p.taper(pts, 3.4, .9)
+        ex, ey = pts[-1]; curl = []                       # a curl at the tip
+        for k in range(30):
+            a = k/29*math.pi*1.6; r = 11*(1 - k/40)
+            curl.append((ex + m*(r*math.sin(a)), ey - 11 + r*math.cos(a)))
+        p.taper(curl, 1.4, .6)
+        for j, dx in enumerate((gap + 349, gap + 366, gap + 380)): p.dot(cx + m*dx, cy + 1, 2.2 - j*.5)
+    if motif == 'quatrefoil':
+        for dx, dy in ((0, -11), (0, 11), (-11, 0), (11, 0)): p.circle(cx + dx, cy + dy, 11, 1.8)
+        p.dot(cx, cy, 3.2)
+        p.poly([(cx, cy - 34), (cx + 4, cy - 24), (cx - 4, cy - 24)]); p.poly([(cx, cy + 34), (cx + 4, cy + 24), (cx - 4, cy + 24)])
+    elif motif == 'star':
+        r1, r2 = 28, 9
+        pts = [(cx + math.cos(k*math.pi/4 - math.pi/2)*(r1 if k % 2 == 0 else r2), cy + math.sin(k*math.pi/4 - math.pi/2)*(r1 if k % 2 == 0 else r2)) for k in range(9)]
+        p.line(pts, 1.8); p.circle(cx, cy, 33, 1.0, 150); p.dot(cx, cy, 3)
+    elif motif == 'anchor':
+        p.circle(cx, cy - 26, 6, 1.8)
+        p.line([(cx, cy - 20), (cx, cy + 26)], 2.6)
+        p.line([(cx - 14, cy - 10), (cx + 14, cy - 10)], 2.2)
+        arc = [(cx + math.sin(a)*22, cy + 6 + math.cos(a)*20) for a in [(-1.3 + k*2.6/30) for k in range(31)]]
+        p.taper(arc, 2.4, 2.4)
+        p.poly([(cx - 22, cy + 6), (cx - 28, cy + 2), (cx - 22, cy - 2)]); p.poly([(cx + 22, cy + 6), (cx + 28, cy + 2), (cx + 22, cy - 2)])
+    elif motif == 'moon':
+        outer = [(cx - 4 + math.cos(a)*22, cy + math.sin(a)*22) for a in [k/60*2*math.pi for k in range(61)]]
+        p.line(outer, 1.8)
+        # fill the crescent by painting a disc and carving the inner one
+        p.d.ellipse([p.P(cx - 26, cy - 22), p.P(cx + 18, cy + 22)], fill=INK)
+        p.d.ellipse([p.P(cx - 16, cy - 22), p.P(cx + 26, cy + 20)], fill=0)
+        p.star4(cx + 22, cy - 18, 8); p.star4(cx + 30, cy + 6, 5); p.dot(cx + 14, cy + 20, 1.8)
+
+
+def find_layout(ink):
+    """Measure the landscape drawing: how far the side art reaches in, and the top and bottom centre ornaments."""
+    from scipy import ndimage
+    Hh, Ww = ink.shape; on = ink > .2
+    # the top strip ends at the first fully empty band of rows below the top ornaments
+    rows = on.any(axis=1); top_end = None
+    for y in range(int(Hh*.08), int(Hh*.6)):
+        if not rows[y:y + int(Hh*.02)].any(): top_end = y; break
+    if top_end is None:   # side vines run on: take where the inner columns go quiet
+        inner = on[:, int(Ww*.1):int(Ww*.9)].any(axis=1)
+        top_end = next(y for y in range(int(Hh*.08), Hh) if not inner[y:y + int(Hh*.02)].any())
+    lab, n = ndimage.label(ndimage.binary_dilation(on, iterations=12))
+    boxes = ndimage.find_objects(lab)
+    big = [b for b in boxes if (b[0].stop - b[0].start) * (b[1].stop - b[1].start) > Ww*Hh*.002]
+    cx0, cx1 = Ww*.3, Ww*.7
+    def centred(b): return b[1].start > Ww*.2 and b[1].stop < Ww*.8
+    tops = [b for b in big if centred(b) and b[0].stop < Hh*.5]; bots = [b for b in big if centred(b) and b[0].start > Hh*.5]
+    sides_l = [b for b in big if not centred(b) and b[1].start < Ww*.5]; sides_r = [b for b in big if not centred(b) and b[1].start >= Ww*.5]
+    lw = max([b[1].stop for b in sides_l] or [int(Ww*.2)]); rx = min([b[1].start for b in sides_r] or [int(Ww*.8)])
+    tx0 = min([b[1].start for b in tops + bots] or [int(Ww*.3)]); tx1 = max([b[1].stop for b in tops + bots] or [int(Ww*.7)])
+    th = max([b[0].stop for b in tops] or [int(Hh*.08)]); by = min([b[0].start for b in bots] or [int(Hh*.92)])
+    pad = 10
+    corners = ([b for b in big if not centred(b) and b[0].start < top_end and b[1].start < Ww*.5],
+               [b for b in big if not centred(b) and b[0].start < top_end and b[1].start >= Ww*.5])
+    union = lambda bs: (min(b[1].start for b in bs), 0, max(b[1].stop for b in bs), min(top_end, max(b[0].stop for b in bs))) if bs else None
+    find_layout.corners = (union(corners[0]), union(corners[1]))
+    find_layout.centre = (max(tx0 - pad, 0), 0, min(tx1 + pad, Ww), min(th + pad, Hh//2)) if tops else None
+    lw, rx = min(lw + pad, Ww//2 - 20), max(rx - pad, Ww//2 + 20)
+    # centre ornaments keep their own width; where they overlap a side piece the soft edge fades blend the two
+    return dict(W=Ww, H=Hh, lw=lw, rx=rx, tx=max(tx0 - pad, 0), tw=min(tx1 - tx0 + 2*pad, Ww),
+                th=min(th + pad, Hh//2), by=max(by - pad, Hh//2), bh=Hh - max(by - pad, Hh//2)), top_end
+
+def to_dark(light):
+    blur = np.asarray(Image.fromarray((light*255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(5))).astype(np.float32)/255
+    return np.clip(.45*light + .75*np.clip((light - .55*blur)*1.6, 0, 1), 0, 1)
+
+def save(arr, path):
+    st = Image.new('LA', (arr.shape[1], arr.shape[0]), (255, 0)); st.putalpha(Image.fromarray((arr*255).astype(np.uint8)))
+    st.convert('RGBA').save(path, quality=84, method=6)
+
+def main():
+    import argparse, json, os
+    ap = argparse.ArgumentParser(); ap.add_argument('name'); ap.add_argument('image')
+    ap.add_argument('--border', default='braid', choices=['thorn', 'braid', 'rope', 'stars'])
+    ap.add_argument('--motif', default='star', choices=['quatrefoil', 'star', 'anchor', 'moon'])
+    ap.add_argument('--out', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'story'))
+    a = ap.parse_args()
+    img = Image.open(a.image).convert('L')
+    if img.size != (2560, 1440): img = img.resize((2560, round(2560 * img.height / img.width)), Image.LANCZOS)
+    land = stencil(img)
+    layout, top_end = find_layout(land)
+    save(land, f'{a.out}/{a.name}-land-light.webp'); save(to_dark(land), f'{a.out}/{a.name}-land-dark.webp')
+    # portrait: the two top corner scenes, enlarged to fill the page width; the top centre ornament moves to the
+    # middle of the bottom flourish, so the drawing's own motif ties top and bottom together
+    def crop(box):
+        x0, y0, x1, y1 = box; return land[y0:y1, x0:x1]
+    L, Rc = find_layout.corners; canvas = np.zeros((H, W), np.float32)
+    if L and Rc:
+        cl, cr = crop(L), crop(Rc); gap = 30
+        k = min((W - gap) / (cl.shape[1] + cr.shape[1]), H*.16 / max(cl.shape[0], cr.shape[0]))
+        def place(arr, x, y):
+            im = Image.fromarray((arr*255).astype(np.uint8)).resize((max(1, round(arr.shape[1]*k)), max(1, round(arr.shape[0]*k))), Image.LANCZOS)
+            a2 = np.asarray(im).astype(np.float32)/255; canvas[y:y + a2.shape[0], x:x + a2.shape[1]] = np.maximum(canvas[y:y + a2.shape[0], x:x + a2.shape[1]], a2); return a2.shape
+        hl = place(cl, 0, 0)[0]; wr = round(cr.shape[1]*k); hr = place(cr, W - wr, 0)[0]
+        band_h = max(hl, hr)
+    else:   # no separate corners: use the whole top strip
+        strip = land[:top_end]; band = Image.fromarray((strip*255).astype(np.uint8)).resize((W, round(strip.shape[0]*W/strip.shape[1])), Image.LANCZOS)
+        canvas[:band.size[1]] = np.asarray(band).astype(np.float32)/255; band_h = band.size[1]
+    p = Pen(); y0, y1 = band_h + 40, H - 150
+    side(p, BX, y0, y1, a.border, False); side(p, W - BX, y0, y1, a.border, True)
+    C = find_layout.centre
+    if C:
+        orn = crop(C); kk = 120 / orn.shape[0]
+        im = Image.fromarray((orn*255).astype(np.uint8)).resize((round(orn.shape[1]*kk), 120), Image.LANCZOS)
+        o = np.asarray(im).astype(np.float32)/255; ox = (W - o.shape[1])//2; oy = H - 70 - 60
+        canvas[oy:oy + 120, ox:ox + o.shape[1]] = np.maximum(canvas[oy:oy + 120, ox:ox + o.shape[1]], o)
+        flourish(p, H - 70, 'none', gap=o.shape[1]//2 + 14)
+    else: flourish(p, H - 70, a.motif)
+    drawn = np.asarray(p.im.filter(ImageFilter.GaussianBlur(.5*K/3)).resize((W, H), Image.LANCZOS)).astype(np.float32)/255
+    slim = np.maximum(canvas, drawn)
+    save(slim, f'{a.out}/{a.name}-slim-light.webp'); save(to_dark(slim), f'{a.out}/{a.name}-slim-dark.webp')
+    cfg = {'land': layout, 'slim': {'W': W, 'H': H, 'th': band_h + 10, 'bh': 200}}
+    print(json.dumps({a.name: cfg}))
+    print(f'portrait top band {round(100*band_h/H,1)}% of the height; landscape sides {round(100*layout["lw"]/layout["W"])}% / {round(100*(layout["W"]-layout["rx"])/layout["W"])}%,'
+          f' top ornament {round(100*layout["th"]/layout["H"])}%, bottom ornament {round(100*layout["bh"]/layout["H"])}%', file=sys.stderr)
+
+if __name__ == '__main__':
+    main()
