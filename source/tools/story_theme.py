@@ -122,21 +122,24 @@ def find_layout(ink):
     if top_end is None:   # side vines run on: take where the inner columns go quiet
         inner = on[:, int(Ww*.1):int(Ww*.9)].any(axis=1)
         top_end = next(y for y in range(int(Hh*.08), Hh) if not inner[y:y + int(Hh*.02)].any())
-    lab, n = ndimage.label(ndimage.binary_dilation(on, iterations=12))
+    # separate clusters (a small gap is enough), each placed by where its middle is
+    lab, n = ndimage.label(ndimage.binary_dilation(on, iterations=4))
     boxes = ndimage.find_objects(lab)
     big = [b for b in boxes if (b[0].stop - b[0].start) * (b[1].stop - b[1].start) > Ww*Hh*.002]
-    cx0, cx1 = Ww*.3, Ww*.7
-    def centred(b): return b[1].start > Ww*.2 and b[1].stop < Ww*.8
+    find_layout.lab = lab; find_layout.ids = {id(b): i + 1 for i, b in enumerate(boxes) if b is not None}
+    mid = lambda b: (b[1].start + b[1].stop) / 2
+    def centred(b): return Ww*.3 < mid(b) < Ww*.7
     tops = [b for b in big if centred(b) and b[0].stop < Hh*.5]; bots = [b for b in big if centred(b) and b[0].start > Hh*.5]
-    sides_l = [b for b in big if not centred(b) and b[1].start < Ww*.5]; sides_r = [b for b in big if not centred(b) and b[1].start >= Ww*.5]
+    sides_l = [b for b in big if not centred(b) and mid(b) < Ww*.5]; sides_r = [b for b in big if not centred(b) and mid(b) >= Ww*.5]
     lw = max([b[1].stop for b in sides_l] or [int(Ww*.2)]); rx = min([b[1].start for b in sides_r] or [int(Ww*.8)])
     tx0 = min([b[1].start for b in tops + bots] or [int(Ww*.3)]); tx1 = max([b[1].stop for b in tops + bots] or [int(Ww*.7)])
     th = max([b[0].stop for b in tops] or [int(Hh*.08)]); by = min([b[0].start for b in bots] or [int(Hh*.92)])
     pad = 10
-    corners = ([b for b in big if not centred(b) and b[0].start < top_end and b[1].start < Ww*.5],
-               [b for b in big if not centred(b) and b[0].start < top_end and b[1].start >= Ww*.5])
+    # top corner scenes: side clusters that start near the top (not the full-height side strips)
+    corners = ([b for b in sides_l if b[0].start < top_end and b[0].stop < Hh*.6], [b for b in sides_r if b[0].start < top_end and b[0].stop < Hh*.6])
     union = lambda bs: (min(b[1].start for b in bs), 0, max(b[1].stop for b in bs), min(top_end, max(b[0].stop for b in bs))) if bs else None
     find_layout.corners = (union(corners[0]), union(corners[1]))
+    find_layout.corner_ids = [{find_layout.ids[id(b)] for b in c} for c in corners]
     find_layout.centre = (max(tx0 - pad, 0), 0, min(tx1 + pad, Ww), min(th + pad, Hh//2)) if tops else None
     lw, rx = min(lw + pad, Ww//2 - 20), max(rx - pad, Ww//2 + 20)
     # centre ornaments keep their own width; where they overlap a side piece the soft edge fades blend the two
@@ -168,11 +171,13 @@ def main():
     save(land, f'{a.out}/{a.name}-land-light.webp'); save(to_dark(land), f'{a.out}/{a.name}-land-dark.webp')
     # portrait: the two top corner scenes, enlarged to fill the page width; the top centre ornament moves to the
     # middle of the bottom flourish, so the drawing's own motif ties top and bottom together
-    def crop(box):
-        x0, y0, x1, y1 = box; return land[y0:y1, x0:x1]
+    def crop(box, ids=None):
+        x0, y0, x1, y1 = box; part = land[y0:y1, x0:x1]
+        if ids: part = part * np.isin(find_layout.lab[y0:y1, x0:x1], list(ids))   # only this scene's own lines
+        return part
     L, Rc = find_layout.corners; canvas = np.zeros((H, W), np.float32)
     if L and Rc:
-        cl, cr = crop(L), crop(Rc); gap = 30
+        cl, cr = crop(L, find_layout.corner_ids[0]), crop(Rc, find_layout.corner_ids[1]); gap = 30
         k = min((W - gap) / (cl.shape[1] + cr.shape[1]), H*.16 / max(cl.shape[0], cr.shape[0]))
         def place(arr, x, y):
             im = Image.fromarray((arr*255).astype(np.uint8)).resize((max(1, round(arr.shape[1]*k)), max(1, round(arr.shape[0]*k))), Image.LANCZOS)
