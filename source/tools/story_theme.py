@@ -174,6 +174,13 @@ def rule_sides(land):
     print(f'replaced {len(strips)} side strips with a plain rule', file=sys.stderr)
     return np.maximum(out, drawn)
 
+def stencil_light_on_dark(img):
+    """A drawing made light-on-black: its brightness is the ink, so lit faces, glows and highlights stay as drawn."""
+    a = np.asarray(img).astype(np.float32)
+    bg = np.asarray(img.filter(ImageFilter.MinFilter(15)).filter(ImageFilter.GaussianBlur(40))).astype(np.float32)
+    ink = np.clip((a - bg) / np.maximum(255 - bg, 1), 0, 1)
+    return np.clip((ink - 0.04) / 0.96, 0, 1) ** 0.9
+
 def to_dark(light, r=3):
     """Dark pages: keep the linework and drop the broad shading, so nothing glows like a photo negative.
     The reader shows it as gold or silver foil, like the stamping on a cloth-bound book."""
@@ -190,14 +197,20 @@ def main():
     ap = argparse.ArgumentParser(); ap.add_argument('name'); ap.add_argument('image')
     ap.add_argument('--border', default='braid', choices=['rule', 'thorn', 'braid', 'rope', 'stars'])
     ap.add_argument('--motif', default='star', choices=['quatrefoil', 'star', 'anchor', 'moon'])
+    ap.add_argument('--tone', default='both', choices=['both', 'light', 'dark'],
+                    help='both: a dark-on-light drawing, dark files made from it; light: write only the light files; '
+                         'dark: the image is drawn light-on-black for dark pages, used as drawn (its own lighting is kept)')
     ap.add_argument('--out', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'story'))
     a = ap.parse_args()
     img = Image.open(a.image).convert('L')
     if img.size != (2560, 1440): img = img.resize((2560, round(2560 * img.height / img.width)), Image.LANCZOS)
-    land = stencil(img)
+    land = stencil(img) if a.tone != 'dark' else stencil_light_on_dark(img)
     layout, top_end = find_layout(land)
     if a.border == 'rule': land = rule_sides(land)
-    save(land, f'{a.out}/{a.name}-land-light.webp'); save(to_dark(land), f'{a.out}/{a.name}-land-dark.webp')
+    if a.tone == 'dark': save(land, f'{a.out}/{a.name}-land-dark.webp')
+    else:
+        save(land, f'{a.out}/{a.name}-land-light.webp')
+        if a.tone == 'both': save(to_dark(land), f'{a.out}/{a.name}-land-dark.webp')
     # portrait: the two top corner scenes, enlarged to fill the page width; the top centre ornament moves to the
     # middle of the bottom flourish, so the drawing's own motif ties top and bottom together
     def crop(box, ids=None):
@@ -228,9 +241,12 @@ def main():
     else: flourish(p, H - 70, a.motif)
     drawn = np.asarray(p.im.filter(ImageFilter.GaussianBlur(.5*K/3)).resize((W, H), Image.LANCZOS)).astype(np.float32)/255
     slim = np.maximum(canvas, drawn)
-    save(slim, f'{a.out}/{a.name}-slim-light.webp'); save(to_dark(slim), f'{a.out}/{a.name}-slim-dark.webp')
+    if a.tone == 'dark': save(slim, f'{a.out}/{a.name}-slim-dark.webp')
+    else:
+        save(slim, f'{a.out}/{a.name}-slim-light.webp')
+        if a.tone == 'both': save(to_dark(slim), f'{a.out}/{a.name}-slim-dark.webp')
     cfg = {'land': layout, 'slim': {'W': W, 'H': H, 'th': band_h + 10, 'bh': 200}}
-    print(json.dumps({a.name: cfg}))
+    print(json.dumps({a.name + ('' if a.tone == 'both' else '/' + a.tone): cfg}))
     print(f'portrait top band {round(100*band_h/H,1)}% of the height; landscape sides {round(100*layout["lw"]/layout["W"])}% / {round(100*(layout["W"]-layout["rx"])/layout["W"])}%,'
           f' top ornament {round(100*layout["th"]/layout["H"])}%, bottom ornament {round(100*layout["bh"]/layout["H"])}%', file=sys.stderr)
 
