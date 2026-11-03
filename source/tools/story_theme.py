@@ -42,7 +42,12 @@ class Pen:
 # ---------- side patterns: all centred on BX, about 22 px wide, with a hairline rule just inside ----------
 def side(p, x, y0, y1, kind, flip):
     inward = 1 if flip else -1          # which way is the page centre
-    p.line([(x - inward*17, y0 + 30), (x - inward*17, y1 - 30)], .9, 120)      # the shared hairline rule
+    if kind == 'rule':                  # the plain standard: a fine rule with a small diamond at its middle
+        ym = (y0 + y1) / 2
+        p.line([(x, y0 + 26), (x, ym - 30)], 1.3); p.line([(x, ym + 30), (x, y1 - 26)], 1.3)
+        p.dot(x, ym - 22, 2); p.dot(x, ym + 22, 2)
+        p.poly([(x, ym - 15), (x + 3.5, ym - 3.5), (x + 9, ym), (x + 3.5, ym + 3.5), (x, ym + 15), (x - 3.5, ym + 3.5), (x - 9, ym), (x - 3.5, ym - 3.5)])
+    else: p.line([(x - inward*17, y0 + 30), (x - inward*17, y1 - 30)], .9, 120)      # the shared hairline rule
     if kind == 'thorn':
         pts = [(x + 4*math.sin(y/38), y) for y in range(int(y0), int(y1), 4)]
         p.taper(pts, 2.2, 2.2)
@@ -146,6 +151,25 @@ def find_layout(ink):
     return dict(W=Ww, H=Hh, lw=lw, rx=rx, tx=max(tx0 - pad, 0), tw=min(tx1 - tx0 + 2*pad, Ww),
                 th=min(th + pad, Hh//2), by=max(by - pad, Hh//2), bh=Hh - max(by - pad, Hh//2)), top_end
 
+def rule_sides(land):
+    """Remove the drawing's own side strips (tall, narrow clusters at the edges between the corner scenes)
+    and draw the standard fine rule with a middle diamond in their place."""
+    lab = find_layout.lab; Hh, Ww = land.shape; out = land.copy()
+    from scipy import ndimage
+    strips = [(i + 1, b) for i, b in enumerate(ndimage.find_objects(lab)) if b is not None
+              and (b[1].stop - b[1].start) < Ww*.08 and (b[0].stop - b[0].start) > Hh*.3 and ((b[1].start + b[1].stop)/2 < Ww*.1 or (b[1].start + b[1].stop)/2 > Ww*.9)]
+    k = 3; im = Image.new('L', (Ww*k, Hh*k), 0); d = ImageDraw.Draw(im)
+    for i, b in strips:
+        out[lab == i] = 0
+        x = (b[1].start + b[1].stop) / 2; y0, y1 = b[0].start + 10, b[0].stop - 10; ym = (y0 + y1) / 2
+        L = lambda pts, w: d.line([(px*k, py*k) for px, py in pts], fill=215, width=round(w*k))
+        L([(x, y0), (x, ym - 34)], 1.6); L([(x, ym + 34), (x, y1)], 1.6)
+        for yy in (ym - 25, ym + 25, y0 - 7, y1 + 7): d.ellipse([((x - 2.3)*k, (yy - 2.3)*k), ((x + 2.3)*k, (yy + 2.3)*k)], fill=215)
+        d.polygon([(x*k, (ym - 17)*k), ((x + 4)*k, (ym - 4)*k), ((x + 10)*k, ym*k), ((x + 4)*k, (ym + 4)*k), (x*k, (ym + 17)*k), ((x - 4)*k, (ym + 4)*k), ((x - 10)*k, ym*k), ((x - 4)*k, (ym - 4)*k)], fill=215)
+    drawn = np.asarray(im.filter(ImageFilter.GaussianBlur(.5)).resize((Ww, Hh), Image.LANCZOS)).astype(np.float32)/255
+    print(f'replaced {len(strips)} side strips with a plain rule', file=sys.stderr)
+    return np.maximum(out, drawn)
+
 def to_dark(light, r=3):
     """Dark pages: keep the linework and drop the broad shading, so nothing glows like a photo negative.
     The reader shows it as gold or silver foil, like the stamping on a cloth-bound book."""
@@ -160,7 +184,7 @@ def save(arr, path):
 def main():
     import argparse, json, os
     ap = argparse.ArgumentParser(); ap.add_argument('name'); ap.add_argument('image')
-    ap.add_argument('--border', default='braid', choices=['thorn', 'braid', 'rope', 'stars'])
+    ap.add_argument('--border', default='braid', choices=['rule', 'thorn', 'braid', 'rope', 'stars'])
     ap.add_argument('--motif', default='star', choices=['quatrefoil', 'star', 'anchor', 'moon'])
     ap.add_argument('--out', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'story'))
     a = ap.parse_args()
@@ -168,6 +192,7 @@ def main():
     if img.size != (2560, 1440): img = img.resize((2560, round(2560 * img.height / img.width)), Image.LANCZOS)
     land = stencil(img)
     layout, top_end = find_layout(land)
+    if a.border == 'rule': land = rule_sides(land)
     save(land, f'{a.out}/{a.name}-land-light.webp'); save(to_dark(land), f'{a.out}/{a.name}-land-dark.webp')
     # portrait: the two top corner scenes, enlarged to fill the page width; the top centre ornament moves to the
     # middle of the bottom flourish, so the drawing's own motif ties top and bottom together
