@@ -138,6 +138,10 @@ def find_layout(ink):
     sides_l = [b for b in big if not centred(b) and mid(b) < Ww*.5]; sides_r = [b for b in big if not centred(b) and mid(b) >= Ww*.5]
     lw = max([b[1].stop for b in sides_l] or [int(Ww*.2)]); rx = min([b[1].start for b in sides_r] or [int(Ww*.8)])
     tx0 = min([b[1].start for b in tops + bots] or [int(Ww*.3)]); tx1 = max([b[1].stop for b in tops + bots] or [int(Ww*.7)])
+    # thin rules either side of a centre ornament are too slight to count as clusters; include any ink in the middle band
+    for band in ([0, max([b[0].stop for b in tops] or [0])], [min([b[0].start for b in bots] or [Hh]), Hh]):
+        cols = np.where(on[band[0]:band[1], int(Ww*.25):int(Ww*.75)].any(axis=0))[0]
+        if len(cols): tx0 = int(min(tx0, int(Ww*.25) + cols[0])); tx1 = int(max(tx1, int(Ww*.25) + cols[-1]))
     th = max([b[0].stop for b in tops] or [int(Hh*.08)]); by = min([b[0].start for b in bots] or [int(Hh*.92)])
     pad = 10
     # top corner scenes: side clusters that start near the top (not the full-height side strips)
