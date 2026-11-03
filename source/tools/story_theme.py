@@ -149,6 +149,10 @@ def find_layout(ink):
     union = lambda bs: (min(b[1].start for b in bs), 0, max(b[1].stop for b in bs), min(top_end, max(b[0].stop for b in bs))) if bs else None
     find_layout.corners = (union(corners[0]), union(corners[1]))
     find_layout.corner_ids = [{find_layout.ids[id(b)] for b in c} for c in corners]
+    # bottom corner scenes, for themes whose scenes sit along the bottom
+    bc = ([b for b in sides_l if b[0].start > Hh*.4], [b for b in sides_r if b[0].start > Hh*.4])
+    ubot = lambda bs: (min(b[1].start for b in bs), min(b[0].start for b in bs), max(b[1].stop for b in bs), max(b[0].stop for b in bs)) if bs else None
+    find_layout.bcorners = (ubot(bc[0]), ubot(bc[1])); find_layout.bcorner_ids = [{find_layout.ids[id(b)] for b in c} for c in bc]
     find_layout.centre = (max(tx0 - pad, 0), 0, min(tx1 + pad, Ww), min(th + pad, Hh//2)) if tops else None
     lw, rx = min(lw + pad, Ww//2 - 20), max(rx - pad, Ww//2 + 20)
     # centre ornaments keep their own width; where they overlap a side piece the soft edge fades blend the two
@@ -192,6 +196,43 @@ def save(arr, path):
     st = Image.new('LA', (arr.shape[1], arr.shape[0]), (255, 0)); st.putalpha(Image.fromarray((arr*255).astype(np.uint8)))
     st.convert('RGBA').save(path, quality=84, method=6)
 
+def phone_bottom(a, land, crop, layout):
+    """Phone layout with the scenes as a footer: the bottom corner scenes enlarged across the bottom of the page,
+    and the drawing's top centre ornament as a small header with the shared flourish."""
+    import json
+    canvas = np.zeros((H, W), np.float32)
+    L, Rc = find_layout.bcorners
+    cl, cr = crop(L, find_layout.bcorner_ids[0]), crop(Rc, find_layout.bcorner_ids[1]); gap = 30
+    k = min((W - gap) / (cl.shape[1] + cr.shape[1]), H*.16 / max(cl.shape[0], cr.shape[0]))
+    def place(arr, x, bottom):
+        im = Image.fromarray((arr*255).astype(np.uint8)).resize((max(1, round(arr.shape[1]*k)), max(1, round(arr.shape[0]*k))), Image.LANCZOS)
+        a2 = np.asarray(im).astype(np.float32)/255; y = bottom - a2.shape[0]
+        canvas[y:bottom, x:x + a2.shape[1]] = np.maximum(canvas[y:bottom, x:x + a2.shape[1]], a2); return a2.shape
+    hl = place(cl, 0, H)[0]; wr = round(cr.shape[1]*k); hr = place(cr, W - wr, H)[0]
+    band_h = max(hl, hr)
+    p = Pen(); top_h = 200
+    C = find_layout.centre
+    if C:
+        orn = crop(C); kk = 130 / orn.shape[0]
+        im = Image.fromarray((orn*255).astype(np.uint8)).resize((round(orn.shape[1]*kk), 130), Image.LANCZOS)
+        o = np.asarray(im).astype(np.float32)/255; ox = (W - o.shape[1])//2; oy = 40
+        if o.shape[1] > W - 80:   # a wide ornament: keep its middle
+            cut = (o.shape[1] - (W - 80))//2; o = o[:, cut:cut + W - 80]; ox = 40
+        canvas[oy:oy + 130, ox:ox + o.shape[1]] = np.maximum(canvas[oy:oy + 130, ox:ox + o.shape[1]], o)
+        if o.shape[1] < W*.6: flourish(p, oy + 65, 'none', gap=o.shape[1]//2 + 14)
+    else: flourish(p, 90, a.motif)
+    y0, y1 = top_h + 20, H - band_h - 40
+    side(p, BX, y0, y1, a.border, False); side(p, W - BX, y0, y1, a.border, True)
+    drawn = np.asarray(p.im.filter(ImageFilter.GaussianBlur(.5*K/3)).resize((W, H), Image.LANCZOS)).astype(np.float32)/255
+    slim = np.maximum(canvas, drawn)
+    if a.tone == 'dark': save(slim, f'{a.out}/{a.name}-slim-dark.webp')
+    else:
+        save(slim, f'{a.out}/{a.name}-slim-light.webp')
+        if a.tone == 'both': save(to_dark(slim), f'{a.out}/{a.name}-slim-dark.webp')
+    cfg = {'land': layout, 'slim': {'W': W, 'H': H, 'th': top_h, 'bh': band_h + 10, 'scenes': 'bottom'}}
+    print(json.dumps({a.name + ('' if a.tone == 'both' else '/' + a.tone): cfg}))
+    print(f'portrait footer {round(100*band_h/H,1)}% of the height', file=sys.stderr)
+
 def main():
     import argparse, json, os
     ap = argparse.ArgumentParser(); ap.add_argument('name'); ap.add_argument('image')
@@ -200,6 +241,8 @@ def main():
     ap.add_argument('--tone', default='both', choices=['both', 'light', 'dark'],
                     help='both: a dark-on-light drawing, dark files made from it; light: write only the light files; '
                          'dark: the image is drawn light-on-black for dark pages, used as drawn (its own lighting is kept)')
+    ap.add_argument('--phone-scenes', default='top', choices=['top', 'bottom'],
+                    help='which corner scenes make the phone band: top (a header) or bottom (a footer, with the centre ornament as a small header)')
     ap.add_argument('--out', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'story'))
     a = ap.parse_args()
     img = Image.open(a.image).convert('L')
@@ -217,6 +260,7 @@ def main():
         x0, y0, x1, y1 = box; part = land[y0:y1, x0:x1]
         if ids: part = part * np.isin(find_layout.lab[y0:y1, x0:x1], list(ids))   # only this scene's own lines
         return part
+    if a.phone_scenes == 'bottom': return phone_bottom(a, land, crop, layout)
     L, Rc = find_layout.corners; canvas = np.zeros((H, W), np.float32)
     if L and Rc:
         cl, cr = crop(L, find_layout.corner_ids[0]), crop(Rc, find_layout.corner_ids[1]); gap = 30
