@@ -225,10 +225,11 @@ def phone_bottom(a, land, crop, layout):
     side(p, BX, y0, y1, a.border, False); side(p, W - BX, y0, y1, a.border, True)
     drawn = np.asarray(p.im.filter(ImageFilter.GaussianBlur(.5*K/3)).resize((W, H), Image.LANCZOS)).astype(np.float32)/255
     slim = np.maximum(canvas, drawn)
-    if a.tone == 'dark': save(slim, f'{a.out}/{a.name}-slim-dark.webp')
+    nm = 'foot' if a.alt else 'slim'
+    if a.tone == 'dark': save(slim, f'{a.out}/{a.name}-{nm}-dark.webp')
     else:
-        save(slim, f'{a.out}/{a.name}-slim-light.webp')
-        if a.tone == 'both': save(to_dark(slim), f'{a.out}/{a.name}-slim-dark.webp')
+        save(slim, f'{a.out}/{a.name}-{nm}-light.webp')
+        if a.tone == 'both': save(to_dark(slim), f'{a.out}/{a.name}-{nm}-dark.webp')
     cfg = {'land': layout, 'slim': {'W': W, 'H': H, 'th': top_h, 'bh': band_h + 10, 'scenes': 'bottom'}}
     print(json.dumps({a.name + ('' if a.tone == 'both' else '/' + a.tone): cfg}))
     print(f'portrait footer {round(100*band_h/H,1)}% of the height', file=sys.stderr)
@@ -243,6 +244,8 @@ def main():
                          'dark: the image is drawn light-on-black for dark pages, used as drawn (its own lighting is kept)')
     ap.add_argument('--phone-scenes', default='top', choices=['top', 'bottom'],
                     help='which corner scenes make the phone band: top (a header) or bottom (a footer, with the centre ornament as a small header)')
+    ap.add_argument('--alt', action='store_true',
+                    help='with --phone-scenes bottom: write only the footer layout, as NAME-foot-*, as an alternative to the header layout')
     ap.add_argument('--out', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'story'))
     a = ap.parse_args()
     img = Image.open(a.image).convert('L')
@@ -250,7 +253,8 @@ def main():
     land = stencil(img) if a.tone != 'dark' else stencil_light_on_dark(img)
     layout, top_end = find_layout(land)
     if a.border == 'rule': land = rule_sides(land)
-    if a.tone == 'dark': save(land, f'{a.out}/{a.name}-land-dark.webp')
+    if a.alt: pass
+    elif a.tone == 'dark': save(land, f'{a.out}/{a.name}-land-dark.webp')
     else:
         save(land, f'{a.out}/{a.name}-land-light.webp')
         if a.tone == 'both': save(to_dark(land), f'{a.out}/{a.name}-land-dark.webp')
