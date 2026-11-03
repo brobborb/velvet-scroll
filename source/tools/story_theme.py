@@ -154,6 +154,7 @@ def find_layout(ink):
     ubot = lambda bs: (min(b[1].start for b in bs), min(b[0].start for b in bs), max(b[1].stop for b in bs), max(b[0].stop for b in bs)) if bs else None
     find_layout.bcorners = (ubot(bc[0]), ubot(bc[1])); find_layout.bcorner_ids = [{find_layout.ids[id(b)] for b in c} for c in bc]
     find_layout.centre = (max(tx0 - pad, 0), 0, min(tx1 + pad, Ww), min(th + pad, Hh//2)) if tops else None
+    find_layout.bcentre = (min(b[1].start for b in bots) - pad, min(b[0].start for b in bots) - pad, max(b[1].stop for b in bots) + pad, Hh) if bots else None
     lw, rx = min(lw + pad, Ww//2 - 20), max(rx - pad, Ww//2 + 20)
     # centre ornaments keep their own width; where they overlap a side piece the soft edge fades blend the two
     return dict(W=Ww, H=Hh, lw=lw, rx=rx, tx=max(tx0 - pad, 0), tw=min(tx1 - tx0 + 2*pad, Ww),
@@ -234,6 +235,31 @@ def phone_bottom(a, land, crop, layout):
     print(json.dumps({a.name + ('' if a.tone == 'both' else '/' + a.tone): cfg}))
     print(f'portrait footer {round(100*band_h/H,1)}% of the height', file=sys.stderr)
 
+def phone_centre(a, land, crop, layout):
+    """Phone layout from the two centre ornaments: the top one enlarged as a header, the bottom one as a footer."""
+    import json
+    canvas = np.zeros((H, W), np.float32)
+    def put(arr, maxw, maxh, y=None, bottom=None):
+        k = min(maxw / arr.shape[1], maxh / arr.shape[0])
+        im = Image.fromarray((arr*255).astype(np.uint8)).resize((max(1, round(arr.shape[1]*k)), max(1, round(arr.shape[0]*k))), Image.LANCZOS)
+        o = np.asarray(im).astype(np.float32)/255; x = (W - o.shape[1])//2
+        if y is None: y = bottom - o.shape[0]
+        canvas[y:y + o.shape[0], x:x + o.shape[1]] = np.maximum(canvas[y:y + o.shape[0], x:x + o.shape[1]], o); return o.shape[0]
+    top_h = 30 + put(crop(find_layout.centre), W*.62, H*.14, y=30)
+    bc = find_layout.bcentre
+    bot_h = put(crop(bc), W - 120, H*.08, bottom=H - 30) + 30 if bc else 0
+    p = Pen()
+    if not bc: flourish(p, H - 70, a.motif); bot_h = 150
+    y0, y1 = top_h + 40, H - bot_h - 40
+    side(p, BX, y0, y1, a.border, False); side(p, W - BX, y0, y1, a.border, True)
+    drawn = np.asarray(p.im.filter(ImageFilter.GaussianBlur(.5*K/3)).resize((W, H), Image.LANCZOS)).astype(np.float32)/255
+    out = np.maximum(canvas, drawn)
+    if a.tone == 'dark': save(out, f'{a.out}/{a.name}-mid-dark.webp')
+    else:
+        save(out, f'{a.out}/{a.name}-mid-light.webp')
+        if a.tone == 'both': save(to_dark(out), f'{a.out}/{a.name}-mid-dark.webp')
+    print(json.dumps({a.name: {'mid': {'th': top_h + 10, 'bh': bot_h + 10}}}))
+
 def main():
     import argparse, json, os
     ap = argparse.ArgumentParser(); ap.add_argument('name'); ap.add_argument('image')
@@ -242,7 +268,7 @@ def main():
     ap.add_argument('--tone', default='both', choices=['both', 'light', 'dark'],
                     help='both: a dark-on-light drawing, dark files made from it; light: write only the light files; '
                          'dark: the image is drawn light-on-black for dark pages, used as drawn (its own lighting is kept)')
-    ap.add_argument('--phone-scenes', default='top', choices=['top', 'bottom'],
+    ap.add_argument('--phone-scenes', default='top', choices=['top', 'bottom', 'centre'],
                     help='which corner scenes make the phone band: top (a header) or bottom (a footer, with the centre ornament as a small header)')
     ap.add_argument('--alt', action='store_true',
                     help='with --phone-scenes bottom: write only the footer layout, as NAME-foot-*, as an alternative to the header layout')
@@ -253,7 +279,7 @@ def main():
     land = stencil(img) if a.tone != 'dark' else stencil_light_on_dark(img)
     layout, top_end = find_layout(land)
     if a.border == 'rule': land = rule_sides(land)
-    if a.alt: pass
+    if a.alt or a.phone_scenes == 'centre': pass
     elif a.tone == 'dark': save(land, f'{a.out}/{a.name}-land-dark.webp')
     else:
         save(land, f'{a.out}/{a.name}-land-light.webp')
@@ -265,6 +291,7 @@ def main():
         if ids: part = part * np.isin(find_layout.lab[y0:y1, x0:x1], list(ids))   # only this scene's own lines
         return part
     if a.phone_scenes == 'bottom': return phone_bottom(a, land, crop, layout)
+    if a.phone_scenes == 'centre': return phone_centre(a, land, crop, layout)
     L, Rc = find_layout.corners; canvas = np.zeros((H, W), np.float32)
     if L and Rc:
         cl, cr = crop(L, find_layout.corner_ids[0]), crop(Rc, find_layout.corner_ids[1]); gap = 30
