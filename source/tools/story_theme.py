@@ -272,12 +272,20 @@ def main():
                     help='which corner scenes make the phone band: top (a header) or bottom (a footer, with the centre ornament as a small header)')
     ap.add_argument('--alt', action='store_true',
                     help='with --phone-scenes bottom: write only the footer layout, as NAME-foot-*, as an alternative to the header layout')
+    ap.add_argument('--layout-from', default=None,
+                    help='measure pieces on this drawing instead (the matching light version), for a dark drawing whose lines join its scenes')
     ap.add_argument('--out', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'story'))
     a = ap.parse_args()
     img = Image.open(a.image).convert('L')
     if img.size != (2560, 1440): img = img.resize((2560, round(2560 * img.height / img.width)), Image.LANCZOS)
     land = stencil(img) if a.tone != 'dark' else stencil_light_on_dark(img)
-    layout, top_end = find_layout(land)
+    if a.layout_from:
+        ref = Image.open(a.layout_from).convert('L')
+        if ref.size != (2560, 1440): ref = ref.resize((2560, round(2560 * ref.height / ref.width)), Image.LANCZOS)
+        layout, top_end = find_layout(stencil(ref))
+        # the pieces' own pixels come from this drawing: everything inside each measured box
+        find_layout.lab = np.ones_like(find_layout.lab); find_layout.corner_ids = [{1}, {1}]; find_layout.bcorner_ids = [{1}, {1}]
+    else: layout, top_end = find_layout(land)
     if a.border == 'rule': land = rule_sides(land)
     if a.alt or a.phone_scenes == 'centre': pass
     elif a.tone == 'dark': save(land, f'{a.out}/{a.name}-land-dark.webp')
