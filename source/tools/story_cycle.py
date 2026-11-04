@@ -16,7 +16,7 @@ import numpy as np
 from PIL import Image, ImageFilter
 from scipy import ndimage
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from story_theme import W, H, K, Pen, side, flourish, save
+from story_theme import W, H, K, Pen, side, flourish, save, PHONE_SIDES
 
 CORNER_H = .135    # a corner scene is at most this share of the page height ...
 CORNER_W = .56     # ... and this share of its width
@@ -89,7 +89,7 @@ def diagonal(top, bottom, top_left):
     # the side under the top scene starts below it; the other side runs from the top; the same at the bottom
     for x, flip, under_top, over_bottom in ((40, False, top_left, not top_left), (W - 40, True, not top_left, top_left)):
         y0 = th + 40 if under_top else 70; y1 = H - bh - 40 if over_bottom else H - 70
-        side(p, x, y0, y1, 'rule', flip)
+        if PHONE_SIDES: side(p, x, y0, y1, 'rule', flip)
     return finish(canvas, p), th + 10, bh + 10
 
 def centre_only(orn, at_top):
@@ -98,7 +98,7 @@ def centre_only(orn, at_top):
     if at_top: paste(canvas, o, (W - o.shape[1])//2, 30); th, bh = o.shape[0] + 40, 150; fy = H - 70
     else: paste(canvas, o, (W - o.shape[1])//2, H - 30 - o.shape[0]); th, bh = 150, o.shape[0] + 40; fy = 70
     flourish(p, fy, 'none'); p.star4(W/2, fy, 14)          # the plain flourish at the other end, with a small star
-    side(p, 40, th + 30, H - bh - 30, 'rule', False); side(p, W - 40, th + 30, H - bh - 30, 'rule', True)
+    if PHONE_SIDES: side(p, 40, th + 30, H - bh - 30, 'rule', False); side(p, W - 40, th + 30, H - bh - 30, 'rule', True)
     return finish(canvas, p), th + 10, bh + 10
 
 def main():

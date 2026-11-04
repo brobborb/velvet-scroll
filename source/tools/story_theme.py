@@ -17,6 +17,7 @@ from PIL import Image, ImageDraw, ImageFilter
 W, H, K = 1440, 2560, 3                       # 9:16 canvas; K = supersampling for smooth lines
 BX = 40                                        # border centre, from each edge (2.8% of the width)
 INK = 215                                      # drawn lines a little lighter than solid, to sit with pencil
+PHONE_SIDES = False                            # phone layouts have no side borders (wide screens keep the drawing's own)
 
 
 def stencil(img):
@@ -227,7 +228,7 @@ def phone_bottom(a, land, crop, layout):
         if o.shape[1] < W*.6: flourish(p, oy + 65, 'none', gap=o.shape[1]//2 + 14)
     else: flourish(p, 90, a.motif)
     y0, y1 = top_h + 20, H - band_h - 40
-    side(p, BX, y0, y1, a.border, False); side(p, W - BX, y0, y1, a.border, True)
+    if PHONE_SIDES: side(p, BX, y0, y1, a.border, False); side(p, W - BX, y0, y1, a.border, True)
     drawn = np.asarray(p.im.filter(ImageFilter.GaussianBlur(.5*K/3)).resize((W, H), Image.LANCZOS)).astype(np.float32)/255
     slim = np.maximum(canvas, drawn)
     nm = 'foot' if a.alt else 'slim'
@@ -255,7 +256,7 @@ def phone_centre(a, land, crop, layout):
     p = Pen()
     if not bc: flourish(p, H - 70, a.motif); bot_h = 150
     y0, y1 = top_h + 40, H - bot_h - 40
-    side(p, BX, y0, y1, a.border, False); side(p, W - BX, y0, y1, a.border, True)
+    if PHONE_SIDES: side(p, BX, y0, y1, a.border, False); side(p, W - BX, y0, y1, a.border, True)
     drawn = np.asarray(p.im.filter(ImageFilter.GaussianBlur(.5*K/3)).resize((W, H), Image.LANCZOS)).astype(np.float32)/255
     out = np.maximum(canvas, drawn)
     if a.tone == 'dark': save(out, f'{a.out}/{a.name}-mid-dark.webp')
@@ -317,7 +318,7 @@ def main():
         strip = land[:top_end]; band = Image.fromarray((strip*255).astype(np.uint8)).resize((W, round(strip.shape[0]*W/strip.shape[1])), Image.LANCZOS)
         canvas[:band.size[1]] = np.asarray(band).astype(np.float32)/255; band_h = band.size[1]
     p = Pen(); y0, y1 = band_h + 40, H - 150
-    side(p, BX, y0, y1, a.border, False); side(p, W - BX, y0, y1, a.border, True)
+    if PHONE_SIDES: side(p, BX, y0, y1, a.border, False); side(p, W - BX, y0, y1, a.border, True)
     C = find_layout.centre
     if C:
         orn = crop(C); kk = 120 / orn.shape[0]
