@@ -163,13 +163,17 @@ def find_layout(ink):
 def rule_sides(land):
     """Remove the drawing's own side strips (tall, narrow clusters at the edges between the corner scenes)
     and draw the standard fine rule with a middle diamond in their place."""
-    lab = find_layout.lab; Hh, Ww = land.shape; out = land.copy()
+    lab = getattr(find_layout, 'ref_lab', None)
+    boxed = lab is not None          # measured on the matching day drawing: clear each strip's whole box (a little wider)
+    if not boxed: lab = find_layout.lab
+    Hh, Ww = land.shape; out = land.copy()
     from scipy import ndimage
     strips = [(i + 1, b) for i, b in enumerate(ndimage.find_objects(lab)) if b is not None
               and (b[1].stop - b[1].start) < Ww*.08 and (b[0].stop - b[0].start) > Hh*.3 and ((b[1].start + b[1].stop)/2 < Ww*.1 or (b[1].start + b[1].stop)/2 > Ww*.9)]
     k = 3; im = Image.new('L', (Ww*k, Hh*k), 0); d = ImageDraw.Draw(im)
     for i, b in strips:
-        out[lab == i] = 0
+        if boxed: out[max(b[0].start - 14, 0):b[0].stop + 14, max(b[1].start - 14, 0):b[1].stop + 14] = 0
+        else: out[lab == i] = 0
         x = (b[1].start + b[1].stop) / 2; y0, y1 = b[0].start + 10, b[0].stop - 10; ym = (y0 + y1) / 2
         L = lambda pts, w: d.line([(px*k, py*k) for px, py in pts], fill=215, width=round(w*k))
         L([(x, y0), (x, ym - 34)], 1.6); L([(x, ym + 34), (x, y1)], 1.6)
@@ -282,7 +286,7 @@ def main():
     if a.layout_from:
         ref = Image.open(a.layout_from).convert('L')
         if ref.size != (2560, 1440): ref = ref.resize((2560, round(2560 * ref.height / ref.width)), Image.LANCZOS)
-        layout, top_end = find_layout(stencil(ref))
+        layout, top_end = find_layout(stencil(ref)); find_layout.ref_lab = find_layout.lab
         # the pieces' own pixels come from this drawing: everything inside each measured box
         find_layout.lab = np.ones_like(find_layout.lab); find_layout.corner_ids = [{1}, {1}]; find_layout.bcorner_ids = [{1}, {1}]
     else: layout, top_end = find_layout(land)
