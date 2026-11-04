@@ -140,9 +140,18 @@ def find_layout(ink):
     lw = max([b[1].stop for b in sides_l] or [int(Ww*.2)]); rx = min([b[1].start for b in sides_r] or [int(Ww*.8)])
     tx0 = min([b[1].start for b in tops + bots] or [int(Ww*.3)]); tx1 = max([b[1].stop for b in tops + bots] or [int(Ww*.7)])
     # thin rules either side of a centre ornament are too slight to count as clusters; include any ink in the middle band
+    # (only whole marks that sit in the middle: not the edges of corner scenes, nor specks)
     for band in ([0, max([b[0].stop for b in tops] or [0])], [min([b[0].start for b in bots] or [Hh]), Hh]):
-        cols = np.where(on[band[0]:band[1], int(Ww*.25):int(Ww*.75)].any(axis=0))[0]
-        if len(cols): tx0 = int(min(tx0, int(Ww*.25) + cols[0])); tx1 = int(max(tx1, int(Ww*.25) + cols[-1]))
+        bl, bn = ndimage.label(on[band[0]:band[1]])
+        marks = [(b[1].start, b[1].stop - 1) for i, b in enumerate(ndimage.find_objects(bl))
+                 if b is not None and Ww*.22 <= b[1].start and b[1].stop <= Ww*.78 and (bl[b] == i + 1).sum() >= 30]
+        grew = True
+        while grew:                       # take in marks that continue the ornament sideways (rules, flourishes), gap <= 60 px
+            grew = False
+            for m0, m1 in marks:
+                if m0 - 60 <= tx1 and m1 + 60 >= tx0 and (m0 < tx0 or m1 > tx1): tx0, tx1 = int(min(tx0, m0)), int(max(tx1, m1)); grew = True
+    # the drawing's centre ornaments are drawn on its middle: keep their box centred, so the reader keeps them there
+    half = max(Ww/2 - tx0, tx1 - Ww/2); tx0, tx1 = int(Ww/2 - half), int(Ww/2 + half)
     th = max([b[0].stop for b in tops] or [int(Hh*.08)]); by = min([b[0].start for b in bots] or [int(Hh*.92)])
     pad = 10
     # top corner scenes: side clusters that start near the top (not the full-height side strips)
