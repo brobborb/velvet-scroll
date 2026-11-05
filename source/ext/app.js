@@ -1843,6 +1843,14 @@ let installEvt = null;
 const isStandalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
 if(!IS_EXT && !IN_CLAUDE && 'serviceWorker' in navigator && (location.protocol === 'https:' || /^(localhost|127\.0\.0\.1)$/.test(location.hostname)))
   addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+// keep the library header on one row: drop the small buttons' labels when they would wrap below the name
+{ const top = $('header.top'), brand = top?.querySelector('.brand'), btns = top?.querySelector('.hdrbtns');
+  const fit = () => { if(!top || !brand || !btns) return; top.classList.remove('hcompact');
+    if(btns.getBoundingClientRect().top >= brand.getBoundingClientRect().bottom - 4) top.classList.add('hcompact'); };
+  let raf = 0; const later = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(fit); };
+  addEventListener('resize', later);
+  if(btns) new MutationObserver(later).observe(btns, {subtree:true, attributes:true, attributeFilter:['hidden']});
+  document.fonts?.ready.then(later); later(); }
 addEventListener('beforeinstallprompt', e => { if(IS_EXT) return; e.preventDefault(); installEvt = e; $('#installBtn').hidden = isStandalone(); });
 addEventListener('appinstalled', () => { installEvt = null; $('#installBtn').hidden = true; toast('Velvet Scroll is installed. You’ll find it with your other apps.', 5000); });
 $('#installBtn').onclick = async () => { if(!installEvt) return; installEvt.prompt(); try{ await installEvt.userChoice; }catch(e){} installEvt = null; $('#installBtn').hidden = true; };
