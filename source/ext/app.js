@@ -1851,6 +1851,7 @@ if(!IS_EXT && !IN_CLAUDE && 'serviceWorker' in navigator && (location.protocol =
   addEventListener('resize', later);
   if(btns) new MutationObserver(later).observe(btns, {subtree:true, attributes:true, attributeFilter:['hidden']});
   document.fonts?.ready.then(later); later(); }
+if(IS_EXT) $('#plusMore').href = 'https://velvetscroll.net/plus.html';
 addEventListener('beforeinstallprompt', e => { if(IS_EXT) return; e.preventDefault(); installEvt = e; $('#installBtn').hidden = isStandalone(); });
 addEventListener('appinstalled', () => { installEvt = null; $('#installBtn').hidden = true; toast('Velvet Scroll is installed. You’ll find it with your other apps.', 5000); });
 $('#installBtn').onclick = async () => { if(!installEvt) return; installEvt.prompt(); try{ await installEvt.userChoice; }catch(e){} installEvt = null; $('#installBtn').hidden = true; };
