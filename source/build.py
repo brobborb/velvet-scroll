@@ -13,8 +13,12 @@ dups=[k for k,v in Counter(re.findall(r'\bid="([^"]+)"', body)).items() if v>1]
 if dups: sys.exit('Duplicate ids in bookroll.html: ' + ', '.join(dups))
 DESC='An ebook reader that scrolls for you, with a reading guide, read aloud and your books kept private on your device.'
 
+# code marked /*WEB-ONLY{*/ ... /*}WEB-ONLY*/ is for the website only (e.g. loading Paddle's checkout); the extensions never get it
+ext_script=re.sub(r'/\*WEB-ONLY\{\*/.*?/\*\}WEB-ONLY\*/', '', script, flags=re.S)
+assert 'cdn.paddle.com' not in ext_script
+
 def ext_files(E):
-    open(E+'app.js','w').write(script); open(E+'reader.css','w').write(style)
+    open(E+'app.js','w').write(ext_script); open(E+'reader.css','w').write(style)
     h=open(E+'reader.html').read()
     h=h[:h.index('<body>')+6]+'\n'+body+'\n'+h[h.index('<script src="lib/jszip.min.js">'):]
     if 'clip-core.js' not in h:

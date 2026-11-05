@@ -1886,6 +1886,31 @@ function plusOpen(feature){
   $('#plusSt').textContent = ''; plusShow(); $('#plusDlg').hidden = false; (PLUS ? $('#plusClose') : $('#plusKey')).focus();
 }
 function closePlusNow(){ $('#plusDlg').hidden = true; }
+/* ---------- buying Plus: Paddle checkout (Paddle.com is the reseller and Merchant of Record).
+   On the website, Paddle's checkout opens over the page. The extensions don't load outside code, so there the
+   button opens the website's checkout in a new tab. SANDBOX: Paddle's test environment (test cards, no real money). */
+const PADDLE = {env:'sandbox', token:'test_bb5e5ad9a4965e7c1ab4cd7ef75', price:'pri_01m6q111yt3w7wyxj12hfs8m3g',
+  site:'https://brobborb.github.io/velvet-scroll-beta/'};
+// the extensions get this stub: their checkout opens on the website instead (they never load outside code)
+function loadPaddle(){ return Promise.reject(new Error('The checkout opens on the website')); }
+
+function paddleEvent(ev){
+  if(ev?.name !== 'checkout.completed') return;
+  const st = $('#plusSt'); st.textContent = 'Thank you! Your payment went through. Your licence key is on its way to your email; paste it in below when it arrives.';
+}
+async function buyPlus(){
+  const st = $('#plusSt');
+  if(IS_EXT){ window.open(PADDLE.site + '?buy=plus', '_blank', 'noopener'); return; }
+  st.textContent = 'Opening the secure checkout…';
+  try{ const P = await loadPaddle();
+    P.Checkout.open({items:[{priceId:PADDLE.price, quantity:1}],
+      settings:{displayMode:'overlay', theme:homeDark() ? 'dark' : 'light', locale:navigator.language || 'en', allowLogout:false}});
+    st.textContent = '';
+  }catch(e){ st.textContent = 'The checkout couldn’t open. Check you’re online, then try again.'; }
+}
+$('#plusBuy').onclick = buyPlus;
+// a link to the website with ?buy=plus (from the extensions or the Plus page) opens the Plus window and the checkout
+if(!IS_EXT && /[?&]buy=plus\b/.test(location.search)) setTimeout(() => { plusOpen(''); buyPlus(); history.replaceState(null, '', location.pathname); }, 600);
 // gate a feature: true when Plus is on, otherwise explain and offer it
 function needPlus(feature){ if(PLUS) return true; plusOpen(feature); return false; }
 async function plusInit(){ const k = LS.get('plusKey', ''); PLUS = k ? await plusVerify(k) : null; plusShow(); }
