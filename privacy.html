@@ -23,7 +23,7 @@ a{color:var(--accent)}
 <body>
 <main>
 <h1>Privacy</h1>
-<p class="meta">Velvet Scroll website and browser extension · Updated 26 October 2026</p>
+<p class="meta">Velvet Scroll website and browser extension · Updated 28 October 2026</p>
 
 <div class="box"><p><strong>In short:</strong> your books, reading positions and settings stay in your own browser. Velvet Scroll has no accounts, no analytics, no advertising and no server that receives your library. The only information it sends anywhere is a book's title and author, and only when you ask it to look up a book's details.</p></div>
 
@@ -39,6 +39,9 @@ a{color:var(--accent)}
 </ul>
 <p>No other information about you or your library is sent. Your browser asks your permission before the extension contacts these sites, and you can withdraw it at any time in your browser's extension settings. Those services handle requests under their own privacy policies.</p>
 
+<h2>Adding books from a web address</h2>
+<p>If you use <em>Add from URL</em>, Velvet Scroll downloads the file from the address you enter, straight from your browser, like any other download. That site receives the request, including your IP address, under its own privacy policy. Nothing else is sent. The extension asks your permission before it contacts a site.</p>
+
 <h2>Author bios</h2>
 <p>The <em>Details</em> window can show a short bio of a book's author. To find it, Velvet Scroll sends the author's name, and nothing else, to Wikidata (wikidata.org) and Wikipedia (wikipedia.org), the first time you open the details of a book by that author, or when you choose <em>Look up on Wikipedia</em>. In the browser extension this happens only after your browser has asked your permission. The bio is then kept on your device, shared by all that author's books, and included in your backups and Google Drive sync. You can edit or remove it, or write your own. Text from Wikipedia is available under the Creative Commons Attribution-ShareAlike licence and is shown with a link to its article.</p>
 
@@ -51,8 +54,14 @@ a{color:var(--accent)}
 <h2>Natural voices (optional)</h2>
 <p>If you choose to use a natural voice, Velvet Scroll downloads that voice (about 63 MB) from Hugging Face (huggingface.co), and a pronunciation dictionary (about 18 MB) from jsDelivr (cdn.jsdelivr.net). On the website, the speech engine's code also comes from jsDelivr; the extension includes it. Like any download, these services receive the technical details of the request, such as your IP address. The voices are kept in your browser and run entirely on your device: the text being read is never sent anywhere. You can remove the downloads at any time under Display, in the reader. Details of the software and voice licences are on the <a href="licences.html">licences page</a>.</p>
 
+<h2>Recognising text in scanned PDFs (optional)</h2>
+<p>If you choose Recognise text for a scanned PDF, Velvet Scroll downloads English language data (about 3 MB) from jsDelivr (cdn.jsdelivr.net); on the website, the text recogniser's code (about 4 MB) comes from jsDelivr too, while the extension includes it. As with any download, jsDelivr receives the technical details of the request, such as your IP address. The recognising happens entirely on your device: page images and the text found on them are never sent anywhere. The recognised text is stored in your browser with the book and is deleted when you remove the book.</p>
+
 <h2>Browser sync (extension only, optional)</h2>
 <p>If you turn on sync, your reading positions, shelves, book details and settings are saved to your browser's built-in sync (Firefox Sync or Chrome sync) so they follow you between your own computers. The books themselves are never synced. This data is handled by Mozilla or Google under their privacy policies. Sync is off unless you turn it on.</p>
+
+<h2>Google Drive sync (optional)</h2>
+<p>If you choose <em>Connect Google Drive</em>, Velvet Scroll keeps one small file, "Velvet Scroll sync.json", in your own Google Drive. It holds your reading positions, shelves, book details, highlights and notes, and settings, so they match on each device where you connect. The books themselves are never uploaded. Velvet Scroll asks Google only for permission to see and change files that Velvet Scroll created, so it can't see anything else in your Drive. The file goes straight between your browser and Google; it doesn't pass through any Velvet Scroll server, and Velvet Scroll doesn't keep a copy anywhere else. Google's sign-in gives your browser a short-lived access key, which is kept only in this browser. You can disconnect at any time from Backup in Velvet Scroll, remove access from your Google Account's security settings, and delete the file from your Drive. Google handles the file under its own privacy policy. Velvet Scroll's use of information received from Google APIs follows the <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>, including its Limited Use requirements.</p>
 
 <h2>Sync codes</h2>
 <p>A sync code is made on your device and encrypted with AES-256 using the passphrase you choose. It holds your reading positions, shelves, book details and settings, but no books. Velvet Scroll doesn't send it anywhere: you copy, share or scan it yourself. If you scan its QR code, your phone opens velvetscroll.net with the code in the address after the "#", a part of the address browsers don't send to the website, and the code still can't be read without the passphrase.</p>
@@ -63,13 +72,20 @@ a{color:var(--accent)}
 <h2>The website</h2>
 <p>velvetscroll.net is hosted by GitHub Pages. Like any web host, GitHub may record technical information such as IP addresses when pages are loaded. The website also loads fonts from Google Fonts, code libraries from cdnjs (Cloudflare), and, when you open a PDF, the PDF library's standard font and character-map files from jsDelivr (cdn.jsdelivr.net). These services receive the same kind of technical request information; none of them receive your books. The extension includes its fonts and libraries, so it doesn't contact these services.</p>
 
+<h2>Velvet Scroll Plus</h2>
+<p>Velvet Scroll Plus is an optional one-time purchase. Its licence key is kept in your browser on your device and checked there, using a signature built into Velvet Scroll. Checking the key doesn't contact any server, and nothing about you or your library is sent anywhere when you use it. The key contains only the name it was issued to, the date and a random reference number.</p>
+
 <h2>Contributions</h2>
 <p>Contributions are optional and made directly through PayPal or Bitcoin. Velvet Scroll never sees or stores payment details. PayPal handles payments under its own privacy policy, and Bitcoin transactions are public on the Bitcoin network.</p>
 
 <h2>Changes and contact</h2>
 <p>If this policy changes, the updated version will be published on this page with a new date. Questions can be raised through the project's page at <a href="https://github.com/brobborb/velvet-scroll/issues">github.com/brobborb/velvet-scroll</a>.</p>
 
-<p>See also the <a href="terms.html">terms of use</a>.</p>
+<h2>Buying Velvet Scroll Plus</h2>
+<p>Purchases are handled by Paddle.com, our reseller and Merchant of Record. Your card or payment details go to Paddle and its payment providers, never to us; Paddle's <a href="https://www.paddle.com/legal/privacy" target="_blank" rel="noopener">privacy policy</a> applies to them. Paddle shares your name, email address and country with us so we can send your licence key, answer questions and handle refunds. We keep these only for that purpose, and you can ask us to delete them by emailing <a href="mailto:support@velvetscroll.net">support@velvetscroll.net</a>.</p>
+<p>Your licence key contains the name it was issued to and the date. Checking it happens on your device.</p>
+
+<p>See also the <a href="terms.html">terms of use</a> and <a href="refunds.html">refund policy</a>.</p>
 <p><a href="./">← Back to Velvet Scroll</a></p>
 </main>
 </body>
