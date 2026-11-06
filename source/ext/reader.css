@@ -886,6 +886,25 @@ kbd{font-family:var(--f-ui);font-size:12px;border:1px solid var(--line);border-b
 ::highlight(vs-hl-note){text-decoration:underline 2px rgb(214 120 0);text-underline-offset:4px}
 .selbar{position:absolute;z-index:7;display:flex;align-items:center;gap:4px;padding:5px 6px;border-radius:999px;background:var(--surface);color:var(--fg);border:1px solid var(--line);box-shadow:0 8px 26px rgb(0 0 0 / .28);font:600 13px var(--f-ui)}
 .selbar[hidden]{display:none}
+/* the dictionary card beside a looked-up word (a sheet along the bottom on phones) */
+.defcard{position:absolute;z-index:7;width:min(400px,calc(100% - 16px));max-height:min(60%,460px);overflow:auto;padding:12px 14px 14px;border-radius:14px;background:var(--surface);color:var(--fg);border:1px solid var(--line);box-shadow:0 10px 30px rgb(0 0 0 / .22);font:15px/1.5 var(--f-ui)}
+.defcard[hidden]{display:none}
+.defhead{display:flex;align-items:baseline;gap:8px;position:sticky;top:-12px;background:var(--surface);padding-top:2px}
+.defhead h3{margin:0;font:600 22px/1.2 var(--f-read,Georgia,serif)}
+.deffrom{color:var(--muted);font-size:13px;flex:1}
+.defhead .rtool{align-self:center;margin-left:auto}
+.defbody .pos{margin:10px 0 2px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.defbody ol{margin:0;padding-left:22px}
+.defbody li{margin:3px 0}
+.defbody .ex{display:block;color:var(--muted);font-style:italic}
+.defbody .syn{display:block;color:var(--muted);font-size:13px}
+.defbody details{margin-top:10px;border-top:1px solid var(--line);padding-top:8px}
+.defbody summary{cursor:pointer;font-weight:600}
+.defbody .old{margin:6px 0 0;font-family:var(--f-read,Georgia,serif)}
+.defbody .src{margin:12px 0 0;font-size:12px;color:var(--muted)}
+.defbody .blink{border:0;background:none;color:var(--accent);font:inherit;font-size:13px;padding:2px 0;cursor:pointer;text-decoration:underline}
+.defbody .row{margin-top:10px;gap:8px;flex-wrap:wrap}
+@media (pointer:coarse) and (max-width:700px){.defcard{left:8px !important;right:8px;top:auto !important;bottom:8px;width:auto;max-height:55%}}
 .selbar .hlc{width:26px;height:26px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0}
 .selbar .hlc[data-c="y"]{background:#ffd84a}.selbar .hlc[data-c="g"]{background:#6fd08a}.selbar .hlc[data-c="b"]{background:#7cb8ff}.selbar .hlc[data-c="p"]{background:#ff8fc0}
 .selbar .hlc[aria-pressed="true"]{border-color:var(--fg)}

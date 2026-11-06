@@ -131,8 +131,12 @@
   <div id="selBar" class="selbar" hidden role="toolbar" aria-label="Highlight">
     <button class="hlc" data-c="y" aria-label="Yellow highlight" title="Yellow"></button><button class="hlc" data-c="g" aria-label="Green highlight" title="Green"></button><button class="hlc" data-c="b" aria-label="Blue highlight" title="Blue"></button><button class="hlc" data-c="p" aria-label="Pink highlight" title="Pink"></button>
     <span class="selsep"></span>
-    <button class="seltxt" id="selNote">Note</button><button class="seltxt" id="selCopy">Copy</button><button class="seltxt" id="selDel" hidden>Delete</button>
+    <button class="seltxt" id="selDef">Define</button><button class="seltxt" id="selNote">Note</button><button class="seltxt" id="selCopy">Copy</button><button class="seltxt" id="selDel" hidden>Delete</button>
   </div>
+  <section id="defCard" class="defcard" hidden role="dialog" aria-labelledby="defWord" aria-live="polite">
+    <div class="defhead"><h3 id="defWord"></h3><span id="defFrom" class="deffrom"></span><button type="button" class="rtool" id="defClose" title="Close (Esc)" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div id="defBody" class="defbody"></div>
+  </section>
   <form id="findBar" class="findbar" hidden role="search" autocomplete="off">
     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.4-4.4"/></svg>
     <input id="findIn" type="search" placeholder="Search this book" aria-label="Search this book" enterkeyhint="search" spellcheck="false">
@@ -309,6 +313,13 @@
         <p class="hint" id="nvStatus" role="status"></p>
         <div class="row" style="flex-wrap:wrap;gap:8px"><button class="btn" id="nvAbout">About natural voices</button><button class="btn" id="nvRemove" hidden>Remove downloaded voices</button><a class="btn" href="licences.html" target="_blank" rel="noopener">Licences</a></div>
       </div>
+
+    <div class="grp" id="dictGrp">
+      <span class="lbl">Dictionary</span>
+      <p class="hint">Select a word (or double-click it), then choose <strong>Define</strong>. Modern meanings come from WordNet, and older ones from Webster’s 1913 dictionary, for the words in classic books. It works offline once it’s downloaded (about 14 MB, once).</p>
+      <p class="hint" id="dictStatus" role="status"></p>
+      <div class="row" style="flex-wrap:wrap;gap:8px"><button class="btn" id="dictGet">Download the dictionary</button><button class="btn" id="dictRemove" hidden>Remove the dictionary</button></div>
+    </div>
     </div>
 
     <div class="grp">
