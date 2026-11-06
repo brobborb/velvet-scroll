@@ -35,7 +35,7 @@ def ext_files(E):
     shutil.rmtree(E+'lib/piper', ignore_errors=True); shutil.copytree(S+'vendor/piper', E+'lib/piper')
     # recognising text in scanned PDFs: Tesseract.js 7.0.0 and tesseract.js-core 7.0.0 (unmodified npm releases; LSTM builds with and without SIMD)
     shutil.rmtree(E+'lib/tesseract', ignore_errors=True); shutil.copytree(S+'vendor/tesseract', E+'lib/tesseract')
-    for f in ('licences.html','LICENSE-GPL-3.0.txt','LICENSE-Apache-2.0.txt','LICENSE-WordNet.txt'): shutil.copy(ROOT+f, E+f)
+    for f in ('licences.html','LICENSE-GPL-3.0.txt','LICENSE-Apache-2.0.txt','LICENSE-WordNet.txt','LICENSE-Mammoth.txt'): shutil.copy(ROOT+f, E+f)
     shutil.rmtree(E+'lib/kokoro', ignore_errors=True)
     if os.path.exists(E+'kokoro-worker.js'): os.remove(E+'kokoro-worker.js')
 
