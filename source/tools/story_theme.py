@@ -168,6 +168,7 @@ def find_layout(ink):
     find_layout.bcentre = (min(b[1].start for b in bots) - pad, min(b[0].start for b in bots) - pad, max(b[1].stop for b in bots) + pad, Hh) if bots else None
     lw, rx = min(lw + pad, Ww//2 - 20), max(rx - pad, Ww//2 + 20)
     # centre ornaments keep their own width; where they overlap a side piece the soft edge fades blend the two
+    if not tops and not bots: tx0 = tx1 = Ww//2 - pad    # no centre ornaments: nothing to show in the middle (tw 0)
     return dict(W=Ww, H=Hh, lw=lw, rx=rx, tx=max(tx0 - pad, 0), tw=min(tx1 - tx0 + 2*pad, Ww),
                 th=min(th + pad, Hh//2), by=max(by - pad, Hh//2), bh=Hh - max(by - pad, Hh//2)), top_end
 
