@@ -904,7 +904,8 @@ kbd{font-family:var(--f-ui);font-size:12px;border:1px solid var(--line);border-b
 ::highlight(vs-hl-g){background-color:rgb(80 200 110 / .38)}
 ::highlight(vs-hl-b){background-color:rgb(80 160 255 / .36)}
 ::highlight(vs-hl-p){background-color:rgb(255 105 170 / .36)}
-::highlight(vs-hl-note){text-decoration:underline 2px rgb(214 120 0);text-underline-offset:4px}
+::highlight(vs-hl-u){text-decoration:underline 2px rgb(205 45 45);text-underline-offset:2px;text-decoration-skip-ink:none}
+::highlight(vs-hl-note){text-decoration:underline dotted 2px rgb(214 120 0);text-underline-offset:5px}
 .selbar{position:absolute;z-index:7;display:flex;align-items:center;gap:4px;padding:5px 6px;border-radius:999px;background:var(--surface);color:var(--fg);border:1px solid var(--line);box-shadow:0 8px 26px rgb(0 0 0 / .28);font:600 13px var(--f-ui)}
 .selbar[hidden]{display:none}
 /* the dictionary card beside a looked-up word (a sheet along the bottom on phones) */
@@ -929,6 +930,7 @@ kbd{font-family:var(--f-ui);font-size:12px;border:1px solid var(--line);border-b
 .selbar .hlc{width:26px;height:26px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0}
 .selbar .hlc[data-c="y"]{background:#ffd84a}.selbar .hlc[data-c="g"]{background:#6fd08a}.selbar .hlc[data-c="b"]{background:#7cb8ff}.selbar .hlc[data-c="p"]{background:#ff8fc0}
 .selbar .hlc[aria-pressed="true"]{border-color:var(--fg)}
+.selbar .hlc.hlu{background:none;color:var(--fg);font:700 15px/1 var(--f-read,Georgia,serif);text-decoration:underline 2.5px #cd2d2d;text-underline-offset:3px}
 .selbar .selsep{width:1px;height:20px;background:var(--line);margin:0 2px}
 .selbar .seltxt{border:0;background:none;color:inherit;font:inherit;padding:6px 8px;border-radius:999px;cursor:pointer}
 .selbar .seltxt:hover,.selbar .hlc:hover{background:var(--accent-soft)}
