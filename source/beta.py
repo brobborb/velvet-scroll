@@ -15,6 +15,7 @@ tag = f'''<div id="betaTag" style="position:fixed;left:50%;transform:translateX(
 font:600 11px/1.6 system-ui,sans-serif;letter-spacing:.06em;padding:0 9px;border-radius:9px;background:#c2410c;color:#fff;opacity:.85">BETA · {sha}</div>
 <script>document.title = 'BETA – ' + document.title;</script>
 '''
-h = open(B+'index.html').read(); h = h.replace('</body>', tag + '</body>', 1); open(B+'index.html', 'w').write(h)
+# the tag goes before the page's own closing </body> (the last one), never one inside the app's code
+h = open(B+'index.html').read(); h = (tag + '</body>').join(h.rsplit('</body>', 1)); open(B+'index.html', 'w').write(h)
 open(B+'.nojekyll', 'w').close()
 print('beta ready from', sha, note)

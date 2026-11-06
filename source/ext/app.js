@@ -2143,7 +2143,7 @@ function decodeText(u8, declared){
    DOCX is opened; ODT and Markdown are converted here. */
 const escHtml = t => String(t).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function docPage(title, author, body){
-  return `<!doctype html><html><head><meta charset="utf-8"><title>${escHtml(title || '')}</title>${author ? `<meta name="author" content="${escHtml(author)}">` : ''}</head><body>${body}</body></html>`;
+  return `<!doctype html><html><head><meta charset="utf-8"><title>${escHtml(title || '')}</title>${author ? `<meta name="author" content="${escHtml(author)}">` : ''}<\/head><body>${body}<\/body><\/html>`;   // written <\/ so no tool mistakes it for the page's own tags
 }
 function docZip(html, imgs){ const z = new JSZip(); z.file('book.html', html); for(const [p, d] of imgs) z.file(p, d); return z; }
 let mammothP = null;
