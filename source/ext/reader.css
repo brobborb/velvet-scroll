@@ -766,6 +766,7 @@ html.ax-hc .rail,html.ax-hc .rail-show{border:2px solid var(--rfg)}
 .reader.hand.grabbing .scroller{cursor:grabbing}
 .hzsel{grid-column:2 / span 2;border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:5px 8px;font-size:14px}
 .check{display:flex;gap:8px;align-items:center;font-size:14px;cursor:pointer}
+.langsel{align-self:flex-start;max-width:100%;color:var(--fg)}
 .check input{accent-color:var(--accent);width:16px;height:16px}
 .hint{margin:0;font-size:13px;color:var(--muted)}
 .chap+.chap{margin-top:2.5em;padding-top:2em;border-top:1px solid color-mix(in srgb,var(--rfg) 12%,transparent)}
