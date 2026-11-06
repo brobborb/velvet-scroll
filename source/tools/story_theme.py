@@ -142,6 +142,7 @@ def find_layout(ink):
     # thin rules either side of a centre ornament are too slight to count as clusters; include any ink in the middle band
     # (only whole marks that sit in the middle: not the edges of corner scenes, nor specks)
     for band in ([0, max([b[0].stop for b in tops] or [0])], [min([b[0].start for b in bots] or [Hh]), Hh]):
+        if band[1] <= band[0]: continue     # no ornament at this end (a drawing with only corner scenes)
         bl, bn = ndimage.label(on[band[0]:band[1]])
         marks = [(b[1].start, b[1].stop - 1) for i, b in enumerate(ndimage.find_objects(bl))
                  if b is not None and Ww*.22 <= b[1].start and b[1].stop <= Ww*.78 and (bl[b] == i + 1).sum() >= 30]
