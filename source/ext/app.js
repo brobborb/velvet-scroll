@@ -1876,7 +1876,8 @@ async function plusVerify(key){
 function plusShow(){
   $('#plusOff').hidden = !!PLUS; $('#plusOnBox').hidden = !PLUS;
   $('#plusWho').textContent = PLUS ? `Licensed to ${PLUS.n}${PLUS.d ? ', ' + new Date(PLUS.d).toLocaleDateString([], {day:'numeric', month:'long', year:'numeric'}) : ''}.` : '';
-  $('#plusOpen').classList.toggle('on', !!PLUS); $('#plusLbl').textContent = PLUS ? 'Plus ✓' : 'Plus';
+  $('#plusOpen').classList.toggle('on', !!PLUS); $('#plusLbl').textContent = PLUS ? 'Plus, unlocked' : 'Plus';
+  $('#plusOpen').title = PLUS ? 'Velvet Scroll Plus is unlocked. Thank you!' : 'Velvet Scroll Plus: a one-time purchase for extra features';
   for(const id of PLUS_ITEMS){ const b = document.getElementById(id); if(!b) continue; let t = b.querySelector('.plustag');
     if(!PLUS && !t){ t = el('span', {class:'plustag', text:'Plus'}); b.append(t); } else if(PLUS && t) t.remove(); }
 }
