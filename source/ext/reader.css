@@ -909,6 +909,27 @@ kbd{font-family:var(--f-ui);font-size:12px;border:1px solid var(--line);border-b
 .selbar{position:absolute;z-index:7;display:flex;align-items:center;gap:4px;padding:5px 6px;border-radius:999px;background:var(--surface);color:var(--fg);border:1px solid var(--line);box-shadow:0 8px 26px rgb(0 0 0 / .28);font:600 13px var(--f-ui)}
 .selbar[hidden]{display:none}
 /* the dictionary card beside a looked-up word (a sheet along the bottom on phones) */
+.mkbar{position:absolute;z-index:6;top:10px;left:50%;transform:translateX(-50%);display:flex;align-items:center;flex-wrap:wrap;justify-content:center;gap:2px 4px;max-width:calc(100% - 90px);padding:5px 8px;border-radius:14px;
+  background:color-mix(in srgb,var(--rbg) 88%,var(--rfg));color:var(--rfg);border:1px solid color-mix(in srgb,var(--rfg) 16%,transparent);box-shadow:0 6px 22px rgb(0 0 0 / .18)}
+.mkbar[hidden]{display:none}
+.mksep{width:1px;height:24px;background:color-mix(in srgb,var(--rfg) 18%,transparent);margin:0 3px}
+.mkcols{display:flex;gap:4px}
+.mkcols button{width:22px;height:22px;border-radius:50%;border:2px solid transparent;padding:0;cursor:pointer;box-shadow:inset 0 0 0 1px rgb(0 0 0 / .15)}
+.mkcols button[aria-checked=true]{border-color:var(--rfg)}
+.mkrange{display:flex;align-items:center;gap:6px;font:12px/1 var(--f-ui);padding:0 4px}
+.mkrange input{width:84px}
+.mkrange[hidden]{display:none}
+.mklayer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:2}
+.reader.marks-off .mklayer{display:none}
+.mklayer .mk-area{mix-blend-mode:multiply}
+.mklayer text{font-family:Helvetica,Arial,sans-serif;white-space:pre}
+.reader.marking .mklayer .mk{pointer-events:visiblePainted;cursor:move}
+.reader.marking .mklayer .mk-hit{pointer-events:stroke;cursor:move}
+.reader.marking.mk-draw .mklayer{pointer-events:all;cursor:crosshair;touch-action:none}
+.reader.marking.mk-text .mklayer{pointer-events:all;cursor:text}
+.reader.marking.mk-draw .mklayer .mk,.reader.marking.mk-text .mklayer .mk,.reader.marking.mk-draw .mklayer .mk-hit{pointer-events:none}
+.mklayer .mk-selbox{fill:none;stroke:var(--accent);stroke-width:1.5px;stroke-dasharray:5 3;vector-effect:non-scaling-stroke;pointer-events:none}
+.mkedit{position:absolute;z-index:5;min-width:80px;min-height:1.4em;padding:2px 4px;border:1.5px dashed var(--accent);background:color-mix(in srgb,#fff 70%,transparent);font-family:Helvetica,Arial,sans-serif;line-height:1.2;resize:both;outline:none;overflow:hidden}
 .defcard{position:absolute;z-index:7;width:min(400px,calc(100% - 16px));max-height:min(60%,460px);overflow:auto;padding:12px 14px 14px;border-radius:14px;background:var(--surface);color:var(--fg);border:1px solid var(--line);box-shadow:0 10px 30px rgb(0 0 0 / .22);font:15px/1.5 var(--f-ui)}
 .defcard[hidden]{display:none}
 .defhead{display:flex;align-items:baseline;gap:8px;position:sticky;top:-12px;background:var(--surface);padding-top:2px}

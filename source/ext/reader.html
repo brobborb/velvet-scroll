@@ -133,6 +133,21 @@
     <span class="selsep"></span>
     <button class="seltxt" id="selDef">Define</button><button class="seltxt" id="selNote">Note</button><button class="seltxt" id="selCopy">Copy</button><button class="seltxt" id="selDel" hidden>Delete</button>
   </div>
+  <div id="mkBar" class="mkbar" hidden role="toolbar" aria-label="Mark up">
+    <button class="rtool" data-tool="select" aria-pressed="false" title="Select: move, change or delete a mark" aria-label="Select marks"><svg viewBox="0 0 24 24"><path d="M5 3l14 8-6 1.5L10 19z"/></svg></button>
+    <button class="rtool" data-tool="text" aria-pressed="false" title="Add text: click where it goes" aria-label="Add text"><svg viewBox="0 0 24 24"><path d="M5 6V4h14v2M12 4v16M9 20h6"/></svg></button>
+    <button class="rtool" data-tool="pen" aria-pressed="false" title="Draw" aria-label="Draw"><svg viewBox="0 0 24 24"><path d="M4 20l1-4.5L16.5 4a2 2 0 0 1 3 3L8 18.5 4 20z"/><path d="M14 6.5l3 3"/></svg></button>
+    <button class="rtool" data-tool="area" aria-pressed="false" title="Highlight an area: drag across it" aria-label="Highlight an area"><svg viewBox="0 0 24 24"><rect x="3.5" y="6" width="17" height="12" rx="1.5" fill="currentColor" fill-opacity=".3"/></svg></button>
+    <span class="mksep"></span>
+    <span id="mkCols" class="mkcols" role="radiogroup" aria-label="Colour"></span>
+    <label class="mkrange" id="mkSizeWrap"><span id="mkSizeLbl">Size</span><input type="range" id="mkSize"></label>
+    <label class="mkrange" id="mkOpWrap"><span>Opacity</span><input type="range" id="mkOp" min="20" max="100" step="5"></label>
+    <span class="mksep"></span>
+    <button class="rtool" id="mkUndo" title="Undo (Ctrl+Z)" aria-label="Undo"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button>
+    <button class="rtool" id="mkDel" title="Delete the selected mark (Delete)" aria-label="Delete the selected mark" disabled><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>
+    <button class="rtool" id="mkEye" aria-pressed="false" title="Hide all marks" aria-label="Hide all marks"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
+    <button class="rbtn" id="mkDone">Done</button>
+  </div>
   <section id="defCard" class="defcard" hidden role="dialog" aria-labelledby="defWord" aria-live="polite">
     <div class="defhead"><h3 id="defWord"></h3><span id="defFrom" class="deffrom"></span><button type="button" class="rtool" id="defClose" title="Close (Esc)" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     <div id="defBody" class="defbody"></div>
@@ -167,6 +182,7 @@
     <button class="rtool rail-pages rail-pdf" id="railRot" title="Rotate pages" aria-label="Rotate pages clockwise"><svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg></button>
     <div class="rail-sep rail-pages rail-pdf"></div>
     <button class="rtool rail-pages rail-pdf" id="railDark" aria-pressed="false" title="Dark pages: dark paper and light text, pictures keep their colours" aria-label="Dark pages"><svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg></button>
+    <button class="rtool rail-pages rail-pdf" id="railMark" aria-pressed="false" title="Mark up: add text, draw, highlight an area" aria-label="Mark up"><svg viewBox="0 0 24 24"><path d="M4 20l1-4.5L16.5 4a2 2 0 0 1 3 3L8 18.5 4 20z"/><path d="M14 6.5l3 3"/></svg></button>
     <button class="rtool rail-pdf" id="railThumbs" title="Page thumbnails" aria-label="Page thumbnails"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="6.5" height="8" rx="1"/><rect x="13.5" y="3" width="6.5" height="8" rx="1"/><rect x="4" y="13" width="6.5" height="8" rx="1"/><rect x="13.5" y="13" width="6.5" height="8" rx="1"/></svg></button>
     <button class="rtool" id="railFind" title="Search (Ctrl+F)" aria-label="Search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.4-4.4"/></svg></button>
     <button class="rtool rail-pdf" id="railMore" title="More: print, download, details, trim margins" aria-label="More PDF tools" aria-haspopup="menu" aria-expanded="false"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/></svg></button>
@@ -174,9 +190,10 @@
   </nav>
   <div id="railMenu" class="railmenu" hidden role="menu" aria-label="More PDF tools">
     <button role="menuitemcheckbox" aria-checked="false" id="mTrim"><svg viewBox="0 0 24 24"><path d="M6 2v16h16M2 6h16v16"/></svg>Trim white margins</button>
+    <button role="menuitem" id="mRotL"><svg viewBox="0 0 24 24"><path d="M4 11a8 8 0 1 1 2.3 5.7"/><path d="M4 4v7h7"/></svg>Rotate anticlockwise</button>
     <button role="menuitem" id="mPrint"><svg viewBox="0 0 24 24"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="7"/></svg>Print…</button>
     <button role="menuitem" id="mSave"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>Download original</button>
-    <button role="menuitem" id="mSaveHl"><svg viewBox="0 0 24 24"><path d="M12 3v9M8 8.5l4 4 4-4M4 21h16"/><path d="M5 17h9" stroke-width="3.5" opacity=".45"/></svg>Download with highlights</button>
+    <button role="menuitem" id="mSaveHl"><svg viewBox="0 0 24 24"><path d="M12 3v9M8 8.5l4 4 4-4M4 21h16"/><path d="M5 17h9" stroke-width="3.5" opacity=".45"/></svg>Download with highlights and marks</button>
     <button role="menuitem" id="mInfo"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/></svg>Document details</button>
     <button role="menuitem" id="mOcr"><svg viewBox="0 0 24 24"><path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16M8 9.5h8M8 12h8M8 14.5h5"/></svg>Recognise text…</button>
   </div>
@@ -356,7 +373,7 @@
       <label class="check" id="tintRow"><input type="checkbox" id="sTint"> Tint pages to match the colours above</label>
       <label class="check" id="trimRow"><input type="checkbox" id="sTrim"> Trim white margins from pages</label>
       <p class="hint" id="pgHint">Text size, typeface and spacing apply when the PDF is shown as reflowed text.</p>
-      <div class="row pdftools" id="pdfTools" style="flex-wrap:wrap;gap:8px"><button class="btn" id="pdfPrintBtn">Print…</button><button class="btn" id="pdfSaveBtn">Download original</button><button class="btn" id="pdfSaveHlBtn">Download with highlights</button><button class="btn" id="pdfInfoBtn">Document details</button><button class="btn" id="pdfOcrBtn">Recognise text…</button></div>
+      <div class="row pdftools" id="pdfTools" style="flex-wrap:wrap;gap:8px"><button class="btn" id="pdfPrintBtn">Print…</button><button class="btn" id="pdfSaveBtn">Download original</button><button class="btn" id="pdfSaveHlBtn">Download with highlights and marks</button><button class="btn" id="pdfInfoBtn">Document details</button><button class="btn" id="pdfOcrBtn">Recognise text…</button></div>
     </div>
 
     <div class="grp">
