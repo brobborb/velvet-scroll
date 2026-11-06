@@ -1890,13 +1890,30 @@ function closePlusNow(){ $('#plusDlg').hidden = true; }
    On the website, Paddle's checkout opens over the page. The extensions don't load outside code, so there the
    button opens the website's checkout in a new tab. SANDBOX: Paddle's test environment (test cards, no real money). */
 const PADDLE = {env:'sandbox', token:'test_bb5e5ad9a4965e7c1ab4cd7ef75', price:'pri_01m6q111yt3w7wyxj12hfs8m3g',
-  site:'https://brobborb.github.io/velvet-scroll-beta/'};
+  site:'https://brobborb.github.io/velvet-scroll-beta/',
+  keys:''};   // the licence-key Worker (source/worker/velvet-scroll-keys.js), e.g. https://velvet-scroll-keys.NAME.workers.dev
 // the extensions get this stub: their checkout opens on the website instead (they never load outside code)
 function loadPaddle(){ return Promise.reject(new Error('The checkout opens on the website')); }
 
 function paddleEvent(ev){
   if(ev?.name !== 'checkout.completed') return;
-  const st = $('#plusSt'); st.textContent = 'Thank you! Your payment went through. Your licence key is on its way to your email; paste it in below when it arrives.';
+  const txn = ev.data?.transaction_id, st = $('#plusSt');
+  st.textContent = 'Thank you! Your payment went through. Getting your licence key…';
+  fetchPlusKey(txn, 0);
+}
+// ask the licence-key Worker for the buyer's key; Paddle can take a moment to mark the payment complete, so retry a few times
+async function fetchPlusKey(txn, tries){
+  const st = $('#plusSt');
+  const fallback = () => { st.textContent = 'Thank you! Your payment went through. Your licence key will be emailed to you; paste it in below when it arrives. If it doesn’t arrive, write to support@velvetscroll.net.'; };
+  if(!PADDLE.keys || !txn) return fallback();
+  try{
+    const r = await fetch(PADDLE.keys.replace(/\/$/, '') + '/key', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({transaction:txn})});
+    if(r.status === 402 && tries < 6){ setTimeout(() => fetchPlusKey(txn, tries + 1), 2500); return; }
+    const d = await r.json();
+    if(!r.ok || !d.key || !await plusUseKey(d.key)) throw new Error(d.error || 'no key');
+    $('#plusKeyShow').value = d.key; $('#plusKeyBox').hidden = false;
+    st.textContent = '';
+  }catch(e){ if(tries < 6) setTimeout(() => fetchPlusKey(txn, tries + 1), 2500); else fallback(); }
 }
 async function buyPlus(){
   const st = $('#plusSt');
@@ -1909,6 +1926,7 @@ async function buyPlus(){
   }catch(e){ st.textContent = 'The checkout couldn’t open. Check you’re online, then try again.'; }
 }
 $('#plusBuy').onclick = buyPlus;
+$('#plusKeyCopy').onclick = async () => { try{ await navigator.clipboard.writeText($('#plusKeyShow').value); toast('Licence key copied.', 2500); }catch(e){ $('#plusKeyShow').select(); } };
 // a link to the website with ?buy=plus (from the extensions or the Plus page) opens the Plus window and the checkout
 if(!IS_EXT && /[?&]buy=plus\b/.test(location.search)) setTimeout(() => { plusOpen(''); buyPlus(); history.replaceState(null, '', location.pathname); }, 600);
 // gate a feature: true when Plus is on, otherwise explain and offer it
@@ -1918,13 +1936,17 @@ $('#plusOpen').onclick = () => plusOpen('');
 $('#footPlus').onclick = e => { e.preventDefault(); plusOpen(''); };
 $('#plusClose').onclick = () => popLayer('plus');
 $('#plusDlg').addEventListener('click', e => { if(e.target === $('#plusDlg')) popLayer('plus'); });
+// unlock Plus with a key (pasted in, or fetched straight after buying); false if the key isn't valid
+async function plusUseKey(key){
+  const p = await plusVerify(key); if(!p) return false;
+  PLUS = p; LS.set('plusKey', key.replace(/\s+/g, '')); $('#plusKey').value = ''; plusShow(); render(); if(dlg) renderCoverChoices(); toast('Velvet Scroll Plus is unlocked. Thank you!', 4000);
+  if(gdOn) gdSync(false);
+  return true;
+}
 $('#plusApply').onclick = async () => {
   const st = $('#plusSt'), key = $('#plusKey').value.trim();
   if(!key){ st.textContent = 'Paste your licence key first.'; $('#plusKey').focus(); return; }
-  const p = await plusVerify(key);
-  if(!p){ st.textContent = 'That key isn’t valid. Check it was copied in full, starting with VSP1-.'; return; }
-  PLUS = p; LS.set('plusKey', key.replace(/\s+/g, '')); $('#plusKey').value = ''; plusShow(); render(); if(dlg) renderCoverChoices(); toast('Velvet Scroll Plus is unlocked. Thank you!', 4000);
-  if(gdOn) gdSync(false);
+  if(!await plusUseKey(key)){ st.textContent = 'That key isn’t valid. Check it was copied in full, starting with VSP1-.'; return; }
 };
 $('#plusRemove').onclick = () => { LS.set('plusKey', ''); PLUS = null; plusShow(); render(); $('#plusSt').textContent = 'The key was removed from this device. You can enter it again at any time.'; };
 

@@ -392,7 +392,8 @@ main.wrap{padding-block:20px 48px;display:flex;flex-direction:column;gap:16px}
 #plusOff{display:flex;flex-direction:column;gap:10px}
 #plusBuy:disabled{opacity:.55;cursor:default}
 #plusDlg .hint a{color:var(--accent);font-weight:600}
-#plusOff[hidden],#plusOnBox[hidden]{display:none}
+#plusOff[hidden],#plusOnBox[hidden],#plusKeyBox[hidden]{display:none}
+.pluskeybox{display:flex;flex-direction:column;gap:8px;margin:10px 0}
 .plustag{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:999px;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;background:var(--accent);color:var(--accent-fg);vertical-align:middle}
 #plusOpen.on{color:var(--accent)}
 @media (max-width:620px){ .plusgrid{grid-template-columns:minmax(0,1fr)} }
