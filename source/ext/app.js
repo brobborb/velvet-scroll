@@ -1891,7 +1891,7 @@ function closePlusNow(){ $('#plusDlg').hidden = true; }
    button opens the website's checkout in a new tab. SANDBOX: Paddle's test environment (test cards, no real money). */
 const PADDLE = {env:'sandbox', token:'test_bb5e5ad9a4965e7c1ab4cd7ef75', price:'pri_01m6q111yt3w7wyxj12hfs8m3g',
   site:'https://brobborb.github.io/velvet-scroll-beta/',
-  keys:''};   // the licence-key Worker (source/worker/velvet-scroll-keys.js), e.g. https://velvet-scroll-keys.NAME.workers.dev
+  keys:'https://velvet-scroll-keys.brobborb06.workers.dev'};   // the licence-key Worker (source/worker/velvet-scroll-keys.js), e.g. https://velvet-scroll-keys.NAME.workers.dev
 // the extensions get this stub: their checkout opens on the website instead (they never load outside code)
 function loadPaddle(){ return Promise.reject(new Error('The checkout opens on the website')); }
 
