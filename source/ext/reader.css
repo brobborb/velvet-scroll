@@ -597,6 +597,27 @@ body.dragging .drop{display:grid}
 .reader.story-port .story-art .pc.t{top:0;height:calc(var(--th) * var(--s));-webkit-mask-position:0 0,0 0;mask-position:0 0,0 0}
 .reader.story-port .story-art .pc.b{bottom:0;height:calc(var(--bh) * var(--s));-webkit-mask-position:0 100%,0 0;mask-position:0 100%,0 0}
 /* dark pages: the night drawing as foil stamped into the cloth */
+/* Borders: whole frames. The four corners keep their shape and the straight edges between them stretch, so the frame
+   fits any window, wide or tall, without breaking its lines */
+.story-art .pc.fx{display:none;--fade:linear-gradient(#000,#000)}
+.reader.story-frame .story-art .pc:not(.fx){display:none}
+.reader.story.story-frame .r-area>*{--s:min(calc(100cqh / var(--H)),calc(100cqw / var(--W)))}
+.reader.story.story-frame.story-port .r-area>*{--s:min(calc(100cqh / var(--H)),calc(100cqw / (2 * var(--cw) + 900)))}
+.reader.story-frame .story-art .pc.fx{display:block;--E:calc(100cqw - 2 * var(--cw) * var(--s));--F:calc(100cqh - 2 * var(--ch) * var(--s))}
+.reader.story-frame .story-art .pc.ftl,.reader.story-frame .story-art .pc.ftr,.reader.story-frame .story-art .pc.fbl,.reader.story-frame .story-art .pc.fbr{width:calc(var(--cw) * var(--s));height:calc(var(--ch) * var(--s))}
+.reader.story-frame .story-art .pc.ftl{left:0;top:0;-webkit-mask-position:0 0,0 0;mask-position:0 0,0 0}
+.reader.story-frame .story-art .pc.ftr{right:0;top:0;-webkit-mask-position:calc(-1 * (var(--W) - var(--cw)) * var(--s)) 0,0 0;mask-position:calc(-1 * (var(--W) - var(--cw)) * var(--s)) 0,0 0}
+.reader.story-frame .story-art .pc.fbl{left:0;bottom:0;-webkit-mask-position:0 calc(-1 * (var(--H) - var(--ch)) * var(--s)),0 0;mask-position:0 calc(-1 * (var(--H) - var(--ch)) * var(--s)),0 0}
+.reader.story-frame .story-art .pc.fbr{right:0;bottom:0;-webkit-mask-position:calc(-1 * (var(--W) - var(--cw)) * var(--s)) calc(-1 * (var(--H) - var(--ch)) * var(--s)),0 0;mask-position:calc(-1 * (var(--W) - var(--cw)) * var(--s)) calc(-1 * (var(--H) - var(--ch)) * var(--s)),0 0}
+.reader.story-frame .story-art .pc.fet,.reader.story-frame .story-art .pc.feb{left:calc(var(--cw) * var(--s) - 1px);right:calc(var(--cw) * var(--s) - 1px);height:calc(var(--ch) * var(--s));
+  -webkit-mask-size:calc((var(--E) + 2px) * var(--W) / (var(--W) - 2 * var(--cw))) calc(var(--H) * var(--s)),100% 100%;mask-size:calc((var(--E) + 2px) * var(--W) / (var(--W) - 2 * var(--cw))) calc(var(--H) * var(--s)),100% 100%}
+.reader.story-frame .story-art .pc.fet{top:0;-webkit-mask-position:calc(-1 * (var(--E) + 2px) * var(--cw) / (var(--W) - 2 * var(--cw))) 0,0 0;mask-position:calc(-1 * (var(--E) + 2px) * var(--cw) / (var(--W) - 2 * var(--cw))) 0,0 0}
+.reader.story-frame .story-art .pc.feb{bottom:0;-webkit-mask-position:calc(-1 * (var(--E) + 2px) * var(--cw) / (var(--W) - 2 * var(--cw))) calc(-1 * (var(--H) - var(--ch)) * var(--s)),0 0;mask-position:calc(-1 * (var(--E) + 2px) * var(--cw) / (var(--W) - 2 * var(--cw))) calc(-1 * (var(--H) - var(--ch)) * var(--s)),0 0}
+.reader.story-frame .story-art .pc.fel,.reader.story-frame .story-art .pc.fer{top:calc(var(--ch) * var(--s) - 1px);bottom:calc(var(--ch) * var(--s) - 1px);width:calc(var(--cw) * var(--s));
+  -webkit-mask-size:calc(var(--W) * var(--s)) calc((var(--F) + 2px) * var(--H) / (var(--H) - 2 * var(--ch))),100% 100%;mask-size:calc(var(--W) * var(--s)) calc((var(--F) + 2px) * var(--H) / (var(--H) - 2 * var(--ch))),100% 100%}
+.reader.story-frame .story-art .pc.fel{left:0;-webkit-mask-position:0 calc(-1 * (var(--F) + 2px) * var(--ch) / (var(--H) - 2 * var(--ch))),0 0;mask-position:0 calc(-1 * (var(--F) + 2px) * var(--ch) / (var(--H) - 2 * var(--ch))),0 0}
+.reader.story-frame .story-art .pc.fer{right:0;-webkit-mask-position:calc(-1 * (var(--W) - var(--cw)) * var(--s)) calc(-1 * (var(--F) + 2px) * var(--ch) / (var(--H) - 2 * var(--ch))),0 0;mask-position:calc(-1 * (var(--W) - var(--cw)) * var(--s)) calc(-1 * (var(--F) + 2px) * var(--ch) / (var(--H) - 2 * var(--ch))),0 0}
+.reader.story-frame.story-port .page:not(.pdfmode){max-width:var(--measure);padding-left:calc(var(--inner) * var(--s) + 14px);padding-right:calc(var(--inner) * var(--s) + 14px)}
 .reader.story-dark .story-art{--f1:#ecd194;--f2:#a9823f;filter:drop-shadow(0 1.4px 0 rgb(0 0 0 / .65))}
 .reader.story-dark[data-finish=silver] .story-art{--f1:#e6ebf3;--f2:#97a3b8}
 .reader.story-dark[data-finish=ink] .story-art{--f1:color-mix(in srgb,var(--rfg) 80%,var(--rbg));--f2:color-mix(in srgb,var(--rfg) 55%,var(--rbg))}
