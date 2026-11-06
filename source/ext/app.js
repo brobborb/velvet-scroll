@@ -1140,7 +1140,7 @@ async function openDetails(b){
   pushLayer('details');
   dlg = {b, fic:'', genre:'', results:[], custom:null, choice: b.coverBuf && b.coverSrc !== 'classic' ? {kind:'own'} : {kind:'classic', style: coverStyleOf(b)}};
   genreUI(b.fic || '', b.genre || '');
-  dModesSet(b.vis || '');
+  dModesSet(b.vis || ''); $('#dStory').value = b.story && (b.story === 'none' || storyOk(b.story)) ? b.story : '';
   $('#dTitle').value = b.title; $('#dAuthor').value = b.author || ''; $('#dYear').value = b.year || ''; $('#dIsbn').value = b.isbn || ''; isbnMsg();
   $('#dResults').replaceChildren(); $('#dStatus').textContent = '';
   $('#dSearch').hidden = !IS_EXT;
@@ -1217,10 +1217,13 @@ $('#dSave').onclick = async () => {
   b.title = $('#dTitle').value.trim() || b.title; b.author = $('#dAuthor').value.trim(); b.isbn = isbnClean($('#dIsbn').value);
   if(dlg.fic) b.fic = dlg.fic; else delete b.fic; if(dlg.fic && dlg.genre) b.genre = dlg.genre; else delete b.genre;
   const y = parseInt($('#dYear').value, 10); b.year = Number.isFinite(y) ? y : null;
+  const st = $('#dStory').value;
+  if(st && st !== 'none' && st !== (b.story || '') && !needPlus('A Story theme for each book')) return;
+  if(st) b.story = st; else delete b.story;
   const vis = dModes();
   if(vis) b.vis = vis; else delete b.vis;
   b.needsCheck = false; b.looked = true; b.upd = Date.now();
-  await dbPutMeta(b); closeDetails(); render();
+  await dbPutMeta(b); closeDetails(); render(); if(cur === b) applySettings(false);
   toast(vis && vis !== modeKey() ? `Details saved. This book now shows only in ${vis === 's' ? 'Study' : 'Relaxed'} mode, so it’s hidden here.` : 'Details saved.', vis && vis !== modeKey() ? 6000 : 3200);
 };
 
@@ -1689,7 +1692,7 @@ async function makeSyncCode(pw){
   const {hz, ttsVoice, ...settings} = S;   // the refresh rate and voice belong to each device
   const data = {app:'VS', v:1, t:Date.now(), st:LS.get('settingsT', 0), s:settings, m:pdfModes,
     b: books.filter(b => !b.sample && b.fp).map(b => { const pr = progress[b.id] || {};
-      return [b.fp, (b.title || '').slice(0, 90), (b.author || '').slice(0, 60), b.year || 0, b.isbn || '', b.shelf || '', b.upd || b.added || 0, +(pr.p || 0).toFixed(5), pr.t || 0, pr.pg || 0, pr.mode || '', b.vis || '']; })};
+      return [b.fp, (b.title || '').slice(0, 90), (b.author || '').slice(0, 60), b.year || 0, b.isbn || '', b.shelf || '', b.upd || b.added || 0, +(pr.p || 0).toFixed(5), pr.t || 0, pr.pg || 0, pr.mode || '', b.vis || '', b.story || '']; })};
   const json = new TextEncoder().encode(JSON.stringify(data));
   let body; try{ const z = await squeeze(json); body = new Uint8Array(z.length + 1); body[0] = 1; body.set(z, 1); }
   catch(e){ body = new Uint8Array(json.length + 1); body[0] = 0; body.set(json, 1); }
@@ -1713,12 +1716,12 @@ function syncMatch(fp, title, author, isbn){
 async function applySyncCode(data, useSettings){
   for(const b of books) await ensureFp(b);
   let places = 0, details = 0; const missing = [];
-  for(const [fp, title, author, year, isbn, shelf, upd, p, pt, pg, mode, vis] of data.b){
+  for(const [fp, title, author, year, isbn, shelf, upd, p, pt, pg, mode, vis, story] of data.b){
     const b = syncMatch(fp, title, author, isbn);
     if(!b){ missing.push(title + (author ? ' · ' + author : '')); continue; }
     // newer details win; so do any details at all when this copy has never been edited (it was only just added here)
-    const untouched = (b.upd || 0) - (b.added || 0) < 5000, differs = b.title !== title || (b.author || '') !== (author || '') || (b.year || 0) !== (year || 0) || (b.isbn || '') !== (isbn || '') || (b.shelf || '') !== (shelf || '') || (vis !== undefined && (b.vis || '') !== vis);
-    if(differs && ((upd || 0) > (b.upd || 0) || untouched)){ Object.assign(b, {title, author, year: year || null, isbn: isbn || b.isbn || '', shelf, upd: Math.max(upd || 0, b.upd || 0)}); if(vis !== undefined){ if(vis) b.vis = vis; else delete b.vis; } await dbPutMeta(b); details++; }
+    const untouched = (b.upd || 0) - (b.added || 0) < 5000, differs = b.title !== title || (b.author || '') !== (author || '') || (b.year || 0) !== (year || 0) || (b.isbn || '') !== (isbn || '') || (b.shelf || '') !== (shelf || '') || (vis !== undefined && (b.vis || '') !== vis) || (story !== undefined && (b.story || '') !== story);
+    if(differs && ((upd || 0) > (b.upd || 0) || untouched)){ Object.assign(b, {title, author, year: year || null, isbn: isbn || b.isbn || '', shelf, upd: Math.max(upd || 0, b.upd || 0)}); if(vis !== undefined){ if(vis) b.vis = vis; else delete b.vis; } if(story !== undefined){ if(story) b.story = story; else delete b.story; } await dbPutMeta(b); details++; }
     const lp = progress[b.id];
     if(pt && (!lp || pt > (lp.t || 0)) && !(cur && cur.id === b.id)){ setProgressRec(b.id, {p, t:pt, pg: pg || undefined, mode: mode || undefined}); places++; }
   }
@@ -1792,7 +1795,7 @@ function syncBook(b){
   gdMark(b);
   if(!syncOn || !b || !b.fp || b.sample) return;
   const pr = progress[b.id] || {};
-  syncQ.set('b:' + b.fp, {title:b.title, author:b.author || '', year:b.year || null, isbn:b.isbn || '', shelf:b.shelf || '', vis:b.vis || '', upd:b.upd || b.added || 0, p:pr.p || 0, pt:pr.t || 0, pg:pr.pg || null, mode:pr.mode || null});
+  syncQ.set('b:' + b.fp, {title:b.title, author:b.author || '', year:b.year || null, isbn:b.isbn || '', shelf:b.shelf || '', vis:b.vis || '', st:b.story || '', upd:b.upd || b.added || 0, p:pr.p || 0, pt:pr.t || 0, pg:pr.pg || null, mode:pr.mode || null});
   if(!syncTimer) syncTimer = setTimeout(syncFlush, 15000);   // at most every 15 seconds while reading
 }
 function syncSettings(){ gdMark(); if(!syncOn) return; const {hz, ...rest} = S; syncQ.set('settings', {t:LS.get('settingsT', Date.now()), s:rest}); if(!syncTimer) syncTimer = setTimeout(syncFlush, 15000); }
@@ -1812,7 +1815,7 @@ async function syncPull(){
     if(!k.startsWith('b:') || !v) continue;
     const b = books.find(x => x.fp === k.slice(2));
     if(!b){ missing.push(v); continue; }
-    if((v.upd || 0) > (b.upd || 0)){ Object.assign(b, {title:v.title || b.title, author:v.author, year:v.year, isbn:v.isbn || b.isbn || '', shelf:v.shelf, upd:v.upd}); if('vis' in v){ if(v.vis) b.vis = v.vis; else delete b.vis; } await dbPutMeta(b); changed = true; }
+    if((v.upd || 0) > (b.upd || 0)){ Object.assign(b, {title:v.title || b.title, author:v.author, year:v.year, isbn:v.isbn || b.isbn || '', shelf:v.shelf, upd:v.upd}); if('vis' in v){ if(v.vis) b.vis = v.vis; else delete b.vis; } if('st' in v){ if(v.st) b.story = v.st; else delete b.story; } await dbPutMeta(b); changed = true; }
     const lp = progress[b.id];
     if(v.pt && (!lp || v.pt > (lp.t || 0)) && !(cur && cur.id === b.id)){ setProgressRec(b.id, {p:v.p, t:v.pt, pg:v.pg || undefined, mode:v.mode || undefined}); changed = true; }
   }
@@ -1878,6 +1881,7 @@ function plusShow(){
   $('#plusWho').textContent = PLUS ? `Licensed to ${PLUS.n}${PLUS.d ? ', ' + new Date(PLUS.d).toLocaleDateString([], {day:'numeric', month:'long', year:'numeric'}) : ''}.` : '';
   $('#plusOpen').classList.toggle('on', !!PLUS); $('#plusLbl').textContent = PLUS ? 'Plus, unlocked' : 'Plus';
   $('#plusOpen').title = PLUS ? 'Velvet Scroll Plus is unlocked. Thank you!' : 'Velvet Scroll Plus: a one-time purchase for extra features';
+  storyUI(); if(!R.hidden) storyFrame();
   for(const id of PLUS_ITEMS){ const b = document.getElementById(id); if(!b) continue; let t = b.querySelector('.plustag');
     if(!PLUS && !t){ t = el('span', {class:'plustag', text:'Plus'}); b.append(t); } else if(PLUS && t) t.remove(); }
 }
@@ -1940,6 +1944,7 @@ $('#plusDlg').addEventListener('click', e => { if(e.target === $('#plusDlg')) po
 // unlock Plus with a key (pasted in, or fetched straight after buying); false if the key isn't valid
 async function plusUseKey(key){
   const p = await plusVerify(key); if(!p) return false;
+  if(storyTry && !S.story){ S.story = storyTry; } storyTry = null;
   PLUS = p; LS.set('plusKey', key.replace(/\s+/g, '')); $('#plusKey').value = ''; plusShow(); render(); if(dlg) renderCoverChoices(); toast('Velvet Scroll Plus is unlocked. Thank you!', 4000);
   if(gdOn) gdSync(false);
   return true;
@@ -2008,7 +2013,7 @@ async function gdData(){
   for(const b of books) if(!b.sample && b.fp && notesAll[b.id] && notesAll[b.id].length) n[b.fp] = notesAll[b.id];
   return {app:'VS', v:1, t:Date.now(), st:LS.get('settingsT', 0), s:settings, m:pdfModes, n, au:authorsAll,
     b: books.filter(b => !b.sample && b.fp).map(b => { const pr = progress[b.id] || {};
-      return [b.fp, (b.title || '').slice(0, 200), (b.author || '').slice(0, 120), b.year || 0, b.isbn || '', b.shelf || '', b.upd || b.added || 0, +(pr.p || 0).toFixed(5), pr.t || 0, pr.pg || 0, pr.mode || '', b.vis || '']; })};
+      return [b.fp, (b.title || '').slice(0, 200), (b.author || '').slice(0, 120), b.year || 0, b.isbn || '', b.shelf || '', b.upd || b.added || 0, +(pr.p || 0).toFixed(5), pr.t || 0, pr.pg || 0, pr.mode || '', b.vis || '', b.story || '']; })};
 }
 async function gdMerge(remote){
   const st = LS.get('settingsT', 0), useSettings = !!remote.s && (remote.st || 0) > st;
@@ -2980,6 +2985,179 @@ $('#apReset').onclick = () => setHome({...HOME_DEFAULT});
 $('#apAccentC').addEventListener('input', e => setHome({accent:e.target.value}));
 $('#apBgC').addEventListener('input', e => setHome({bg:e.target.value}));
 
+/* ---------- Story mode (Plus): illustrated pages ----------
+   Light pages are framed by a pencil drawing, dark pages by the same scene drawn for night, stamped like foil.
+   Wide windows show the whole drawing around the text; tall ones show one scene at the top and one at the bottom,
+   moving round the four corners and centre pieces chapter by chapter. Watercolour themes and the reader's own
+   pictures fill the page behind the text. The drawings are tables made by source/tools/story_theme.py and
+   story_cycle.py (the same as story-preview.html). Without Plus, any theme can be tried while a book is open. */
+const ST_THEMES = [["Classic Collection", [["moor", "Moorland: Wuthering Heights, Jane Eyre"], ["jungle", "Jungle: Kipling, adventure, nature"], ["sea", "Sea: Moby-Dick, sea stories"], ["pirate", "Pirates: Treasure Island, swashbucklers"], ["river", "River: Huckleberry Finn, Tom Sawyer"], ["quixote", "La Mancha: Don Quixote"], ["nursery", "Nursery: picture books, bedtime stories"], ["alice", "Wonderland: Alice, Through the Looking-Glass"], ["fantasy", "Fantasy: myths, legends, quests"], ["witch", "Witchcraft: magic, spells, school stories"], ["haunt", "Gothic: ghost stories, haunted houses"]]], ["History", [["rome", "Ancient Rome: history, the classical world"], ["greece", "Ancient Greece: history, myth, philosophy"]]], ["Modern", [["western", "Western: cowboys, outlaws, frontier towns"], ["plains", "Plains: frontier and Native American stories"], ["deco", "Art Deco conservatory: 1920s–30s, romance, travel"], ["boudoir", "Boudoir: romance, 1920s–50s glamour"], ["spy", "Espionage: spies, Cold War thrillers"], ["noir", "Noir: crime, detective stories"], ["harbour", "Harbour noir: coastal mysteries"], ["jazz", "Jazz Age: Gatsby, 1920s–40s"], ["scifi", "Science fiction: space, the future"], ["flight", "Flight: aviation, travel, adventure"], ["cyber", "Cyberpunk: androids, neon futures"], ["tokyo", "Neon city: cyberpunk, modern thrillers"]]], ["Watercolour", [["london", "London by night: mysteries, detectives"], ["japan", "Japan: classics, haiku, travel"], ["fantasy-wc", "Fantasy: myths, legends, quests"], ["pirate-wc", "Pirates: treasure, adventures at sea"], ["scifi-wc", "Science fiction: other worlds, the future"]]], ["Your own", [["custom", "Your own pictures"]]]];
+const ST_LAND = {noir:{W:2560, H:1440, lw:475, rx:2034, tx:849, tw:871, th:162, by:1257, bh:183}, fantasy:{W:2560, H:1440, lw:640, rx:1904, tx:676, tw:1209, th:203, by:1199, bh:241}};
+Object.assign(ST_LAND, {
+  jungle:{light:{W:2560, H:1440, lw:641, rx:1913, tx:623, tw:1314, th:183, by:1331, bh:109}, dark:{W:2560, H:1440, lw:641, rx:1913, tx:559, tw:1445, th:200, by:1326, bh:114}},
+  nursery:{W:2560, H:1440, lw:604, rx:1921, tx:950, tw:662, th:192, by:1260, bh:180},
+  boudoir:{W:2560, H:1440, lw:486, rx:2062, tx:514, tw:1532, th:152, by:1296, bh:144},
+  quixote:{W:2560, H:1440, lw:700, rx:1915, tx:836, tw:888, th:279, by:1189, bh:251},
+  moor:{W:2560, H:1440, lw:553, rx:1930, tx:648, tw:1264, th:178, by:1228, bh:212},
+  river:{W:2560, H:1440, lw:593, rx:1905, tx:863, tw:825, th:189, by:1191, bh:249},
+  alice:{W:2560, H:1440, lw:551, rx:2005, tx:744, tw:1066, th:168, by:1212, bh:228},
+  sea:{W:2560, H:1440, lw:608, rx:1991, tx:695, tw:1171, th:275, by:1143, bh:297},
+  scifi:{W:2560, H:1440, lw:706, rx:1838, tx:630, tw:1299, th:253, by:1136, bh:304},
+  spy:{W:2560, H:1440, lw:666, rx:1904, tx:883, tw:794, th:251, by:1175, bh:265},
+  western:{W:2560, H:1440, lw:648, rx:1883, tx:803, tw:954, th:274, by:1210, bh:230},
+  plains:{W:2560, H:1440, lw:613, rx:1904, tx:816, tw:928, th:334, by:1140, bh:300},
+  cyber:{W:2560, H:1440, lw:634, rx:1890, tx:716, tw:1128, th:227, by:1093, bh:347},
+  witch:{W:2560, H:1440, lw:778, rx:1783, tx:630, tw:1299, th:259, by:1290, bh:150},
+  pirate:{W:2560, H:1440, lw:563, rx:2011, tx:973, tw:609, th:233, by:1202, bh:238},
+  haunt:{W:2560, H:1440, lw:547, rx:2056, tx:915, tw:721, th:168, by:1212, bh:228},
+  deco:{W:2560, H:1440, lw:533, rx:2027, tx:517, tw:1528, th:201, by:1248, bh:192},
+  greece:{light:{W:2560, H:1440, lw:579, rx:1966, tx:586, tw:1392, th:250, by:1167, bh:273}, dark:{W:2560, H:1440, lw:626, rx:1926, tx:563, tw:1457, th:223, by:1169, bh:271}},
+  rome:{light:{W:2560, H:1440, lw:578, rx:1984, tx:650, tw:1266, th:259, by:1193, bh:247}, dark:{W:2560, H:1440, lw:507, rx:2058, tx:522, tw:1516, th:266, by:1181, bh:259}},
+  flight:{light:{W:2560, H:1440, lw:457, rx:2126, tx:655, tw:1251, th:225, by:1290, bh:150}, dark:{W:2560, H:1440, lw:456, rx:2128, tx:659, tw:1243, th:225, by:1290, bh:150}},
+  harbour:{light:{W:2560, H:1440, lw:536, rx:2030, tx:564, tw:1433, th:196, by:1248, bh:192}, dark:{W:2560, H:1440, lw:473, rx:2061, tx:610, tw:1342, th:167, by:1258, bh:182}},
+  jazz:{light:{W:2560, H:1440, lw:467, rx:2085, tx:651, tw:1251, th:146, by:1255, bh:185}, dark:{W:2560, H:1440, lw:453, rx:2100, tx:757, tw:1045, th:148, by:1248, bh:192}},
+  tokyo:{light:{W:2560, H:1440, lw:476, rx:2048, tx:646, tw:1279, th:142, by:1276, bh:164}, dark:{W:2560, H:1440, lw:501, rx:2050, tx:628, tw:1306, th:160, by:1263, bh:177}}});
+const ST_CYC = {spy:{d1:[356, 356], d2:[356, 356], ct:[332, 160], cb:[160, 332]}, western:{d1:[356, 356], d2:[356, 356], ct:[286, 160], cb:[160, 266]}, plains:{d1:[356, 356], d2:[356, 356], ct:[289, 160], cb:[160, 332]}, noir:{d1:[356, 356], d2:[356, 356], ct:[332, 160], cb:[160, 332]}, fantasy:{d1:[356, 356], d2:[356, 356], ct:[332, 160], cb:[160, 252]}, nursery:{d1:[356, 356], d2:[356, 356], ct:[316, 160], cb:[160, 262]}, boudoir:{d1:[356, 356], d2:[356, 356], ct:[130, 160], cb:[160, 124]}, quixote:{d1:[356, 356], d2:[356, 356], ct:[332, 160], cb:[160, 290]}, moor:{d1:[356, 356], d2:[356, 356], ct:[288, 160], cb:[160, 192]}, river:{d1:[356, 356], d2:[356, 356], ct:[332, 160], cb:[160, 279]}, alice:{d1:[356, 356], d2:[356, 356], ct:[250, 160], cb:[160, 218]}, sea:{d1:[356, 356], d2:[356, 356], ct:[332, 160], cb:[160, 275]}, scifi:{d1:[356, 356], d2:[356, 356], ct:[332, 160], cb:[160, 332]}, cyber:{d1:[356, 356], d2:[356, 356], ct:[256, 160], cb:[160, 332]}, witch:{d1:[313, 356], d2:[310, 356], ct:[332, 160], cb:[160, 201]}, pirate:{d1:[356, 356], d2:[356, 356], ct:[332, 160], cb:[160, 332]}, haunt:{d1:[356, 356], d2:[356, 356], ct:[332, 160], cb:[160, 321]}, deco:{d1:[356, 356], d2:[356, 356], ct:[173, 160], cb:[160, 168]}, jungle:{d1:[356, 356], d2:[356, 356], ct:[332, 160]}, greece:{d1:[356, 356], d2:[356, 356], ct:[212, 160], cb:[160, 332]}, rome:{d1:[356, 356], d2:[356, 356], ct:[332, 160], cb:[160, 332]}, flight:{d1:[356, 356], d2:[356, 356], ct:[206, 160], cb:[160, 332]}, harbour:{d1:[356, 356], d2:[356, 356], ct:[174, 160], cb:[160, 180]}, jazz:{d1:[356, 356], d2:[356, 356], ct:[144, 160], cb:[160, 196]}, tokyo:{d1:[356, 356], d2:[356, 356], ct:[160, 160], cb:[160, 179]}};
+const ST_FINISH = {deco:'gold', flight:'silver', scifi:'silver', noir:'silver', jazz:'silver', harbour:'silver', tokyo:'silver', gothic:'silver', haunt:'silver', witch:'silver', cyber:'silver', spy:'silver'};
+const ST_WC = {london:{light:{bg:'#fdf1e6', fg:'#2f2a35'}, dark:{bg:'#0a2342', fg:'#e6e1d4'}},
+  japan:{light:{bg:'#fdedd9', fg:'#33282a'}, dark:{bg:'#052347', fg:'#ebe3d6'}, tp:'center 12%', fp:'left 55%'},
+  'scifi-wc':{file:'scifi', light:{bg:'#fde8cc', fg:'#33272a'}, dark:{bg:'#0d1f4a', fg:'#ebe3d6'}, tp:'center 40%', fp:'left 45%'},
+  'pirate-wc':{file:'pirate', light:{bg:'#fdedd6', fg:'#33272a'}, dark:{bg:'#0b1f4a', fg:'#ebe3d6', tp:'center 58%'}, tp:'center 22%', fp:'left 85%'},
+  'fantasy-wc':{file:'fantasy', light:{bg:'#fdedd6', fg:'#33272a'}, dark:{bg:'#002042', fg:'#ebe3d6', tp:'center 58%'}, tp:'center 28%', fp:'left 22%'}};
+const ST_DEF = {on:false, theme:'moor', finish:'auto', art:85};
+let storyTry = null, storyChap = 0;
+const storyOk = t => !!(ST_LAND[t] || ST_WC[t] || t === 'custom');
+const storyCfg = () => { const c = {...ST_DEF, ...((PLUS ? S.story : storyTry) || {})}; if(!storyOk(c.theme)) c.theme = ST_DEF.theme; return c; };
+function storySet(k, v){ const c = {...storyCfg(), [k]:v}; if(PLUS){ S.story = c; applySettings(); } else { storyTry = c; applySettings(false); } }
+// a book can have a theme of its own ('none': plain pages for that book), chosen in its Details
+const storyBook = () => cur && cur.story && (cur.story === 'none' || storyOk(cur.story)) ? cur.story : '';
+const storyTheme = () => { const b = storyBook(); return b && b !== 'none' && PLUS ? b : storyCfg().theme; };
+const storyName = t => { for(const [, list] of ST_THEMES) for(const [v, n] of list) if(v === t) return n.split(':')[0]; return t; };
+function storyActive(){
+  if(IS_EXT || R.hidden || !cur || hcMode() !== 'off' || comic || (pdfDoc && pdfMode === 'pages')) return false;
+  const b = storyBook(); if(b === 'none') return false;
+  return storyCfg().on || !!(b && PLUS);
+}
+const stPre = new Set();
+function storyPreload(u){ if(stPre.has(u)) return; stPre.add(u); const i = new Image(); i.src = u; }
+function storyFrame(){
+  const A = $('#rArea'), art = $('#storyArt'), on = storyActive(), rc = readerCols();
+  R.style.setProperty('--rbg', rc.bg); R.style.setProperty('--rfg', rc.fg);
+  for(const c of ['story', 'story-port', 'story-dark', 'story-wc', 'story-user', 'story-cin', 'story-sweep']) R.classList.remove(c);
+  art.hidden = !on; if(!on) return;
+  const th = storyTheme(), cfg = storyCfg(), dark = isDark(rc.bg), tone = dark ? 'dark' : 'light', set = (k, v) => A.style.setProperty('--' + k, v);
+  const port = A.clientWidth <= A.clientHeight;
+  R.classList.add('story'); R.classList.toggle('story-port', port); R.classList.toggle('story-dark', dark);
+  R.classList.toggle('story-cin', !isSweep() && !isPages()); R.classList.toggle('story-sweep', isSweep());
+  if(th === 'custom' || ST_WC[th]){
+    R.classList.add('story-wc');
+    if(th === 'custom'){ R.classList.add('story-user'); storyUserFrame(tone, set); }
+    else { const W = ST_WC[th], c = W[tone], u = n => `url(story/wc/${W.file || th}${n}-${tone}.webp)`;
+      R.style.setProperty('--rbg', c.bg); R.style.setProperty('--rfg', c.fg);
+      set('wcimg', u('')); set('wctop', u('-top')); set('wcfoot', u('-foot')); set('wctp', c.tp || W.tp || 'center 40%'); set('wcfp', c.fp || W.fp || 'left 65%'); }
+    set('colw', page.offsetWidth + 'px'); return;
+  }
+  set('art', cfg.art / 100); R.dataset.finish = cfg.finish === 'auto' ? (ST_FINISH[th] || 'gold') : cfg.finish;
+  // the night drawings were made on pure black, so with them the Night page is black too
+  if(dark && rc.bg.toLowerCase() === '#141414') R.style.setProperty('--rbg', '#000000');
+  if(!port){ const L = ST_LAND[th][tone] || ST_LAND[th];
+    for(const k of ['W', 'H', 'lw', 'rx', 'tx', 'tw', 'th', 'by', 'bh']) set(k, L[k]);
+    set('tt', L.th); set('tb', L.bh); set('side', Math.max(L.lw, L.W - L.rx)); set('img', `url(story/${th}-land-${tone}.webp)`);
+  } else { const C = ST_CYC[th], cyc = ['d1', 'ct', 'd2', 'cb'].filter(v => C[v]), v = cyc[storyChap % cyc.length], [t, b] = C[v];
+    set('W', 1440); set('H', 2560); set('th', t); set('bh', b);
+    // the text keeps the same space all the way through, whichever scene is showing
+    set('tt', Math.max(...cyc.map(x => C[x][0])) - 10); set('tb', Math.max(...cyc.map(x => C[x][1])) - 30);
+    set('img', `url(story/${th}-${v}-${tone}.webp)`); storyPreload(`story/${th}-${cyc[(storyChap + 1) % cyc.length]}-${tone}.webp`); }
+}
+// tall screens show the next scene when a new chapter starts
+function storyChapter(i){ i = Math.max(0, i); if(i === storyChap) return; storyChap = i; if(R.classList.contains('story-port') && !R.classList.contains('story-wc')) storyFrame(); }
+if(typeof ResizeObserver !== 'undefined') new ResizeObserver(() => { if(R.hidden || !R.classList.contains('story')) return;
+  const A = $('#rArea'); if((A.clientWidth <= A.clientHeight) !== R.classList.contains('story-port') || R.classList.contains('story-wc')) storyFrame(); }).observe($('#rArea'));
+
+// ---- your own pictures: kept only on this device (IndexedDB, shared with the Story preview page), never uploaded ----
+// each picture: {id, day:{blob,bg,url}, night:{...}|null, veil, dim, pos}; UP.cur is the one in use
+const UP = {list:[], cur:null, loaded:false};
+const upNow = () => UP.list.find(p => p.id === UP.cur) || null;
+const upDB = () => new Promise((ok, no) => { try{ const r = indexedDB.open('vs-story-pictures', 2); r.onupgradeneeded = () => { if(!r.result.objectStoreNames.contains('p')) r.result.createObjectStore('p'); }; r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error); }catch(e){ no(e); } });
+const upStrip = v => v ? {blob:v.blob, bg:v.bg} : null;
+async function upSave(){ try{ const db = await upDB(), st = db.transaction('p', 'readwrite').objectStore('p');
+  st.put({order:UP.list.map(p => p.id), cur:UP.cur}, 'meta');
+  for(const p of UP.list) st.put({day:upStrip(p.day), night:upStrip(p.night), veil:p.veil, dim:p.dim, pos:p.pos}, 'pic:' + p.id); }catch(e){} }
+async function upDel(id){ try{ const db = await upDB(); db.transaction('p', 'readwrite').objectStore('p').delete('pic:' + id); }catch(e){} }
+async function upLoad(){ if(UP.loaded) return; UP.loaded = true;
+  try{ const db = await upDB(), st = db.transaction('p').objectStore('p'), get = k => new Promise(ok => { const r = st.get(k); r.onsuccess = () => ok(r.result); r.onerror = () => ok(null); });
+    const url = v => v ? {...v, url:URL.createObjectURL(v.blob)} : null, meta = await get('meta');
+    if(meta){ for(const id of meta.order){ const v = await get('pic:' + id); if(v && v.day) UP.list.push({id, day:url(v.day), night:url(v.night), veil:v.veil ?? 60, dim:v.dim ?? 0, pos:v.pos ?? 50}); } UP.cur = meta.cur; }
+    if(!upNow() && UP.list.length) UP.cur = UP.list[0].id; }catch(e){}
+  upRender(); storyFrame(); }
+// shrink to at most 2560 px wide and find the colour of the middle, where the text sits
+async function upPrepare(file){
+  const img = await createImageBitmap(file), k = Math.min(1, 2560 / img.width), w = Math.round(img.width * k), h = Math.round(img.height * k);
+  const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'); g.drawImage(img, 0, 0, w, h);
+  const d = g.getImageData(Math.round(w * .38), Math.round(h * .3), Math.max(1, Math.round(w * .24)), Math.max(1, Math.round(h * .4))).data;
+  let r = 0, gg = 0, b = 0, n = 0; for(let i = 0; i < d.length; i += 16){ r += d[i]; gg += d[i+1]; b += d[i+2]; n++; }
+  const hex = v => Math.round(v / n).toString(16).padStart(2, '0'), bg = '#' + hex(r) + hex(gg) + hex(b);
+  const blob = await new Promise(ok => c.toBlob(ok, 'image/webp', .82));
+  return {blob, bg, url:URL.createObjectURL(blob)};
+}
+const upDarker = (hex, f) => { const n = parseInt(hex.slice(1), 16); return '#' + [n >> 16, n >> 8 & 255, n & 255].map(v => Math.round(v * f).toString(16).padStart(2, '0')).join(''); };
+function storyUserFrame(tone, set){
+  // dark pages: the picture's night version if it has one, otherwise the picture dimmed well down
+  const p = upNow(), night = tone === 'dark', pic = p && (night && p.night ? p.night : p.day);
+  if(!pic){ set('wcimg', 'none'); return; }
+  const dimmed = night && !p.night, bright = (1 - p.dim / 100) * (dimmed ? .38 : 1), bg = dimmed ? upDarker(pic.bg, .16) : upDarker(pic.bg, bright);
+  set('wcimg', `url(${pic.url})`); set('wcbright', bright); set('veil', p.veil); set('wcpos', p.pos + '% center');
+  R.style.setProperty('--rbg', bg); R.style.setProperty('--rfg', isDark(bg) ? '#ece6da' : '#2a2622');
+}
+function upRender(){
+  const box = $('#stThumbs');
+  box.replaceChildren(...UP.list.map((p, i) => { const b = el('button', {type:'button', role:'radio', 'aria-checked':String(p.id === UP.cur), title:'Picture ' + (i + 1) + (p.night ? ' (with a night version)' : '')});
+    b.setAttribute('aria-label', b.title); b.style.backgroundImage = `url(${p.day.url})`; if(p.night) b.append(el('span', {class:'nt', text:'N'}));
+    b.onclick = () => { UP.cur = p.id; upSave(); upRender(); storyFrame(); }; return b; }));
+  const p = upNow(); $('#stNight').disabled = $('#stRemove').disabled = !p; $('#stNight').textContent = p?.night ? 'Change night version' : 'Night version';
+  for(const [id, k] of [['StVeil', 'veil'], ['StDim', 'dim'], ['StPos', 'pos']]){ const r = $('#s' + id); r.disabled = !p; if(p){ r.value = p[k]; $('#o' + id).value = p[k] + '%'; } }
+  $('#stAdd').textContent = UP.list.length ? 'Add another picture' : 'Add a picture';
+}
+let upWhich = 'add';
+const upPick = which => { upWhich = which; $('#stFile').value = ''; $('#stFile').click(); };
+$('#stAdd').onclick = () => upPick('add'); $('#stNight').onclick = () => upPick('night');
+$('#stFile').onchange = async e => { const f = e.target.files[0]; if(!f) return;
+  try{ const pic = await upPrepare(f);
+    if(upWhich === 'add'){ const id = 'p' + Date.now().toString(36); UP.list.push({id, day:pic, night:null, veil:60, dim:0, pos:50}); UP.cur = id; }
+    else { const p = upNow(); if(!p) return; if(p.night) URL.revokeObjectURL(p.night.url); p.night = pic; }
+    upSave(); upRender(); storyFrame();
+  }catch(err){ toast('Couldn’t open that picture. Try a JPEG, PNG or WebP image.', 4000); } };
+$('#stRemove').onclick = () => { const p = upNow(); if(!p) return;
+  for(const v of [p.day, p.night]) if(v) URL.revokeObjectURL(v.url);
+  const i = UP.list.indexOf(p); UP.list.splice(i, 1); upDel(p.id); UP.cur = (UP.list[i] || UP.list[i - 1] || {}).id ?? null; upSave(); upRender(); storyFrame(); };
+for(const [id, k] of [['StVeil', 'veil'], ['StDim', 'dim'], ['StPos', 'pos']]) $('#s' + id).oninput = e => { const p = upNow(); if(!p) return; p[k] = +e.target.value; $('#o' + id).value = p[k] + '%'; storyFrame(); clearTimeout(upSave.t); upSave.t = setTimeout(upSave, 400); };
+
+// ---- the Display panel's Story mode controls, and the theme lists ----
+function storyOptions(sel, extra){ sel.replaceChildren(...extra.map(([v, t]) => el('option', {value:v, text:t})),
+  ...ST_THEMES.map(([g, list]) => { const o = el('optgroup'); o.label = g; o.append(...list.map(([v, t]) => el('option', {value:v, text:t}))); return o; })); }
+storyOptions($('#sStoryTheme'), []);
+storyOptions($('#dStory'), [['', 'Same as Display (your usual theme)'], ['none', 'Plain pages for this book']]);
+function storyUI(){
+  $('#storyGrp').hidden = IS_EXT; $('#dStoryRow').hidden = IS_EXT; if(IS_EXT) return;
+  const c = storyCfg(), b = storyBook(), on = storyActive(), th = storyTheme(), wc = th === 'custom' || !!ST_WC[th];
+  $('#storyTag').hidden = !!PLUS; $('#sStory').checked = !!c.on; $('#storyOpts').hidden = !c.on && !on;
+  $('#sStoryTheme').value = c.theme; $('#storyInk').hidden = wc; $('#storyPics').hidden = th !== 'custom';
+  $('#sStoryFinish').value = c.finish; $('#sStoryArt').value = c.art; $('#oStoryArt').value = c.art + '%';
+  const note = $('#storyBookNote'); note.hidden = !(b && PLUS && !R.hidden);
+  note.textContent = b === 'none' ? 'This book is set to plain pages in its Details, so Story mode stays off while you read it.' : b ? `This book has its own theme, ${storyName(b)}, chosen in its Details. The theme above is for your other books.` : '';
+  const why = hcMode() !== 'off' ? 'Story mode is paused while high contrast is on.' : comic ? 'Story mode isn’t used for comics.' : pdfDoc && pdfMode === 'pages' ? 'Story mode is used when a PDF is shown as text.' : '';
+  $('#storyHint').textContent = why || (!PLUS ? 'Try any theme while this book is open. Keeping Story mode on for every book needs Velvet Scroll Plus.'
+    : wc ? 'The painting brings its own paper and ink colours. Choose a dark background colour above for the night painting.'
+    : 'Light background colours above show the pencil drawings; dark ones (Night, Midnight) show the night drawings.');
+  $('#storyTry').hidden = !!PLUS || !c.on;
+  if(th === 'custom') upLoad();
+}
+$('#sStory').onchange = e => storySet('on', e.target.checked);
+$('#sStoryTheme').onchange = e => { const v = e.target.value; storySet('theme', v);
+  if(v === 'custom') upLoad().then(() => { if(!UP.list.length) upPick('add'); }); };
+$('#sStoryFinish').onchange = e => storySet('finish', e.target.value);
+$('#sStoryArt').oninput = e => storySet('art', +e.target.value);
+$('#storyKeep').onclick = () => needPlus('Keeping Story mode on');
 function applySettings(save=true){
   S.home = {...HOME_DEFAULT, ...(S.home || {})}; applyAx(); applyHome();
   R.style.setProperty('--rsize', S.size+'px'); R.style.setProperty('--rlh', S.lh); R.style.setProperty('--measure', S.width+'ch');
@@ -3030,6 +3208,7 @@ function applySettings(save=true){
   try{ lensRefresh(true); }catch(e){}   // the magnifier may not be set up yet on first load
   if(sw && !playing && sw.sig !== sweepSig()) sweepEnd();
   document.querySelectorAll('.rng input[type=range]').forEach(r => r._nudgeSync && r._nudgeSync());
+  storyFrame(); storyUI();
   if(save){ LS.set('settings', S); LS.set('settingsT', Date.now()); syncSettings(); }
   updateStatus();
 }
@@ -3768,7 +3947,7 @@ function goTo(id){
 }
 function closeReader(){ popLayer('reader'); }
 function closeReaderNow(){
-  ttsStop();
+  ttsStop(); storyTry = null; storyChap = 0;
   setLens(false); setImmersive(false);
   if(R.hidden) return;
   pause(); hidePanels(); sweepEnd();
@@ -4629,7 +4808,7 @@ function updateStatus(){
       if(!tg || (tg.getBoundingClientRect().top - page.getBoundingClientRect().top) <= y) curIdx = i; }
   }
   const label = curIdx >= 0 ? tocItems[curIdx].label : (cur.author || '');
-  $('#rChap').textContent = label;
+  $('#rChap').textContent = label; storyChapter(curIdx);
   document.querySelectorAll('#toc button').forEach(b=>b.classList.toggle('cur', +b.dataset.i===curIdx));
   const now = Date.now(); if(ready && now - saveT > 1000){ saveT = now; saveCur(); }
 }

@@ -115,6 +115,8 @@
     <button id="findBtn" class="rbtn icon" aria-label="Search" title="Search (Ctrl+F)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.4-4.4"/></svg></button>
     <button id="fsBtn" class="rbtn icon" aria-label="Full screen" title="Full screen (F)"><svg id="icFs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><svg id="icFsOff" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg></button>
   </div>
+  <div class="r-area" id="rArea">
+  <div id="storyArt" class="story-art" aria-hidden="true" hidden><div class="pic"></div><div class="veil"></div><div class="pc l"></div><div class="pc r"></div><div class="pc t"></div><div class="pc b"></div></div>
   <div class="r-stage" id="stage">
     <div id="scroller" class="scroller" tabindex="-1" role="region" aria-label="Book text"><article id="page" class="page"></article></div>
     <div id="sweepFoot" class="sweep-foot" hidden></div>
@@ -189,6 +191,7 @@
     </div>
     <div id="loading" class="loading" hidden>Opening book…</div>
   </div>
+  </div>
   <div class="r-bottom chrome">
     <button id="play" class="play" aria-label="Start scrolling" title="Play (Space)">
       <svg id="icPlay" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg>
@@ -261,6 +264,30 @@
         <label>Text <input type="color" id="cFg"></label>
       </div>
       <div class="field"><label for="sBright">Brightness</label><input type="range" id="sBright" min="25" max="100" step="1"><output id="oBright"></output></div>
+    </div>
+
+    <div class="grp" id="storyGrp">
+      <span class="lbl">Story mode<span class="plustag" id="storyTag">Plus</span></span>
+      <label class="check"><input type="checkbox" id="sStory"> Illustrated pages</label>
+      <div class="grp" id="storyOpts" hidden>
+        <div class="field"><label for="sStoryTheme">Theme</label><select id="sStoryTheme" class="hzsel"></select></div>
+        <p class="hint" id="storyBookNote" hidden></p>
+        <div class="grp" id="storyPics" hidden>
+          <div class="stthumbs" id="stThumbs" role="radiogroup" aria-label="Your pictures"></div>
+          <div class="row" style="flex-wrap:wrap;gap:8px"><button class="btn" id="stAdd">Add a picture</button><button class="btn" id="stNight" title="Optional: a version of this picture for dark pages. Without one, the picture is dimmed.">Night version</button><button class="btn" id="stRemove">Remove</button></div>
+          <div class="field"><label for="sStVeil">Veil</label><input type="range" id="sStVeil" min="0" max="100" step="1"><output id="oStVeil"></output></div>
+          <div class="field"><label for="sStDim">Dim</label><input type="range" id="sStDim" min="0" max="80" step="1"><output id="oStDim"></output></div>
+          <div class="field"><label for="sStPos">Phone focus</label><input type="range" id="sStPos" min="0" max="100" step="1"><output id="oStPos"></output></div>
+          <p class="hint">Your pictures stay on this device. They’re never uploaded or synced. The veil is the page colour behind the text; Phone focus picks which part of the picture shows on a phone.</p>
+          <input type="file" id="stFile" accept="image/*" hidden>
+        </div>
+        <div class="grp" id="storyInk">
+          <div class="field"><label for="sStoryFinish">Dark pages</label><select id="sStoryFinish" class="hzsel"><option value="auto">The theme’s choice</option><option value="gold">Gold foil</option><option value="silver">Silver foil</option><option value="ink">Soft ink</option></select></div>
+          <div class="field"><label for="sStoryArt">Drawing</label><input type="range" id="sStoryArt" min="30" max="100" step="1"><output id="oStoryArt"></output></div>
+        </div>
+      </div>
+      <p class="hint" id="storyHint"></p>
+      <div class="row" id="storyTry" hidden style="flex-wrap:wrap;gap:8px"><button class="btn primary" id="storyKeep">Keep Story mode</button></div>
     </div>
 
     <div class="grp">
@@ -370,6 +397,7 @@
           </div>
         </div>
         <p class="hint" id="dModesHint" aria-live="polite"></p>
+        <div class="dstory" id="dStoryRow"><label for="dStory">Story mode</label><select id="dStory"></select></div>
       </div>
 
     <div class="grp dcov">

@@ -569,7 +569,68 @@ body.dragging .drop{display:grid}
 .r-title span{font-size:13px;opacity:.7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rbtn{border:1px solid color-mix(in srgb,var(--rfg) 20%,transparent);background:transparent;color:var(--rfg);border-radius:999px;padding:7px 13px;cursor:pointer;font-weight:700;font-size:14px;white-space:nowrap}
 .rbtn:hover{background:color-mix(in srgb,var(--rfg) 8%,transparent)}
-.r-stage{flex:1;min-height:0;position:relative;overflow:hidden}
+.r-area{flex:1;min-height:0;position:relative;container-type:size}
+.r-stage{position:absolute;inset:0;overflow:hidden}
+/* ---------- Story mode: a drawing around the text (stencils tinted with the page's ink), or a painting behind it ---------- */
+.story-art{position:absolute;inset:0;pointer-events:none;z-index:3;opacity:var(--art,.85);
+  --ink:color-mix(in srgb,var(--rfg) 78%,var(--rbg))}
+.story-art[hidden]{display:none}
+.reader.story .r-area>*{--s:calc(100cqh / var(--H))}
+.reader.story.story-port .r-area>*{--s:min(calc(100cqw / var(--W)),calc(100cqh / 1700))}
+.reader.story:not(.story-wc) .r-stage{top:calc((var(--tt) + 10) * var(--s));bottom:calc((var(--tb) + 20) * var(--s))}
+.reader.story.story-cin:not(.story-wc) .scroller{-webkit-mask-image:linear-gradient(transparent,#000 calc(40 * var(--s)),#000 calc(100% - 50 * var(--s)),transparent);mask-image:linear-gradient(transparent,#000 calc(40 * var(--s)),#000 calc(100% - 50 * var(--s)),transparent)}
+.reader.story:not(.story-wc):not(.story-port) .page:not(.pdfmode){max-width:min(var(--measure),calc(100cqw - 2 * (var(--side) - 90) * var(--s)))}
+.reader.story-port:not(.story-wc) .page:not(.pdfmode){max-width:min(var(--measure),calc(var(--W) * var(--s) * .92))}
+.story-art .pic,.story-art .veil{display:none}
+.story-art .pc{position:absolute;background:var(--ink);
+  -webkit-mask-image:var(--img),var(--fade,linear-gradient(#000,#000));mask-image:var(--img),var(--fade,linear-gradient(#000,#000));
+  -webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;
+  -webkit-mask-size:calc(var(--W) * var(--s)) calc(var(--H) * var(--s)),100% 100%;mask-size:calc(var(--W) * var(--s)) calc(var(--H) * var(--s)),100% 100%;
+  -webkit-mask-composite:source-in;mask-composite:intersect}
+.story-art .pc.l{left:0;top:0;width:calc(var(--lw) * var(--s));height:100%;-webkit-mask-position:0 0,0 0;mask-position:0 0,0 0;--fade:linear-gradient(90deg,#000 80%,transparent)}
+.story-art .pc.r{right:0;top:0;width:calc((var(--W) - var(--rx)) * var(--s));height:100%;-webkit-mask-position:calc(-1 * var(--rx) * var(--s)) 0,0 0;mask-position:calc(-1 * var(--rx) * var(--s)) 0,0 0;--fade:linear-gradient(270deg,#000 80%,transparent)}
+.story-art .pc.t{left:50%;top:0;width:calc(var(--tw) * var(--s));height:calc(var(--th) * var(--s));transform:translateX(-50%);-webkit-mask-position:calc(-1 * var(--tx) * var(--s)) 0,0 0;mask-position:calc(-1 * var(--tx) * var(--s)) 0,0 0;--fade:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)}
+.story-art .pc.b{left:50%;bottom:0;width:calc(var(--tw) * var(--s));height:calc(var(--bh) * var(--s));transform:translateX(-50%);-webkit-mask-position:calc(-1 * var(--tx) * var(--s)) calc(-1 * var(--by) * var(--s)),0 0;mask-position:calc(-1 * var(--tx) * var(--s)) calc(-1 * var(--by) * var(--s)),0 0;--fade:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent)}
+/* tall screens: one scene at the top and one at the bottom, the whole width of the page; it changes each chapter */
+.reader.story-port .story-art .pc.l,.reader.story-port .story-art .pc.r{display:none}
+.reader.story-port .story-art .pc.t,.reader.story-port .story-art .pc.b{left:50%;width:calc(var(--W) * var(--s));transform:translateX(-50%);--fade:linear-gradient(#000,#000)}
+.reader.story-port .story-art .pc.t{top:0;height:calc(var(--th) * var(--s));-webkit-mask-position:0 0,0 0;mask-position:0 0,0 0}
+.reader.story-port .story-art .pc.b{bottom:0;height:calc(var(--bh) * var(--s));-webkit-mask-position:0 100%,0 0;mask-position:0 100%,0 0}
+/* dark pages: the night drawing as foil stamped into the cloth */
+.reader.story-dark .story-art{--f1:#ecd194;--f2:#a9823f;filter:drop-shadow(0 1.4px 0 rgb(0 0 0 / .65))}
+.reader.story-dark[data-finish=silver] .story-art{--f1:#e6ebf3;--f2:#97a3b8}
+.reader.story-dark[data-finish=ink] .story-art{--f1:color-mix(in srgb,var(--rfg) 80%,var(--rbg));--f2:color-mix(in srgb,var(--rfg) 55%,var(--rbg))}
+.reader.story-dark .story-art .pc{background:linear-gradient(168deg,var(--f1) 0%,var(--f2) 38%,var(--f1) 62%,var(--f2) 100%)}
+/* watercolours and your own pictures: the painting is the page, with a soft veil of paper behind the text */
+.reader.story-wc .story-art{z-index:0;opacity:1;filter:none}
+.reader.story-wc .story-art .pc{display:none}
+.reader.story-wc .story-art .pic,.reader.story-wc .story-art .veil{display:block;position:absolute;inset:0}
+.reader.story-wc .story-art .pic{background:var(--rbg) var(--wcimg) center/cover no-repeat}
+.reader.story-wc .story-art .veil{background:radial-gradient(ellipse 34% 62% at 50% 52%,color-mix(in srgb,var(--rbg) 78%,transparent) 0%,color-mix(in srgb,var(--rbg) 40%,transparent) 60%,transparent 100%)}
+.reader.story-wc:not(.story-port) .page:not(.pdfmode){max-width:min(var(--measure),max(52cqw,30em))}
+.reader.story-wc.story-port:not(.story-user) .story-art .pic{display:none}
+.reader.story-wc.story-port .story-art .veil{display:none}
+.reader.story-wc.story-port .story-art::before,.reader.story-wc.story-port .story-art::after{content:"";position:absolute;left:0;right:0}
+.reader.story-wc.story-port .story-art::before{top:0;height:25cqh;background:var(--wctop) var(--wctp,center 40%)/cover no-repeat;-webkit-mask:linear-gradient(#000 55%,transparent);mask:linear-gradient(#000 55%,transparent)}
+.reader.story-wc.story-port .story-art::after{bottom:0;height:24cqh;background:var(--wcfoot) var(--wcfp,left 65%)/cover no-repeat;-webkit-mask:linear-gradient(transparent,#000 45%);mask:linear-gradient(transparent,#000 45%)}
+.reader.story-wc.story-port .r-stage{top:17cqh;bottom:23cqh}
+.reader.story-wc.story-port.story-cin .scroller{-webkit-mask-image:linear-gradient(transparent,#000 5cqh,#000 calc(100% - 5cqh),transparent);mask-image:linear-gradient(transparent,#000 5cqh,#000 calc(100% - 5cqh),transparent)}
+.reader.story-user .story-art .pic{background:var(--rbg) var(--wcimg) var(--wcpos,center) / cover no-repeat;filter:brightness(var(--wcbright,1))}
+.reader.story-user .story-art .veil{background:radial-gradient(ellipse calc(30% + var(--veil) * .4%) calc(56% + var(--veil) * .4%) at 50% 50%,color-mix(in srgb,var(--rbg) calc(var(--veil) * 1%),transparent) 0%,color-mix(in srgb,var(--rbg) calc(var(--veil) * .6%),transparent) 62%,transparent 100%),color-mix(in srgb,var(--rbg) calc(var(--veil) * .22%),transparent)}
+.reader.story-user.story-port .story-art .pic{background:var(--rbg) var(--wcimg) var(--wcpos,center) / cover no-repeat}
+.reader.story-user.story-port .story-art .veil{display:block;background:color-mix(in srgb,var(--rbg) calc(32% + var(--veil) * .65%),transparent)}
+.reader.story-user.story-port .story-art::before,.reader.story-user.story-port .story-art::after{display:none}
+.reader.story-user.story-port .r-stage{top:0;bottom:0}
+.reader.story-user.story-port .scroller{-webkit-mask-image:none;mask-image:none}
+/* page sweep over a painting: the page is a column of paper, and the sweep only covers that column */
+.reader.story-wc .sweep-cover,.reader.story-wc .sweep-head,.reader.story-wc .sweep-foot{left:max(0px,calc(50% - var(--colw,100%) / 2));right:auto;width:min(100%,var(--colw,100%))}
+.reader.story-wc.story-sweep .r-stage::before{content:"";position:absolute;top:0;bottom:0;left:max(0px,calc(50% - var(--colw,100%) / 2));width:min(100%,var(--colw,100%));background:var(--rbg);box-shadow:0 0 28px 14px var(--rbg)}
+.stthumbs{display:flex;flex-wrap:wrap;gap:6px}
+.stthumbs button{width:56px;height:36px;padding:0;border-radius:6px;background:var(--line) center/cover no-repeat;border:2px solid transparent;cursor:pointer;position:relative}
+.stthumbs button[aria-checked=true]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.stthumbs .nt{position:absolute;right:2px;bottom:2px;font:700 9px/1 var(--f-ui);background:#0b1f4a;color:#e9e4d8;padding:2px 3px;border-radius:3px}
+.dstory{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:10px;font-size:14px}
+.dstory select{border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:6px;padding:6px 8px;font:inherit;min-width:0}
 .scroller{position:absolute;inset:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-color:color-mix(in srgb,var(--rfg) 30%,transparent) transparent}
 .page{position:relative;max-width:var(--measure);margin:0 auto;padding:30vh max(20px,env(safe-area-inset-right,0px)) 75vh max(20px,env(safe-area-inset-left,0px));font-family:var(--rfont);font-size:var(--rsize);line-height:var(--rlh);color:var(--rfg);overflow-wrap:break-word;hyphens:auto}
 .page p{margin:0 0 .75em}
