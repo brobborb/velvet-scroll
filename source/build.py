@@ -29,6 +29,7 @@ def ext_files(E):
     for f in ('popup.html','popup.js','background.js'): shutil.copy(S+f, E+f)
     shutil.copy(S+'npmdl/node_modules/@mozilla/readability/Readability.js', E+'lib/Readability.js')
     shutil.copy(ROOT+'lib/qrcode.js', E+'lib/qrcode.js')   # QR codes for sync codes (MIT, Kazuhiko Arase)
+    shutil.copy(S+'vendor/mammoth/mammoth.browser.min.js', E+'lib/mammoth.browser.min.js')   # Word (DOCX) files: Mammoth 1.13.0 (BSD 2-clause), unmodified npm release
     # natural voices (Piper): the worker, ONNX Runtime Web 1.20.1 and the eSpeak NG / piper-phonemize WebAssembly build (unmodified npm releases)
     shutil.copy(S+'piper-worker.js', E+'piper-worker.js')
     shutil.rmtree(E+'lib/piper', ignore_errors=True); shutil.copytree(S+'vendor/piper', E+'lib/piper')
