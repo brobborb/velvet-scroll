@@ -622,6 +622,15 @@ body.dragging .drop{display:grid}
 .reader.story-dark[data-finish=silver] .story-art{--f1:#e6ebf3;--f2:#97a3b8}
 .reader.story-dark[data-finish=ink] .story-art{--f1:color-mix(in srgb,var(--rfg) 80%,var(--rbg));--f2:color-mix(in srgb,var(--rfg) 55%,var(--rbg))}
 .reader.story-dark .story-art .pc{background:linear-gradient(168deg,var(--f1) 0%,var(--f2) 38%,var(--f1) 62%,var(--f2) 100%)}
+/* full-colour themes: the pictures themselves, in their own colours, on a see-through background */
+.reader.story-colour .story-art{filter:none;opacity:calc(var(--art,.85) + .15)}
+.reader.story-colour .story-art .pc{background:var(--img) no-repeat;background-size:calc(var(--W) * var(--s)) calc(var(--H) * var(--s))}
+.reader.story-colour .story-art .pc.l{background-position:0 0}
+.reader.story-colour .story-art .pc.r{background-position:calc(-1 * var(--rx) * var(--s)) 0}
+.reader.story-colour .story-art .pc.t{background-position:calc(-1 * var(--tx) * var(--s)) 0}
+.reader.story-colour .story-art .pc.b{background-position:calc(-1 * var(--tx) * var(--s)) calc(-1 * var(--by) * var(--s))}
+.reader.story-colour.story-port .story-art .pc.t{background-position:0 0}
+.reader.story-colour.story-port .story-art .pc.b{background-position:0 100%}
 /* watercolours and your own pictures: the painting is the page, with a soft veil of paper behind the text */
 .reader.story-wc .story-art{z-index:0;opacity:1;filter:none}
 .reader.story-wc .story-art .pc{display:none}
