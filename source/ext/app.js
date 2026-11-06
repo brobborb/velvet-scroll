@@ -4393,7 +4393,7 @@ let drag = null, suppressClick = false, fling = 0;
 function setHand(on){ S.hand = on; applySettings(); }
 /* ---------- Full screen and hiding the controls ---------- */
 const touchUI = () => matchMedia('(hover: none), (pointer: coarse)').matches;
-let immersive = false, realFs = false, hoverT = 0, fsTipShown = false;
+let immersive = false, realFs = false, hoverT = 0, fsTipShown = false, fsArmed = false;
 function setBars(top, bottom){ R.classList.toggle('show-top', top); R.classList.toggle('show-bottom', bottom); }
 function setMin(min){
   R.classList.toggle('min', min); $('#ribUp').hidden = !min;
@@ -4409,7 +4409,8 @@ async function setImmersive(on){
     realFs = false;
     try{ const el = document.documentElement; if(!document.fullscreenElement && el.requestFullscreen){ await el.requestFullscreen({navigationUI:'hide'}); realFs = true; } }catch(e){}
     if(touchUI()) setMin(true);
-    else { setBars(true, true); clearTimeout(hoverT); hoverT = setTimeout(() => { if(immersive) setBars(false, false); }, 1600); }
+    // the pointer is still on the Full screen button: the bars go after a moment, and only come back once it has left the edges
+    else { fsArmed = false; setBars(true, true); clearTimeout(hoverT); hoverT = setTimeout(() => { if(immersive) setBars(false, false); }, 800); }
     if(!fsTipShown){ fsTipShown = true;
       toast(touchUI() ? 'Tap the arrow at the bottom to show the controls.' : 'Move the pointer to the top or bottom edge to show the controls. Press F to leave full screen.', 4500); }
   } else {
@@ -4430,10 +4431,11 @@ R.addEventListener('mousemove', e => {
   const panel = !$('#tocPanel').hidden || !$('#setPanel').hidden;
   const wantTop = e.clientY < (R.classList.contains('show-top') ? topH + 24 : 64) || panel;
   const wantBot = e.clientY > h - (R.classList.contains('show-bottom') ? botH + 24 : 84);
+  if(!fsArmed){ if(e.clientY > 90 && e.clientY < h - 100) fsArmed = true; else if(!panel) return; }
   if(wantTop || wantBot){ clearTimeout(hoverT); setBars(wantTop, wantBot); }
-  else { clearTimeout(hoverT); hoverT = setTimeout(() => { if(immersive && !touchUI()) setBars(!$('#tocPanel').hidden || !$('#setPanel').hidden, false); }, 450); }
+  else { clearTimeout(hoverT); hoverT = setTimeout(() => { if(immersive && !touchUI()) setBars(!$('#tocPanel').hidden || !$('#setPanel').hidden, false); }, 200); }
 });
-document.addEventListener('mouseleave', () => { if(immersive && !touchUI()){ clearTimeout(hoverT); hoverT = setTimeout(() => setBars(false, false), 300); } });
+document.addEventListener('mouseleave', () => { if(immersive && !touchUI()){ clearTimeout(hoverT); hoverT = setTimeout(() => setBars(false, false), 150); } });
 R.addEventListener('focusin', e => { if(immersive && !touchUI() && e.target.closest('.chrome')){ const top = !!e.target.closest('.r-top'); setBars(top || R.classList.contains('show-top'), !top || R.classList.contains('show-bottom')); } });
 // the reading area changes size when bars hide or show: keep the reader's place
 let stageRO = 0;
