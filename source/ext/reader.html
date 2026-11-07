@@ -331,6 +331,14 @@
         <div class="row" style="flex-wrap:wrap;gap:8px"><button class="btn" id="nvAbout">About natural voices</button><button class="btn" id="nvRemove" hidden>Remove downloaded voices</button><a class="btn" href="licences.html" target="_blank" rel="noopener">Licences</a></div>
       </div>
 
+    <div class="grp" id="trGrp">
+      <span class="lbl">Translate <span class="newtag">Experimental</span></span>
+      <div class="field"><label for="sTrLang">Translate into</label><select id="sTrLang" class="hzsel"><option value="">Off (the original text)</option><option value="es" data-noi18n>Español (Spanish)</option></select><span></span></div>
+      <p class="hint"><strong>Experimental.</strong> Translates English books as you read, on this device, with Mozilla’s open-source translator (the one in Firefox). Machine translation makes mistakes, especially with old-fashioned or poetic writing, names and dialogue, so treat it as a reading aid, not a faithful translation. Highlights and notes are paused while it’s on.</p>
+      <p class="hint" id="trStatus" role="status"></p>
+      <div class="row" style="flex-wrap:wrap;gap:8px"><button class="btn" id="trRemove" hidden>Remove the translation files</button></div>
+    </div>
+
     <div class="grp" id="dictGrp">
       <span class="lbl">Dictionary</span>
       <p class="hint">Select a word (or double-click it), then choose <strong>Define</strong>. Modern meanings come from WordNet, and older ones from Webster’s 1913 dictionary, for the words in classic books. It works offline once it’s downloaded (about 14 MB, once).</p>
@@ -595,6 +603,26 @@
     </div>
     <p class="hint" id="ocrDlgSt" role="status"></p>
     <footer class="sh-foot"><a class="btn" href="licences.html" target="_blank" rel="noopener">Licences</a><button class="btn" id="ocrCancel">Not now</button><button class="btn primary" id="ocrGo">Download and start</button></footer>
+  </div>
+</div>
+
+<div id="trdlg" class="modal" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="trH">
+    <header class="sh-head"><h2 id="trH">Translate (experimental)</h2><button class="btn" id="trClose">Close</button></header>
+    <div class="grp">
+      <span class="lbl">Before you turn it on</span>
+      <ul class="nvinfo">
+        <li><strong>An experimental feature.</strong> It may be slow, make mistakes or not work on some devices, and it may change or be removed.</li>
+        <li><strong>Machine translation, not a translator.</strong> It’s good for getting the gist and for language practice, but it can get meaning, tone, names and idioms wrong, especially in older or literary books.</li>
+        <li><strong>Runs on your device.</strong> Nothing from your book is sent anywhere: the translator runs in your browser with Mozilla’s open-source Firefox Translations engine and models.</li>
+        <li><strong>A one-time download</strong> of about <span id="trMB">30</span> MB from velvetscroll.net. Your browser keeps it, so it isn’t downloaded again unless you remove it or clear this site’s data.</li>
+        <li><strong>English books only for now,</strong> into Spanish. More languages may follow.</li>
+        <li><strong>For your own reading.</strong> Velvet Scroll shows the translation on screen as you read; it never saves or shares a translated copy.</li>
+        <li><strong>Openly licensed.</strong> The engine and models are free software from Mozilla under the Mozilla Public License 2.0. See Licences for details.</li>
+      </ul>
+    </div>
+    <p class="hint" id="trDlgSt" role="status"></p>
+    <footer class="sh-foot"><a class="btn" href="licences.html#translation" target="_blank" rel="noopener">Licences</a><button class="btn" id="trCancel">Not now</button><button class="btn primary" id="trGo">Download and translate</button></footer>
   </div>
 </div>
 
