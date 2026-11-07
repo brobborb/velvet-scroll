@@ -1,0 +1,37 @@
+# Fetches the translation models listed in translate/models.json from Mozilla's model registry (which doesn't allow
+# web pages to download from it directly), checks each one against its SHA-256 hash, and commits the gzipped files
+# to translate/<direction>/ so velvetscroll.net can serve them. Runs when models.json changes, or by hand.
+name: Translation models
+on:
+  push:
+    paths: ['translate/models.json']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download and check the models
+        run: |
+          python3 - <<'PY'
+          import json, os, gzip, hashlib, urllib.request
+          m = json.load(open('translate/models.json'))
+          for key, d in m['directions'].items():
+              os.makedirs(f'translate/{key}', exist_ok=True)
+              for kind, f in d['files'].items():
+                  dest = f"translate/{key}/{f['name']}.gz"
+                  if os.path.exists(dest) and hashlib.sha256(gzip.open(dest).read()).hexdigest() == f['sha256']:
+                      print('already here:', dest); continue
+                  data = urllib.request.urlopen(f"{m['registry']}/{f['path']}").read()
+                  got = hashlib.sha256(gzip.decompress(data)).hexdigest()
+                  assert got == f['sha256'], f'{dest}: hash {got} does not match {f["sha256"]}'
+                  open(dest, 'wb').write(data); print('fetched:', dest, len(data))
+          PY
+      - name: Commit them
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add translate
+          git diff --cached --quiet || (git commit -m "Translation models from Mozilla's registry" && git pull --rebase && git push)

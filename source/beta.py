@@ -4,7 +4,7 @@ import os, shutil, sys, re, subprocess
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/'
 B = os.path.abspath(sys.argv[1]) + '/'
 note = sys.argv[2] if len(sys.argv) > 2 else ''
-skip = {'.git', 'CNAME', 'source', 'README.md'}
+skip = {'.git', '.github', 'CNAME', 'source', 'README.md'}
 for f in os.listdir(B):
     if f not in ('.git', 'README.md'): (shutil.rmtree if os.path.isdir(B+f) else os.remove)(B+f)
 for f in os.listdir(ROOT):
