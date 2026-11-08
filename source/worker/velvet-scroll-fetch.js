@@ -12,7 +12,7 @@
    Then its address (https://velvet-scroll-fetch.NAME.workers.dev) goes in FETCHER in source/bookroll.html. */
 
 const ORIGINS = ['https://velvetscroll.net', 'https://www.velvetscroll.net', 'https://brobborb.github.io'];
-const HOSTS = ['gutenberg.org', 'gutenberg.net.au', 'standardebooks.org', 'arxiv.org', 'fadedpage.com', 'wikisource.org',
+const HOSTS = ['gutenberg.org', 'gutenberg.net.au', 'arxiv.org', 'fadedpage.com', 'wikisource.org',
   'ws-export.wmcloud.org', 'archive.org'];
 const MAX = 300 * 1024 * 1024;
 const allowedHost = h => HOSTS.some(d => h === d || h.endsWith('.' + d));
