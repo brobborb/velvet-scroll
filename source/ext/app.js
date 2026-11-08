@@ -1172,7 +1172,7 @@ const modeKey = () => S.mode === 'relax' ? 'r' : 's';
 const inMode = b => !b.vis || b.vis === modeKey();
 function dModesSet(v){ $('#dStudy').setAttribute('aria-pressed', String(v !== 'r')); $('#dRelax').setAttribute('aria-pressed', String(v !== 's')); dModesHint(); }
 function dModes(){ const st = $('#dStudy').getAttribute('aria-pressed') === 'true', rl = $('#dRelax').getAttribute('aria-pressed') === 'true'; return st && rl ? '' : st ? 's' : 'r'; }
-function dModesHint(){ const v = dModes(); $('#dModesHint').textContent = !v ? 'Shown in the library in both modes.' : `Shown only in ${v === 's' ? 'Study' : 'Relaxed'} mode.`; }
+function dModesHint(){ const v = dModes(); $('#dModesHint').textContent = !v ? '' : `Shown only in ${v === 's' ? 'Study' : 'Relaxed'} mode.`; }
 [['#dStudy', '#dRelax'], ['#dRelax', '#dStudy']].forEach(([a, o]) => $(a).onclick = () => {
   const on = $(a).getAttribute('aria-pressed') === 'true';
   if(on && $(o).getAttribute('aria-pressed') !== 'true'){ $(o).setAttribute('aria-pressed', 'true'); }   // turning off the only one: show it in the other mode instead
