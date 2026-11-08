@@ -3083,6 +3083,7 @@ function applyAx(){
   cl.toggle('ax-hc', hc !== 'off'); cl.toggle('ax-cues', hc !== 'off' || S.ax.cvd !== 'none');
   cl.toggle('ax-large', !!S.ax.large); cl.toggle('ax-still', stillOn());
   R.classList.toggle('ax-easy', !!S.ax.easy);
+  siteThemeSave();
 }
 function applyHome(){
   const h = S.home, st = document.documentElement.style, hc = hcMode(), cvd = CVD[(S.ax || AX_DEFAULT).cvd];
@@ -3092,7 +3093,27 @@ function applyHome(){
   else { const pal = homePalette(homeDark(), h.accent, h.bg); for(const k of TOKENS) st.setProperty(k, pal[k]); }
   faviconUpdate(hc, cvd, h);
   if(!$('#ap').hidden) renderAppearance();
+  siteThemeSave();
 }
+/* the website's other pages (About, Plus, Privacy…) wear the library's colours and accessibility settings: they read
+   this snapshot when they open (see the small script at the top of each page) */
+function siteTheme(){
+  const h = S.home || HOME_DEFAULT, hc = hcMode(), cvd = CVD[(S.ax || AX_DEFAULT).cvd], cl = document.documentElement.classList;
+  const pick = pal => Object.fromEntries(TOKENS.map(k => [k, pal[k]]));
+  let t;
+  if(hc !== 'off') t = {fixed:pick(HC[hc])};
+  else if(h.mode === 'system' && !h.accent && !h.bg && !cvd) t = {};
+  else { const pal = d => homePalette(d, cvd ? (d ? cvd.dark : cvd.light) : h.accent, h.bg);
+    t = h.mode === 'system' ? {light:pick(pal(false)), dark:pick(pal(true))} : {fixed:pick(pal(homeDark()))}; }
+  t.cls = ['ax-hc', 'ax-cues', 'ax-large', 'ax-still'].filter(c => cl.contains(c));
+  return t;
+}
+function siteThemeSave(){ try{ if(S.home) localStorage.setItem('vsSite', JSON.stringify(siteTheme())); }catch(e){} }
+// the extensions keep their own settings, so links to the website carry the look along
+if(IS_EXT) document.addEventListener('click', e => {
+  const a = e.target.closest && e.target.closest('a[href^="https://velvetscroll.net/"]'); if(!a) return;
+  try{ const u = new URL(a.href); if(/\.html$/.test(u.pathname)){ u.searchParams.set('vs', JSON.stringify(siteTheme())); a.href = u.href; } }catch(err){}
+}, true);
 /* the tab's icon in the library's colours: light themes paint the tile in the accent, dark themes use the page colour
    with the reading band in the accent. The default light theme keeps the usual (dark) icon. */
 let favLink = document.querySelector('link[rel~="icon"]'); const favOrig = favLink && favLink.getAttribute('href');
