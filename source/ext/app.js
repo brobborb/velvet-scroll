@@ -1171,8 +1171,17 @@ function authorsMerge(other){ let n = 0; for(const [k, v] of Object.entries(othe
 /* ---------- Saving web articles (extension) ---------- */
 /* the Add books menu */
 function addMenu(open){ const m = $('#addMenu'), b = $('#addMore'); if(open === undefined) open = m.hidden; m.hidden = !open; b.setAttribute('aria-expanded', String(open));
+  m.style.right = ''; if(open){ const r = m.getBoundingClientRect(); if(r.left < 8) m.style.right = (r.left - 8) + 'px'; }
   if(open) m.querySelector('button:not([hidden])').focus(); }
 $('#addMore').hidden = !(IS_EXT && typeof velvetArticle === 'function');   // the website has one way to add, so no menu
+{ const top = $('header.top'), btns = top?.querySelector('.hdrbtns');
+  const fit = () => { if(!top || !btns) return; top.classList.remove('hadd-icon', 'hwrap');
+    if(btns.scrollWidth > btns.clientWidth + 1) top.classList.add('hadd-icon');
+    if(btns.scrollWidth > btns.clientWidth + 1) top.classList.add('hwrap'); };
+  let raf = 0; const later = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(fit); };
+  addEventListener('resize', later);
+  if(btns) new MutationObserver(later).observe(btns, {subtree:true, attributes:true, attributeFilter:['hidden']});
+  document.fonts?.ready.then(later); later(); }
 $('#addMore').onclick = e => { e.stopPropagation(); addMenu(); };
 document.addEventListener('pointerdown', e => { if(!$('#addMenu').hidden && !e.target.closest('#addMenu, #addMore')) addMenu(false); });
 $('#addMenu').addEventListener('keydown', e => { const items = [...$('#addMenu').querySelectorAll('button:not([hidden])')], i = items.indexOf(document.activeElement);
