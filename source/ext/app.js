@@ -2298,6 +2298,7 @@ $('#apAccentC').addEventListener('input', e => setHome({accent:e.target.value}))
 $('#apBgC').addEventListener('input', e => setHome({bg:e.target.value}));
 
 function applySettings(save=true){
+  try{ quickLabels(); }catch(e){}
   S.home = {...HOME_DEFAULT, ...(S.home || {})}; applyAx(); applyHome();
   R.style.setProperty('--rsize', S.size+'px'); R.style.setProperty('--rlh', S.lh); R.style.setProperty('--measure', S.width+'ch');
   R.style.setProperty('--rfont', (FONTS.find(f=>f.n===S.font)||FONTS[0]).v);
@@ -2421,6 +2422,23 @@ $('#sBook').addEventListener('change', e => { keepPlace(() => { S.book = e.targe
 $('#styles').addEventListener('click', e => { const b = e.target.closest('[data-v]'); if(!b || b.dataset.v === S.style) return;
   keepPlace(() => { S.style = b.dataset.v; applySettings(); }); });
 $('#sSmooth').addEventListener('change', e=>{ S.smooth = e.target.checked; applySettings(); });
+/* the two quick buttons on the reading screen: the next reading guide style, and the next scroll style */
+function STYLE_NAME(v){ return ({cinema:'Cinema (free scroll)', sweep:'Page sweep', pages:'Pages'})[v] || 'Cinema (free scroll)'; }
+function quickLabels(){
+  if(!$('#guideBtn')) return;
+  const g = (GMODES.find(([v]) => v === S.gmode) || GMODES[0])[1], st = STYLE_NAME(S.style);
+  $('#guideBtn').setAttribute('aria-label', `Reading guide: ${g}`); $('#guideBtn').title = `Reading guide: ${g}. Click for the next style (B)`;
+  $('#styleBtn').setAttribute('aria-label', `Scroll style: ${st}`); $('#styleBtn').title = `Scroll style: ${st}. Click for the next style (S)`;
+}
+function cycleGuide(){
+  const i = GMODES.findIndex(([v]) => v === S.gmode), [v, l] = GMODES[(i + 1) % GMODES.length];
+  S.gmode = v; applySettings(); quickLabels(); toast(`Reading guide: ${l}`, 1600);
+}
+function cycleStyle(){
+  const order = ['cinema', 'sweep', 'pages'], v = order[(order.indexOf(S.style) + 1) % order.length];
+  keepPlace(() => { S.style = v; applySettings(); }); quickLabels(); toast(`Scroll style: ${STYLE_NAME(v)}`, 1600);
+}
+$('#guideBtn').onclick = cycleGuide; $('#styleBtn').onclick = cycleStyle;
 $('#sHz').addEventListener('change', e=>{ S.hz = e.target.value === 'auto' ? 'auto' : +e.target.value; applySettings(); });
 $('#sTint').addEventListener('change', e=>{ S.tint = e.target.checked; applySettings(); });
 // a − and + either side of every slider in the panels: one step per tap, repeating while held
@@ -3566,6 +3584,8 @@ addEventListener('keydown', e=>{
   else if(e.key==='['){ keepPlace(()=>{ S.size=Math.max(14,S.size-1); applySettings(); }); }
   else if((e.key==='h' || e.key==='H') && !e.ctrlKey && !e.metaKey && !e.altKey){ setHand(!S.hand); }
   else if((e.key==='m' || e.key==='M') && !e.ctrlKey && !e.metaKey && !e.altKey){ setLens(!lensOn); }
+  else if((e.key==='b' || e.key==='B') && !e.ctrlKey && !e.metaKey && !e.altKey){ cycleGuide(); }
+  else if((e.key==='s' || e.key==='S') && !e.ctrlKey && !e.metaKey && !e.altKey){ cycleStyle(); }
   else if((e.key==='r' || e.key==='R') && !e.ctrlKey && !e.metaKey && !e.altKey && synth){ tts.on ? ttsStop() : ttsStart(); }
   else if((e.key==='f' || e.key==='F') && !e.ctrlKey && !e.metaKey && !e.altKey){ setImmersive(!immersive); }
   else if(e.key==='Escape'){ if(!$('#tocPanel').hidden || !$('#setPanel').hidden) closePanels(); else if(lensOn) setLens(false); else if(immersive) setImmersive(false); else closeReader(); }

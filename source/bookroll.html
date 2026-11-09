@@ -458,6 +458,8 @@ body.dragging .drop{display:grid}
 .play svg{width:22px;height:22px}
 .ctl{display:flex;align-items:center;gap:10px;min-width:0;font-size:13px}
 .ctl.speed{flex:1 1 220px}
+/* phones: the round buttons share the top row (tighter gaps fit the reading guide and scroll style buttons), and the speed gets a row of its own */
+@media (max-width:520px){.r-bottom{column-gap:10px}.r-bottom .ctl.speed{flex-basis:100%}}
 .ctl.seek{flex:2 1 260px}
 .ctl label{font-weight:700;white-space:nowrap}
 .ctl input[type=range]{flex:1;min-width:80px;accent-color:var(--accent)}
@@ -740,6 +742,8 @@ html.ax-still *,html.ax-still *::before,html.ax-still *::after{transition:none!i
     <button id="ttsPrev" class="tool solo" aria-label="Previous paragraph" title="Previous paragraph (←)" hidden><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="5" width="2.6" height="14" rx="1"/><path d="M19 5.5v13L9 12z"/></svg></button>
     <button id="ttsNext" class="tool solo" aria-label="Next paragraph" title="Next paragraph (→)" hidden><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="16.4" y="5" width="2.6" height="14" rx="1"/><path d="M5 5.5v13L15 12z"/></svg></button>
     <button id="magBtn" class="tool solo" aria-pressed="false" aria-label="Magnifier" title="Magnifier (M)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21M8 10.5h5M10.5 8v5"/></svg></button>
+    <button id="guideBtn" class="tool solo" aria-label="Reading guide" title="Change the reading guide (B)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 5h14M5 19h14" opacity=".45"/><rect x="3" y="9.5" width="18" height="5" rx="1.5" fill="currentColor" fill-opacity=".25"/></svg></button>
+    <button id="styleBtn" class="tool solo" aria-label="Scroll style" title="Change the scroll style (S)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4v16M4 7l3-3 3 3M4 17l3 3 3-3"/><path d="M14 6h6M14 12h6M14 18h6"/></svg></button>
     <div class="toolseg" role="group" aria-label="Pointer">
       <button id="toolArrow" class="tool" aria-pressed="true" aria-label="Pointer: select text" title="Pointer: select text (H to switch)">
       <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 3.5v15.2l4.1-3.9 2.7 6.1 2.6-1.1-2.7-6h5.7z"/></svg>
@@ -858,6 +862,8 @@ html.ax-still *,html.ax-still *::before,html.ax-still *::after{transition:none!i
         <kbd>Page Down</kbd> <kbd>Page Up</kbd> next / previous page<br>
         <kbd>H</kbd> switch between pointer and hand tool<br>
         <kbd>M</kbd> magnifier on / off<br>
+        <kbd>B</kbd> next reading guide style<br>
+        <kbd>S</kbd> next scroll style<br>
         <kbd>R</kbd> read aloud on / off<br>
         <kbd>←</kbd> <kbd>→</kbd> while reading aloud: previous / next paragraph<br>
         <kbd>F</kbd> full screen on / off<br>
@@ -3379,6 +3385,7 @@ $('#apAccentC').addEventListener('input', e => setHome({accent:e.target.value}))
 $('#apBgC').addEventListener('input', e => setHome({bg:e.target.value}));
 
 function applySettings(save=true){
+  try{ quickLabels(); }catch(e){}
   S.home = {...HOME_DEFAULT, ...(S.home || {})}; applyAx(); applyHome();
   R.style.setProperty('--rsize', S.size+'px'); R.style.setProperty('--rlh', S.lh); R.style.setProperty('--measure', S.width+'ch');
   R.style.setProperty('--rfont', (FONTS.find(f=>f.n===S.font)||FONTS[0]).v);
@@ -3502,6 +3509,23 @@ $('#sBook').addEventListener('change', e => { keepPlace(() => { S.book = e.targe
 $('#styles').addEventListener('click', e => { const b = e.target.closest('[data-v]'); if(!b || b.dataset.v === S.style) return;
   keepPlace(() => { S.style = b.dataset.v; applySettings(); }); });
 $('#sSmooth').addEventListener('change', e=>{ S.smooth = e.target.checked; applySettings(); });
+/* the two quick buttons on the reading screen: the next reading guide style, and the next scroll style */
+function STYLE_NAME(v){ return ({cinema:'Cinema (free scroll)', sweep:'Page sweep', pages:'Pages'})[v] || 'Cinema (free scroll)'; }
+function quickLabels(){
+  if(!$('#guideBtn')) return;
+  const g = (GMODES.find(([v]) => v === S.gmode) || GMODES[0])[1], st = STYLE_NAME(S.style);
+  $('#guideBtn').setAttribute('aria-label', `Reading guide: ${g}`); $('#guideBtn').title = `Reading guide: ${g}. Click for the next style (B)`;
+  $('#styleBtn').setAttribute('aria-label', `Scroll style: ${st}`); $('#styleBtn').title = `Scroll style: ${st}. Click for the next style (S)`;
+}
+function cycleGuide(){
+  const i = GMODES.findIndex(([v]) => v === S.gmode), [v, l] = GMODES[(i + 1) % GMODES.length];
+  S.gmode = v; applySettings(); quickLabels(); toast(`Reading guide: ${l}`, 1600);
+}
+function cycleStyle(){
+  const order = ['cinema', 'sweep', 'pages'], v = order[(order.indexOf(S.style) + 1) % order.length];
+  keepPlace(() => { S.style = v; applySettings(); }); quickLabels(); toast(`Scroll style: ${STYLE_NAME(v)}`, 1600);
+}
+$('#guideBtn').onclick = cycleGuide; $('#styleBtn').onclick = cycleStyle;
 $('#sHz').addEventListener('change', e=>{ S.hz = e.target.value === 'auto' ? 'auto' : +e.target.value; applySettings(); });
 $('#sTint').addEventListener('change', e=>{ S.tint = e.target.checked; applySettings(); });
 // a − and + either side of every slider in the panels: one step per tap, repeating while held
@@ -4647,6 +4671,8 @@ addEventListener('keydown', e=>{
   else if(e.key==='['){ keepPlace(()=>{ S.size=Math.max(14,S.size-1); applySettings(); }); }
   else if((e.key==='h' || e.key==='H') && !e.ctrlKey && !e.metaKey && !e.altKey){ setHand(!S.hand); }
   else if((e.key==='m' || e.key==='M') && !e.ctrlKey && !e.metaKey && !e.altKey){ setLens(!lensOn); }
+  else if((e.key==='b' || e.key==='B') && !e.ctrlKey && !e.metaKey && !e.altKey){ cycleGuide(); }
+  else if((e.key==='s' || e.key==='S') && !e.ctrlKey && !e.metaKey && !e.altKey){ cycleStyle(); }
   else if((e.key==='r' || e.key==='R') && !e.ctrlKey && !e.metaKey && !e.altKey && synth){ tts.on ? ttsStop() : ttsStart(); }
   else if((e.key==='f' || e.key==='F') && !e.ctrlKey && !e.metaKey && !e.altKey){ setImmersive(!immersive); }
   else if(e.key==='Escape'){ if(!$('#tocPanel').hidden || !$('#setPanel').hidden) closePanels(); else if(lensOn) setLens(false); else if(immersive) setImmersive(false); else closeReader(); }

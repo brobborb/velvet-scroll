@@ -451,6 +451,8 @@ body.dragging .drop{display:grid}
 .play svg{width:22px;height:22px}
 .ctl{display:flex;align-items:center;gap:10px;min-width:0;font-size:13px}
 .ctl.speed{flex:1 1 220px}
+/* phones: the round buttons share the top row (tighter gaps fit the reading guide and scroll style buttons), and the speed gets a row of its own */
+@media (max-width:520px){.r-bottom{column-gap:10px}.r-bottom .ctl.speed{flex-basis:100%}}
 .ctl.seek{flex:2 1 260px}
 .ctl label{font-weight:700;white-space:nowrap}
 .ctl input[type=range]{flex:1;min-width:80px;accent-color:var(--accent)}
