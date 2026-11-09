@@ -5609,7 +5609,7 @@ async function showPdf(mode){
   page.classList.toggle('pdfmode', mode === 'pages');
   R.classList.toggle('pdf-pages', mode === 'pages');
   const mb = $('#rMode'); mb.hidden = false;
-  mb.innerHTML = mode === 'text' ? '<span class="lng">Original pages</span><span class="sht">Pages</span>' : '<span class="lng">Reflow text</span><span class="sht">Reflow</span>'; mb.setAttribute('aria-label', mode === 'text' ? 'Original pages' : 'Reflow text');
+  mb.replaceChildren(...(mode === 'text' ? ['Original pages', 'Pages'] : ['Reflow text', 'Reflow']).map((t, i) => el('span', {class:i ? 'sht' : 'lng', text:t}))); mb.setAttribute('aria-label', mode === 'text' ? 'Original pages' : 'Reflow text');
   mb.disabled = mode === 'pages' && (!pdfDoc.textAllowed || pdfTextCache.get(cur.id) === null);
   mb.title = !mb.disabled ? '' : pdfDoc.textAllowed ? 'This PDF has no text yet: choose Recognise text to read its pages' : 'This PDF can only be shown as original pages';
   $('#pdfGroup').hidden = false; goPageSetup(pdfDoc.numPages);
@@ -6020,7 +6020,7 @@ function trDetach(restore){
 const guideTop = () => scroller.getBoundingClientRect().top + topY();
 // replaces a paragraph's contents, keeping your place if it's above where you're reading
 function trSwap(el, html, g){
-  const r0 = el.getBoundingClientRect(); el.innerHTML = html;
+  const r0 = el.getBoundingClientRect(); el.replaceChildren(...new DOMParser().parseFromString(html, 'text/html').body.childNodes);
   if(r0.top < g){ const d = el.getBoundingClientRect().height - r0.height; if(d){ scroller.scrollTop += d; if(playing) pos += d; } }
 }
 async function trPump(){
@@ -7555,7 +7555,8 @@ function thumbsBuild(){
   for(let n = 1; n <= N; n++){
     const b = document.createElement('button'); b.dataset.n = n; b.title = `Page ${pageName(n)}`;
     const sz = pdfSizes && pdfSizes.doc === doc && pdfSizes.sizes[n - 1];
-    b.innerHTML = `<div class="tpg" style="aspect-ratio:${sz ? sz[0] + ' / ' + sz[1] : '1 / 1.414'}"></div><span>${pageName(n).replace(/[<>&]/g, '')}</span>`;
+    const tpg = el('div', {class:'tpg'}); tpg.style.aspectRatio = sz ? sz[0] + ' / ' + sz[1] : '1 / 1.414';
+    b.append(tpg, el('span', {text:String(pageName(n))}));
     box.append(b); thumbIO.observe(b);
   }
   thumbsMark(currentPage(), true);
