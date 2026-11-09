@@ -222,6 +222,8 @@
     <button id="ttsPrev" class="tool solo" aria-label="Previous paragraph" title="Previous paragraph (←)" hidden><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="5" width="2.6" height="14" rx="1"/><path d="M19 5.5v13L9 12z"/></svg></button>
     <button id="ttsNext" class="tool solo" aria-label="Next paragraph" title="Next paragraph (→)" hidden><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="16.4" y="5" width="2.6" height="14" rx="1"/><path d="M5 5.5v13L15 12z"/></svg></button>
     <button id="magBtn" class="tool solo" aria-pressed="false" aria-label="Magnifier" title="Magnifier (M)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21M8 10.5h5M10.5 8v5"/></svg></button>
+    <button id="guideBtn" class="tool solo" aria-label="Reading guide" title="Change the reading guide (B)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 5h14M5 19h14" opacity=".45"/><rect x="3" y="9.5" width="18" height="5" rx="1.5" fill="currentColor" fill-opacity=".25"/></svg></button>
+    <button id="styleBtn" class="tool solo" aria-label="Scroll style" title="Change the scroll style (S)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4v16M4 7l3-3 3 3M4 17l3 3 3-3"/><path d="M14 6h6M14 12h6M14 18h6"/></svg></button>
     <div class="toolseg" role="group" aria-label="Pointer">
       <button id="toolArrow" class="tool" aria-pressed="true" aria-label="Pointer: select text" title="Pointer: select text (H to switch)">
       <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 3.5v15.2l4.1-3.9 2.7 6.1 2.6-1.1-2.7-6h5.7z"/></svg>
@@ -401,6 +403,8 @@
         <kbd>Page Down</kbd> <kbd>Page Up</kbd> next / previous page<br>
         <kbd>H</kbd> switch between pointer and hand tool<br>
         <kbd>M</kbd> magnifier on / off<br>
+        <kbd>B</kbd> next reading guide style<br>
+        <kbd>S</kbd> next scroll style<br>
         <kbd>R</kbd> read aloud on / off<br>
         <kbd>←</kbd> <kbd>→</kbd> while reading aloud: previous / next paragraph<br>
         <kbd>F</kbd> full screen on / off<br>
@@ -523,7 +527,7 @@
     </div>
     <div class="grp">
       <span class="lbl">Keyboard</span>
-      <label class="check"><input type="checkbox" id="axKeys"> Single-letter shortcuts (H, M, R, F, G, [ and ])</label>
+      <label class="check"><input type="checkbox" id="axKeys"> Single-letter shortcuts (H, M, R, F, G, B, S, [ and ])</label>
       <p class="hint">Turn these off if they clash with your screen reader or speech software. Space, the arrow keys and Page Up / Page Down still work, and every shortcut also has a button. With a screen reader, Read aloud (the speaker button in the reader) reads the book to you and follows along on the page.</p>
     </div>
     <footer class="sh-foot"><button class="btn" id="axReset">Reset accessibility</button></footer>
