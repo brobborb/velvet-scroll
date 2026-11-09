@@ -11,6 +11,10 @@ body=src[src.index('</style>')+8:src.rindex('<script>')].strip()
 from collections import Counter
 dups=[k for k,v in Counter(re.findall(r'\bid="([^"]+)"', body)).items() if v>1]
 if dups: sys.exit('Duplicate ids in bookroll.html: ' + ', '.join(dups))
+# the live site sets BETA_EXTRAS false (Plus features and Translate hidden): the extension packages then leave out the
+# code only those features use (text recognition, PDF exports, the translation engine) and Drive sync's identity permission
+EXTRAS='const BETA_EXTRAS = true;' in src
+EXTRAS_ONLY=['lib/tesseract/*', 'lib/bergamot/*', 'translate-worker.js', 'lib/pdf-lib.min.js']
 DESC='An ebook reader that scrolls for you, with a reading guide, read aloud and your books kept private on your device.'
 
 # code marked /*WEB-ONLY{*/ ... /*}WEB-ONLY*/ is for the website only (e.g. loading Paddle's checkout); the extensions never get it
@@ -45,8 +49,9 @@ def ext_files(E):
 # Firefox
 E=S+'ext/'; ext_files(E)
 m=json.load(open(E+'manifest.json')); m['version']=VERSION;
-for perm in ('activeTab','scripting','contextMenus','identity'):  # identity: signing in to Google Drive for sync
+for perm in ('activeTab','scripting','contextMenus') + (('identity',) if EXTRAS else ()):  # identity: signing in to Google Drive for sync (Plus)
     if perm not in m['permissions']: m['permissions'].append(perm)
+if not EXTRAS and 'identity' in m['permissions']: m['permissions'].remove('identity')
 m['action']['default_popup']='popup.html'; m['action']['default_title']='Velvet Scroll'
 m['name']='Velvet Scroll – EPUB & Ebook Reader'   # the store name: says what it is, so searches for EPUB or ebook readers find it
 m['background']={'scripts':['store.js','background.js']}; hosts=m['optional_host_permissions']; [hosts.append(x) for x in ('https://*/*','http://*/*') if x not in hosts]; m['description']=DESC; m['homepage_url']='https://velvetscroll.net/'
@@ -67,7 +72,7 @@ open(C+'manifest.json','w').write(json.dumps(mc,indent=2)+'\n')
 
 for d,z in [(E,'velvet-scroll-firefox.zip'),(C,'velvet-scroll-chrome.zip')]:
     if os.path.exists(S+z): os.remove(S+z)
-    subprocess.run(['zip','-qr','-X',S+z,'.'],cwd=d,check=True)
+    subprocess.run(['zip','-qr','-X',S+z,'.'] + ([] if EXTRAS else ['-x', *EXTRAS_ONLY]),cwd=d,check=True)
 
 # Website
 W=ROOT
