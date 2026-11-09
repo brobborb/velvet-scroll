@@ -13,7 +13,8 @@
 
 const ORIGINS = ['https://velvetscroll.net', 'https://www.velvetscroll.net', 'https://brobborb.github.io'];
 const HOSTS = ['gutenberg.org', 'gutenberg.net.au', 'e-book.au', 'arxiv.org', 'fadedpage.com', 'wikisource.org',
-  'ws-export.wmcloud.org', 'archive.org'];
+  'ws-export.wmcloud.org', 'archive.org',
+  'oapen.org', 'zenodo.org', 'europepmc.org', 'plos.org', 'hal.science', 'archives-ouvertes.fr', 'osf.io'];
 const MAX = 300 * 1024 * 1024;
 const allowedHost = h => HOSTS.some(d => h === d || h.endsWith('.' + d));
 
