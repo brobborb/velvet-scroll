@@ -40,6 +40,8 @@ def ext_files(E):
     # recognising text in scanned PDFs: Tesseract.js 7.0.0 and tesseract.js-core 7.0.0 (unmodified npm releases; LSTM builds with and without SIMD)
     shutil.rmtree(E+'lib/tesseract', ignore_errors=True); shutil.copytree(S+'vendor/tesseract', E+'lib/tesseract')
     for f in ('licences.html','LICENSE-GPL-3.0.txt','LICENSE-Apache-2.0.txt','LICENSE-WordNet.txt','LICENSE-Mammoth.txt','LICENSE-MPL-2.0.txt'): shutil.copy(ROOT+f, E+f)
+    # the website's page-colour script is inline, which extension pages don't run; leave it out of the extension's copy
+    lic=open(E+'licences.html').read(); open(E+'licences.html','w').write(re.sub(r'<script>.*?</script>\n?', '', lic, flags=re.S))
     # translating books (experimental): the worker and Mozilla's Bergamot engine (mozilla/translations v0.6.0, MPL 2.0, built by @bandf/i18n 1.1.2, unmodified)
     shutil.copy(ROOT+'translate-worker.js', E+'translate-worker.js')
     shutil.rmtree(E+'lib/bergamot', ignore_errors=True); shutil.copytree(S+'vendor/bergamot', E+'lib/bergamot')
