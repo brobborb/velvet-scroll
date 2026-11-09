@@ -1356,6 +1356,7 @@ let urlCtl = null;
 function closeUrlNow(){ $('#urlDlg').hidden = true; if(urlCtl){ urlCtl.abort(); urlCtl = null; } }
 /* the Add books menu */
 function addMenu(open){ const m = $('#addMenu'), b = $('#addMore'); if(open === undefined) open = m.hidden; m.hidden = !open; b.setAttribute('aria-expanded', String(open));
+  m.style.right = ''; if(open){ const r = m.getBoundingClientRect(); if(r.left < 8) m.style.right = (r.left - 8) + 'px'; }
   if(open) m.querySelector('button:not([hidden])').focus(); }
 $('#addMore').onclick = e => { e.stopPropagation(); addMenu(); };
 document.addEventListener('pointerdown', e => { if(!$('#addMenu').hidden && !e.target.closest('#addMenu, #addMore')) addMenu(false); });
@@ -1868,8 +1869,10 @@ if(!IS_EXT && !IN_CLAUDE && 'serviceWorker' in navigator && (location.protocol =
   addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 // keep the library header on one row: drop the small buttons' labels when they would wrap below the name
 { const top = $('header.top'), brand = top?.querySelector('.brand'), btns = top?.querySelector('.hdrbtns');
-  const fit = () => { if(!top || !brand || !btns) return; top.classList.remove('hcompact');
-    if(btns.getBoundingClientRect().top >= brand.getBoundingClientRect().bottom - 4) top.classList.add('hcompact'); };
+  const fit = () => { if(!top || !brand || !btns) return; top.classList.remove('hcompact', 'hadd-icon', 'hwrap');
+    if(btns.getBoundingClientRect().top >= brand.getBoundingClientRect().bottom - 4) top.classList.add('hcompact');
+    if(btns.scrollWidth > btns.clientWidth + 1) top.classList.add('hadd-icon');
+    if(btns.scrollWidth > btns.clientWidth + 1) top.classList.add('hwrap'); };   // still too wide (very large text): let it wrap
   let raf = 0; const later = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(fit); };
   addEventListener('resize', later);
   if(btns) new MutationObserver(later).observe(btns, {subtree:true, attributes:true, attributeFilter:['hidden']});
