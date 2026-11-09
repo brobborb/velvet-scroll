@@ -908,6 +908,11 @@ const LOOKUP = (() => {
 // Chrome names its extension API "chrome"; Firefox calls it "browser". Use one name for both.
 if(typeof globalThis.browser === 'undefined' && typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) globalThis.browser = chrome;
 const IS_EXT = typeof browser !== 'undefined' && !!(browser.permissions && browser.permissions.request);
+/* BETA_EXTRAS: true on the beta (the dev branch). The live site (main) sets it to false until Plus launches: then the Plus
+   features (Plus window, Story mode, Drive sync, scanned PDFs, PDF and notes exports, genre covers) and the experimental
+   Translate are hidden, and everything else is the same code as the beta. */
+const BETA_EXTRAS = true;
+if(!BETA_EXTRAS) document.documentElement.classList.add('no-extras');
 const IS_FIREFOX = /Firefox\//.test(navigator.userAgent);
 if(IS_FIREFOX){ const l = document.getElementById('syncLbl'), h = document.getElementById('syncHint');
   if(l) l.textContent = 'Firefox Sync';
@@ -1099,7 +1104,7 @@ function renderCoverChoices(){
   if(dlg.custom) tiles.push({kind:'custom', label:'Your image', node:() => customCanvas(84, 126)});
   if(b.coverBuf) tiles.push({kind:'own', label: b.coverSrc==='custom' || b.prevSrc==='custom' ? 'Your cover' : b.coverSrc==='online' || b.prevSrc==='online' ? 'Current cover' : (b.coverSrc==='page' || b.prevSrc==='page') ? 'First page' : 'Book’s own cover', node:() => coverImg(b.coverBuf, b.coverType)});
   tiles.push({kind:'classic', style:'', label:'Classic leather', node:() => classicCover(dlgPreview())});
-  for(const [k, v] of Object.entries(COVER_STYLES)) if(!v.reserved) tiles.push({kind:'classic', style:k, label:v.label, plus:!PLUS, node:() => classicCover({...dlgPreview(), coverStyle:k}, true)});
+  for(const [k, v] of Object.entries(COVER_STYLES)) if(!v.reserved && BETA_EXTRAS) tiles.push({kind:'classic', style:k, label:v.label, plus:!PLUS, node:() => classicCover({...dlgPreview(), coverStyle:k}, true)});
   for(const r of dlg.results) if(r.thumb) tiles.push({kind:'online', url:r.cover, thumb:r.thumb, label: r.source + (r.year ? ` · ${r.year}` : '') + (r.openCover ? '' : ' (copyright may apply)'), node:() => el('img', {src:r.thumb, alt:'', loading:'lazy', referrerpolicy:'no-referrer', onerror:e => { const t = e.target.closest('.ctile'); if(t) t.hidden = true; }})});
   const isSel = t => dlg.choice.kind === t.kind && (t.kind !== 'online' || dlg.choice.url === t.url) && (t.kind !== 'classic' || (dlg.choice.style || '') === t.style);
   $('#dCovers').replaceChildren(...tiles.map(t => el('button', {class:'ctile', 'aria-pressed':String(isSel(t)), onclick:() => { dlg.choice = {kind:t.kind, url:t.url, thumb:t.thumb, style:t.style || ''}; renderCoverChoices(); }},
@@ -1956,12 +1961,12 @@ async function buyPlus(){
 $('#plusBuy').onclick = buyPlus;
 $('#plusKeyCopy').onclick = async () => { try{ await navigator.clipboard.writeText($('#plusKeyShow').value); toast('Licence key copied.', 2500); }catch(e){ $('#plusKeyShow').select(); } };
 // a link to the website with ?buy=plus (from the extensions or the Plus page) opens the Plus window and the checkout
-if(!IS_EXT && /[?&]buy=plus\b/.test(location.search)) setTimeout(() => { plusOpen(''); buyPlus(); history.replaceState(null, '', location.pathname); }, 600);
+if(!IS_EXT && BETA_EXTRAS && /[?&]buy=plus\b/.test(location.search)) setTimeout(() => { plusOpen(''); buyPlus(); history.replaceState(null, '', location.pathname); }, 600);
 // gate a feature: true when Plus is on, otherwise explain and offer it
-function needPlus(feature){ if(PLUS) return true; plusOpen(feature); return false; }
+function needPlus(feature){ if(PLUS) return true; if(BETA_EXTRAS) plusOpen(feature); return false; }
 async function plusInit(){ const k = LS.get('plusKey', ''); PLUS = k ? await plusVerify(k) : null; plusShow(); }
 $('#plusOpen').onclick = () => plusOpen('');
-$('#footPlus').onclick = e => { e.preventDefault(); plusOpen(''); };
+if(BETA_EXTRAS) $('#footPlus').onclick = e => { e.preventDefault(); plusOpen(''); }; else $('#footPlus').href = 'https://velvetscroll.net/plus.html', $('#footPlus').target = '_blank';
 $('#plusClose').onclick = () => popLayer('plus');
 $('#plusDlg').addEventListener('click', e => { if(e.target === $('#plusDlg')) popLayer('plus'); });
 // unlock Plus with a key (pasted in, or fetched straight after buying); false if the key isn't valid
@@ -3259,7 +3264,7 @@ const storyBook = () => cur && cur.story && (cur.story === 'none' || storyOk(cur
 const storyTheme = () => { const b = storyBook(); return b && b !== 'none' && PLUS ? b : storyCfg().theme; };
 const storyName = t => { for(const [, list] of ST_THEMES) for(const [v, n] of list) if(v === t) return n.split(':')[0]; return t; };
 function storyActive(){
-  if(IS_EXT || R.hidden || !cur || hcMode() !== 'off' || comic || (pdfDoc && pdfMode === 'pages')) return false;
+  if(IS_EXT || !BETA_EXTRAS || R.hidden || !cur || hcMode() !== 'off' || comic || (pdfDoc && pdfMode === 'pages')) return false;
   const b = storyBook(); if(b === 'none') return false;
   return storyCfg().on || !!(b && PLUS);
 }
@@ -3368,7 +3373,7 @@ function storyOptions(sel, extra){ sel.replaceChildren(...extra.map(([v, t]) => 
 storyOptions($('#sStoryTheme'), []);
 storyOptions($('#dStory'), [['', 'Same as Display (your usual theme)'], ['none', 'Plain pages for this book']]);
 function storyUI(){
-  $('#storyGrp').hidden = IS_EXT; $('#dStoryRow').hidden = IS_EXT; if(IS_EXT) return;
+  const noStory = IS_EXT || !BETA_EXTRAS; $('#storyGrp').hidden = noStory; $('#dStoryRow').hidden = noStory; if(noStory) return;
   const c = storyCfg(), b = storyBook(), on = storyActive(), th = storyTheme(), wc = th === 'custom' || !!ST_WC[th];
   $('#storyTag').hidden = !!PLUS; $('#sStory').checked = !!c.on; $('#storyOpts').hidden = !c.on && !on;
   $('#sStoryTheme').value = c.theme; $('#storyInk').hidden = wc; $('#sStoryFinish').closest('.field').hidden = !!ST_COLOUR[th]; $('#storyPics').hidden = th !== 'custom';

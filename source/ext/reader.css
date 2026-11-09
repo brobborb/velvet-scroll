@@ -455,6 +455,8 @@ main.wrap{padding-block:20px 48px;display:flex;flex-direction:column;gap:16px}
 .pluskeybox{display:flex;flex-direction:column;gap:8px;margin:10px 0}
 .plustag{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:999px;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;background:var(--accent);color:var(--accent-fg);vertical-align:middle}
 /* once Plus is unlocked: the label goes and the star is filled in the accent colour */
+/* the live site before Plus launches (BETA_EXTRAS false): Plus features and the experimental Translate are hidden */
+html.no-extras :is(#plusOpen,#storyGrp,#dStoryRow,#trGrp,#gdGrp,#dJump [data-to="storyGrp"],#pdfOcrBtn,#mOcr,#pdfSaveHlBtn,#mSaveHl,#notesPdf,#notesExport,#dPlusNote,#plusDlg){display:none!important}
 #plusOpen.on{color:var(--accent)}
 #plusOpen.on svg{fill:currentColor}
 #plusOpen.on #plusLbl{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
