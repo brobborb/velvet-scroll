@@ -18,6 +18,7 @@ Other files
     piper-worker.js     natural voices (Piper) worker, used by both the extensions and the website
     clip-core.js, store-core.js, popup.*, background.js   article saving and the toolbar menu (extensions)
     vendor/piper/       ONNX Runtime Web 1.20.1 and the eSpeak NG / piper-phonemize WebAssembly build (unmodified releases; see site/licences.html)
+    vendor/tesseract/   Tesseract.js 7.0.0 and tesseract.js-core 7.0.0 LSTM builds, for Recognise text (unmodified npm releases; see licences.html)
     ext/                Firefox extension template: manifest, icons, fonts and libraries (PDF.js, JSZip, Readability, QR codes)
     ../donate.js        your PayPal link — the build never touches it
     icon-dark/          the dark teal icon set

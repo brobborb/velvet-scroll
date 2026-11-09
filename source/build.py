@@ -7,10 +7,18 @@ src=open(S+'bookroll.html').read()
 style=re.search(r'<style>(.*?)</style>',src,re.S).group(1).strip()+'\n'
 script=re.findall(r'<script>(.*?)</script>',src,re.S)[-1].strip()+'\n'
 body=src[src.index('</style>')+8:src.rindex('<script>')].strip()
+# every id on the page must be unique, or one button can quietly take over another's job
+from collections import Counter
+dups=[k for k,v in Counter(re.findall(r'\bid="([^"]+)"', body)).items() if v>1]
+if dups: sys.exit('Duplicate ids in bookroll.html: ' + ', '.join(dups))
 DESC='An ebook reader that scrolls for you, with a reading guide, read aloud and your books kept private on your device.'
 
+# code marked /*WEB-ONLY{*/ ... /*}WEB-ONLY*/ is for the website only (e.g. loading Paddle's checkout); the extensions never get it
+ext_script=re.sub(r'/\*WEB-ONLY\{\*/.*?/\*\}WEB-ONLY\*/', '', script, flags=re.S)
+assert 'cdn.paddle.com' not in ext_script
+
 def ext_files(E):
-    open(E+'app.js','w').write(script); open(E+'reader.css','w').write(style)
+    open(E+'app.js','w').write(ext_script); open(E+'reader.css','w').write(style)
     h=open(E+'reader.html').read()
     h=h[:h.index('<body>')+6]+'\n'+body+'\n'+h[h.index('<script src="lib/jszip.min.js">'):]
     if 'clip-core.js' not in h:
@@ -21,17 +29,23 @@ def ext_files(E):
     for f in ('popup.html','popup.js','background.js'): shutil.copy(S+f, E+f)
     shutil.copy(S+'npmdl/node_modules/@mozilla/readability/Readability.js', E+'lib/Readability.js')
     shutil.copy(ROOT+'lib/qrcode.js', E+'lib/qrcode.js')   # QR codes for sync codes (MIT, Kazuhiko Arase)
+    shutil.copy(S+'vendor/mammoth/mammoth.browser.min.js', E+'lib/mammoth.browser.min.js')   # Word (DOCX) files: Mammoth 1.13.0 (BSD 2-clause), unmodified npm release
     # natural voices (Piper): the worker, ONNX Runtime Web 1.20.1 and the eSpeak NG / piper-phonemize WebAssembly build (unmodified npm releases)
     shutil.copy(S+'piper-worker.js', E+'piper-worker.js')
     shutil.rmtree(E+'lib/piper', ignore_errors=True); shutil.copytree(S+'vendor/piper', E+'lib/piper')
-    for f in ('licences.html','LICENSE-GPL-3.0.txt'): shutil.copy(ROOT+f, E+f)
+    # recognising text in scanned PDFs: Tesseract.js 7.0.0 and tesseract.js-core 7.0.0 (unmodified npm releases; LSTM builds with and without SIMD)
+    shutil.rmtree(E+'lib/tesseract', ignore_errors=True); shutil.copytree(S+'vendor/tesseract', E+'lib/tesseract')
+    for f in ('licences.html','LICENSE-GPL-3.0.txt','LICENSE-Apache-2.0.txt','LICENSE-WordNet.txt','LICENSE-Mammoth.txt','LICENSE-MPL-2.0.txt'): shutil.copy(ROOT+f, E+f)
+    # translating books (experimental): the worker and Mozilla's Bergamot engine (mozilla/translations v0.6.0, MPL 2.0, built by @bandf/i18n 1.1.2, unmodified)
+    shutil.copy(ROOT+'translate-worker.js', E+'translate-worker.js')
+    shutil.rmtree(E+'lib/bergamot', ignore_errors=True); shutil.copytree(S+'vendor/bergamot', E+'lib/bergamot')
     shutil.rmtree(E+'lib/kokoro', ignore_errors=True)
     if os.path.exists(E+'kokoro-worker.js'): os.remove(E+'kokoro-worker.js')
 
 # Firefox
 E=S+'ext/'; ext_files(E)
 m=json.load(open(E+'manifest.json')); m['version']=VERSION;
-for perm in ('activeTab','scripting','contextMenus'):
+for perm in ('activeTab','scripting','contextMenus','identity'):  # identity: signing in to Google Drive for sync
     if perm not in m['permissions']: m['permissions'].append(perm)
 m['action']['default_popup']='popup.html'; m['action']['default_title']='Velvet Scroll'
 m['name']='Velvet Scroll – EPUB & Ebook Reader'   # the store name: says what it is, so searches for EPUB or ebook readers find it

@@ -24,16 +24,18 @@
       <button id="axOpen" class="qbtn" title="Accessibility: larger text, contrast and motion"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="4.5" r="1.8"/><path d="M5 8.5l7 1.5 7-1.5M12 10v5M12 15l-3 6M12 15l3 6"/></svg><span>Accessibility</span></button>
       <button id="bkOpen" class="qbtn" title="Backup, restore and sync codes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h11.5L20 7.5V19a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/><path d="M8 4v4.5h7V4"/><rect x="7.5" y="13" width="9" height="7"/></svg><span>Backup</span></button>
       <button id="installBtn" class="qbtn" hidden title="Install Velvet Scroll as an app on this device"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M12 7v7M9 11.5l3 3 3-3M10 18.5h4"/></svg><span>Install app</span></button>
+      <button id="plusOpen" class="qbtn" title="Velvet Scroll Plus: a one-time purchase for extra features"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg><span id="plusLbl">Plus</span></button>
     </nav>
     <div class="addsplit">
       <label class="btn primary addmain" for="file"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span class="addlbl">Add books</span></label>
       <button class="btn primary addmore" id="addMore" aria-haspopup="menu" aria-expanded="false" aria-controls="addMenu" title="More ways to add" aria-label="More ways to add books"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
       <div id="addMenu" class="addmenu" role="menu" hidden>
         <button role="menuitem" id="addFilesItem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/></svg>Choose files on this device…</button>
+        <button role="menuitem" id="urlOpen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1"/></svg>From a web address…</button>
         <button role="menuitem" id="artOpen" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h11l3 3v13H5z"/><path d="M8 9h8M8 12.5h8M8 16h5"/></svg>Save a web article…</button>
       </div>
     </div>
-    <input type="file" id="file" accept=".epub,.kepub,.mobi,.azw3,.azw,.prc,.pdf,.txt,.htm,.html,.xhtml,.fb2,.fbz,.cbz,.zip,application/epub+zip,application/x-mobipocket-ebook,application/pdf,text/plain,text/html,application/x-cbz,application/zip" multiple hidden>
+    <input type="file" id="file" accept=".epub,.kepub,.mobi,.azw3,.azw,.prc,.pdf,.docx,.odt,.md,.markdown,.txt,.htm,.html,.xhtml,.fb2,.fbz,.cbz,.zip,application/epub+zip,application/x-mobipocket-ebook,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.oasis.opendocument.text,text/markdown,text/plain,text/html,application/x-cbz,application/zip" multiple hidden>
     </div>
   </div>
 </header>
@@ -73,11 +75,17 @@
     <button id="tabBooks" class="libtab" role="tab" aria-selected="true" aria-controls="grid">Books<b></b></button>
     <button id="tabArts" class="libtab" role="tab" aria-selected="false" aria-controls="grid">Saved articles<b></b></button>
   </div>
+  <div class="chiprow">
   <div id="chips" class="chips" role="group" aria-label="Filter"></div>
+    <div class="modeseg" role="group" aria-label="Reading mode"><span class="modelbl" aria-hidden="true">Mode</span>
+      <button id="modeStudy" aria-pressed="true" title="Study mode: PDFs and comics open with the page tools showing"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c0 1.5 2.7 3 6 3s6-1.5 6-3v-5"/><path d="M22 9v6"/></svg><span class="vh">Study</span></button>
+      <button id="modeRelax" aria-pressed="false" title="Relaxed mode: a clean reader, with the page tools tucked away"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M17 11h1.5a2.5 2.5 0 0 1 0 5H17"/><path d="M8 3c0 1.5 1 1.5 1 3M12 3c0 1.5 1 1.5 1 3"/></svg><span class="vh">Relaxed</span></button>
+    </div>
+  </div>
   <div id="fmts" class="fmts" role="group" aria-label="File formats" hidden></div>
   <div id="notice" class="notice" hidden></div>
   <section id="grid" class="grid" aria-label="Books"></section>
-  <p class="foot"><a class="plink" href="https://velvetscroll.net/about.html" target="_blank" rel="noopener">About</a> · <span id="footExt">Extensions: <a class="plink" href="https://chromewebstore.google.com/detail/lcddfbbfeahgjlilbmclahmfgolpoknf" target="_blank" rel="noopener">Chrome</a> · <a class="plink" href="https://addons.mozilla.org/firefox/addon/velvet-scroll/" target="_blank" rel="noopener">Firefox</a> · <a class="plink" href="https://microsoftedge.microsoft.com/addons/detail/abkbeknhfpdjhdimaebgabkcmdinojmg" target="_blank" rel="noopener">Edge</a> · </span><a class="plink" href="https://velvetscroll.net/privacy.html" target="_blank" rel="noopener">Privacy</a> · <a class="plink" href="https://velvetscroll.net/licences.html" target="_blank" rel="noopener">Licences</a> · <a class="plink" href="https://velvetscroll.net/terms.html" target="_blank" rel="noopener">Terms</a> · <a class="plink" href="https://velvetscroll.net/refunds.html" target="_blank" rel="noopener">Refunds</a> · <a class="plink" href="https://velvetscroll.net/plus.html" target="_blank" rel="noopener">Plus</a> · Books stay in this browser on this device; nothing is uploaded. Opens EPUB, KEPUB, MOBI, AZW3, PDF, TXT, HTML, FB2 and CBZ comic files, including zipped ones. Drag them anywhere on the page to add them. DRM-protected and password-locked books, including Kindle store purchases, can't be opened.</p>
+  <p class="foot"><a class="plink" href="https://velvetscroll.net/about.html" target="_blank" rel="noopener">About</a> · <span id="footExt">Extensions: <a class="plink" href="https://chromewebstore.google.com/detail/lcddfbbfeahgjlilbmclahmfgolpoknf" target="_blank" rel="noopener">Chrome</a> · <a class="plink" href="https://addons.mozilla.org/firefox/addon/velvet-scroll/" target="_blank" rel="noopener">Firefox</a> · <a class="plink" href="https://microsoftedge.microsoft.com/addons/detail/abkbeknhfpdjhdimaebgabkcmdinojmg" target="_blank" rel="noopener">Edge</a> · </span><a class="plink" href="https://velvetscroll.net/privacy.html" target="_blank" rel="noopener">Privacy</a> · <a class="plink" href="https://velvetscroll.net/licences.html" target="_blank" rel="noopener">Licences</a> · <a class="plink" href="https://velvetscroll.net/terms.html" target="_blank" rel="noopener">Terms</a> · <a class="plink" href="https://velvetscroll.net/refunds.html" target="_blank" rel="noopener">Refunds</a> · <a class="plink" href="#" id="footPlus">Velvet Scroll Plus</a> · Books stay in this browser on this device; nothing is uploaded. Opens EPUB, KEPUB, MOBI, AZW3, PDF, TXT, HTML, FB2 and CBZ comic files, including zipped ones, and Word (DOCX), LibreOffice (ODT) and Markdown documents. Drag them anywhere on the page to add them. DRM-protected and password-locked books, including Kindle store purchases, can't be opened.</p>
   <section id="donate" class="donate" hidden aria-labelledby="donH">
     <div class="don-text"><h2 id="donH">Contribute to Velvet Scroll</h2><p>Velvet Scroll is free. If you enjoy it, you can contribute to help keep it going.</p></div>
     <div class="don-ways">
@@ -98,15 +106,19 @@
 
 <div id="reader" class="reader" hidden>
   <div class="r-top chrome">
-    <button id="rBack" class="rbtn">← Library</button>
+    <button id="rBack" class="rbtn" aria-label="Library">← <span class="rlbl">Library</span></button>
     <div class="r-title"><strong id="rTitle"></strong><span id="rChap"></span></div>
+    <span class="r-spacer" aria-hidden="true"></span>
     <button id="rMode" class="rbtn" hidden></button>
     <button id="rToc" class="rbtn">Contents</button>
     <button id="rSet" class="rbtn">Display</button>
+    <button id="findBtn" class="rbtn icon" aria-label="Search" title="Search (Ctrl+F)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.4-4.4"/></svg></button>
     <button id="fsBtn" class="rbtn icon" aria-label="Full screen" title="Full screen (F)"><svg id="icFs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><svg id="icFsOff" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg></button>
   </div>
+  <div class="r-area" id="rArea">
+  <div id="storyArt" class="story-art" aria-hidden="true" hidden><div class="pic"></div><div class="veil"></div><div class="pc l"></div><div class="pc r"></div><div class="pc t"></div><div class="pc b"></div><div class="pc fx ftl"></div><div class="pc fx ftr"></div><div class="pc fx fbl"></div><div class="pc fx fbr"></div><div class="pc fx fet"></div><div class="pc fx feb"></div><div class="pc fx fel"></div><div class="pc fx fer"></div></div>
   <div class="r-stage" id="stage">
-    <div id="scroller" class="scroller" tabindex="-1"><article id="page" class="page"></article></div>
+    <div id="scroller" class="scroller" tabindex="-1" role="region" aria-label="Book text"><article id="page" class="page"></article></div>
     <div id="sweepFoot" class="sweep-foot" hidden></div>
     <div id="pgProg" class="pg-prog" hidden></div>
     <button type="button" id="pgPrev" class="pgarrow prev" aria-label="Previous page" title="Previous page (←)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
@@ -116,6 +128,77 @@
     <div id="sweepCover" class="sweep-cover" hidden></div>
     <div id="sweepNext" class="sweep-next" hidden><div class="sweep-clip"><div class="page lens-content sweep-content" aria-hidden="true"></div></div></div>
     <div id="guide" class="guide band"></div>
+  <div id="selBar" class="selbar" hidden role="toolbar" aria-label="Highlight">
+    <button class="hlc" data-c="y" aria-label="Yellow highlight" title="Yellow"></button><button class="hlc" data-c="g" aria-label="Green highlight" title="Green"></button><button class="hlc" data-c="b" aria-label="Blue highlight" title="Blue"></button><button class="hlc" data-c="p" aria-label="Pink highlight" title="Pink"></button><button class="hlc hlu" data-c="u" aria-label="Underline text" title="Underline text"><span aria-hidden="true">U</span></button>
+    <span class="selsep"></span>
+    <button class="seltxt" id="selDef">Define</button><button class="seltxt" id="selNote">Note</button><button class="seltxt" id="selCopy">Copy</button><button class="seltxt" id="selDel" hidden>Delete</button>
+  </div>
+  <div id="mkBar" class="mkbar" hidden role="toolbar" aria-label="Mark up">
+    <button class="rtool" data-tool="select" aria-pressed="false" title="Select: move, change or delete a mark" aria-label="Select marks"><svg viewBox="0 0 24 24"><path d="M5 3l14 8-6 1.5L10 19z"/></svg></button>
+    <button class="rtool" data-tool="text" aria-pressed="false" title="Add text: click where it goes" aria-label="Add text"><svg viewBox="0 0 24 24"><path d="M5 6V4h14v2M12 4v16M9 20h6"/></svg></button>
+    <button class="rtool" data-tool="pen" aria-pressed="false" title="Draw" aria-label="Draw"><svg viewBox="0 0 24 24"><path d="M4 20l1-4.5L16.5 4a2 2 0 0 1 3 3L8 18.5 4 20z"/><path d="M14 6.5l3 3"/></svg></button>
+    <button class="rtool" data-tool="area" aria-pressed="false" title="Highlight an area: drag across it" aria-label="Highlight an area"><svg viewBox="0 0 24 24"><rect x="3.5" y="6" width="17" height="12" rx="1.5" fill="currentColor" fill-opacity=".3"/></svg></button>
+    <span class="mksep"></span>
+    <span id="mkCols" class="mkcols" role="radiogroup" aria-label="Colour"></span>
+    <label class="mkrange" id="mkSizeWrap"><span id="mkSizeLbl">Size</span><input type="range" id="mkSize"></label>
+    <label class="mkrange" id="mkOpWrap"><span>Opacity</span><input type="range" id="mkOp" min="20" max="100" step="5"></label>
+    <span class="mksep"></span>
+    <button class="rtool" id="mkUndo" title="Undo (Ctrl+Z)" aria-label="Undo"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button>
+    <button class="rtool" id="mkDel" title="Delete the selected mark (Delete)" aria-label="Delete the selected mark" disabled><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>
+    <button class="rtool" id="mkEye" aria-pressed="false" title="Hide all marks" aria-label="Hide all marks"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
+    <button class="rbtn" id="mkDone">Done</button>
+  </div>
+  <section id="defCard" class="defcard" hidden role="dialog" aria-labelledby="defWord" aria-live="polite">
+    <div class="defhead"><h3 id="defWord"></h3><span id="defFrom" class="deffrom"></span><button type="button" class="rtool" id="defClose" title="Close (Esc)" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div id="defBody" class="defbody"></div>
+  </section>
+  <form id="findBar" class="findbar" hidden role="search" autocomplete="off">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.4-4.4"/></svg>
+    <input id="findIn" type="search" placeholder="Search this book" aria-label="Search this book" enterkeyhint="search" spellcheck="false">
+    <output id="findCount" aria-live="polite"></output>
+    <button type="button" class="rtool" id="findPrev" title="Previous match (Shift+Enter)" aria-label="Previous match"><svg viewBox="0 0 24 24"><path d="M6 15l6-6 6 6"/></svg></button>
+    <button type="button" class="rtool" id="findNext" title="Next match (Enter)" aria-label="Next match"><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+    <button type="button" class="rtool" id="findClose" title="Close search (Esc)" aria-label="Close search"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </form>
+  <div id="ocrBar" class="findbar ocrbar" hidden>
+    <span id="ocrMsg" role="status" aria-live="polite">Recognising text…</span>
+    <progress id="ocrProg" max="1" aria-hidden="true"></progress>
+    <button type="button" class="btn" id="ocrStop">Stop</button>
+  </div>
+  <nav id="pdfRail" class="rail" hidden aria-label="Page tools">
+    <input id="railPage" class="rail-page" type="text" inputmode="text" spellcheck="false" aria-label="Page" title="Type a page and press Enter">
+    <span id="railTotal" class="rail-total"></span>
+    <button class="rtool" id="railFirst" title="First page" aria-label="First page"><svg viewBox="0 0 24 24"><path d="M6 5h12M7 15l5-5 5 5"/></svg></button>
+    <button class="rtool" id="railPrev" title="Previous page" aria-label="Previous page"><svg viewBox="0 0 24 24"><path d="M6 15l6-6 6 6"/></svg></button>
+    <button class="rtool" id="railNext" title="Next page" aria-label="Next page"><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+    <button class="rtool" id="railLast" title="Last page" aria-label="Last page"><svg viewBox="0 0 24 24"><path d="M6 19h12M7 9l5 5 5-5"/></svg></button>
+    <div class="rail-sep rail-pages"></div>
+    <button class="rtool rail-pages" id="railFitW" title="Fit width" aria-label="Fit width"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 12h10M7 12l2.5-2.5M7 12l2.5 2.5M17 12l-2.5-2.5M17 12l-2.5 2.5"/></svg></button>
+    <button class="rtool rail-pages" id="railFitP" title="Fit whole page" aria-label="Fit whole page"><svg viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="2"/><path d="M12 7v10M12 7l-2.5 2.5M12 7l2.5 2.5M12 17l-2.5-2.5M12 17l2.5-2.5"/></svg></button>
+    <button class="rtool rail-pages" id="railIn" title="Zoom in" aria-label="Zoom in"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.4-4.4M8 11h6M11 8v6"/></svg></button>
+    <output id="railZoom" class="rail-zoom rail-pages" title="Page width"></output>
+    <button class="rtool rail-pages" id="railOut" title="Zoom out" aria-label="Zoom out"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.4-4.4M8 11h6"/></svg></button>
+    <button class="rtool rail-pages" id="railSpread" aria-pressed="false" title="Two pages side by side" aria-label="Two pages side by side"><svg viewBox="0 0 24 24"><rect x="2.5" y="5" width="8.5" height="14" rx="1.5"/><rect x="13" y="5" width="8.5" height="14" rx="1.5"/></svg></button>
+    <button class="rtool rail-pages rail-pdf" id="railRot" title="Rotate pages" aria-label="Rotate pages clockwise"><svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg></button>
+    <div class="rail-sep rail-pages rail-pdf"></div>
+    <button class="rtool rail-pages rail-pdf" id="railDark" aria-pressed="false" title="Dark pages: dark paper and light text, pictures keep their colours" aria-label="Dark pages"><svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg></button>
+    <button class="rtool rail-pages rail-pdf" id="railMark" aria-pressed="false" title="Mark up: add text, draw, highlight an area" aria-label="Mark up"><svg viewBox="0 0 24 24"><path d="M4 20l1-4.5L16.5 4a2 2 0 0 1 3 3L8 18.5 4 20z"/><path d="M14 6.5l3 3"/></svg></button>
+    <button class="rtool rail-pdf" id="railThumbs" title="Page thumbnails" aria-label="Page thumbnails"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="6.5" height="8" rx="1"/><rect x="13.5" y="3" width="6.5" height="8" rx="1"/><rect x="4" y="13" width="6.5" height="8" rx="1"/><rect x="13.5" y="13" width="6.5" height="8" rx="1"/></svg></button>
+    <button class="rtool" id="railFind" title="Search (Ctrl+F)" aria-label="Search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.4-4.4"/></svg></button>
+    <button class="rtool rail-pdf" id="railMore" title="More: print, download, details, trim margins" aria-label="More PDF tools" aria-haspopup="menu" aria-expanded="false"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/></svg></button>
+    <button class="rtool" id="railToc" title="Contents and Go to page" aria-label="Contents"><svg viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/></svg></button>
+  </nav>
+  <div id="railMenu" class="railmenu" hidden role="menu" aria-label="More PDF tools">
+    <button role="menuitemcheckbox" aria-checked="false" id="mTrim"><svg viewBox="0 0 24 24"><path d="M6 2v16h16M2 6h16v16"/></svg>Trim white margins</button>
+    <button role="menuitem" id="mRotL"><svg viewBox="0 0 24 24"><path d="M4 11a8 8 0 1 1 2.3 5.7"/><path d="M4 4v7h7"/></svg>Rotate anticlockwise</button>
+    <button role="menuitem" id="mPrint"><svg viewBox="0 0 24 24"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="7"/></svg>Print…</button>
+    <button role="menuitem" id="mSave"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>Download original</button>
+    <button role="menuitem" id="mSaveHl"><svg viewBox="0 0 24 24"><path d="M12 3v9M8 8.5l4 4 4-4M4 21h16"/><path d="M5 17h9" stroke-width="3.5" opacity=".45"/></svg>Download with highlights and marks</button>
+    <button role="menuitem" id="mInfo"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/></svg>Document details</button>
+    <button role="menuitem" id="mOcr"><svg viewBox="0 0 24 24"><path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16M8 9.5h8M8 12h8M8 14.5h5"/></svg>Recognise text…</button>
+  </div>
+  <button id="railPin" class="rail-show rail-hide" hidden title="Hide the page tools" aria-label="Hide the page tools"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+  <button id="railShow" class="rail-show" hidden title="Show the page tools" aria-label="Show the page tools"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
     <div id="lens" class="lens circle" hidden>
       <div class="lens-view"><div class="lens-content page" aria-hidden="true"></div></div>
       <div class="lens-bezel"></div>
@@ -128,6 +211,7 @@
       </div>
     </div>
     <div id="loading" class="loading" hidden>Opening book…</div>
+  </div>
   </div>
   <div class="r-bottom chrome">
     <button id="play" class="play" aria-label="Start scrolling" title="Play (Space)">
@@ -167,14 +251,29 @@
 
   <aside id="tocPanel" class="panel left" hidden aria-label="Contents">
     <header><h2>Contents</h2><button class="btn" data-close>Close</button></header>
+    <form id="goPage" class="gopage" hidden autocomplete="off">
+      <label for="goPageIn">Go to page</label>
+      <div class="row"><input id="goPageIn" type="text" inputmode="text" enterkeyhint="go" spellcheck="false" aria-describedby="goPageHint"><button class="btn primary" type="submit">Go</button></div>
+      <p class="hint" id="goPageHint" role="status"></p>
+    </form>
+    <div id="tocTabs" class="seg toctabs" role="tablist"><button data-t="toc" aria-pressed="true">Contents</button><button data-t="thumbs" aria-pressed="false" id="tabThumbs" hidden>Pages</button><button data-t="notes" aria-pressed="false">Notes</button></div>
     <ul id="toc" class="toc"></ul>
+    <div id="thumbs" class="thumbs" hidden></div>
+    <div id="notesBox" class="notesbox" hidden>
+      <ul id="notesList" class="noteslist"></ul>
+      <p class="hint" id="notesEmpty">No highlights yet. Select some text, then pick a colour to highlight it or Note to add a note.</p>
+      <div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn" id="notesExport">Export notes</button><button class="btn" id="notesPdf" hidden>Save PDF with highlights</button></div>
+    </div>
   </aside>
 
   <aside id="setPanel" class="panel right" hidden aria-label="Display settings">
+    <button class="dgrab" id="dGrab" aria-label="Show more of the panel"></button>
     <header><h2>Display</h2><button class="btn" data-close>Close</button></header>
-    <button class="btn" id="axFromReader" style="align-self:flex-start">Accessibility settings</button>
+    <button class="btn" id="axFromReader">Accessibility settings</button>
+    <nav class="djump" id="dJump" aria-label="Jump to"><button data-to="dgText">Text</button><button data-to="dgGuide">Reading guide</button><button data-to="dgScroll">Scroll style</button><button data-to="dgCol">Colours</button><button data-to="dgTts">Read aloud</button><button data-to="storyGrp">Story mode</button><button data-to="dispMore">More</button></nav>
 
-    <div class="grp">
+    <div class="dcols">
+    <div class="grp" id="dgText">
       <span class="lbl">Text</span>
       <div class="field"><label for="sSize">Size</label><input type="range" id="sSize" min="14" max="56" step="1"><output id="oSize"></output></div>
       <div class="field"><label for="sLh">Line spacing</label><input type="range" id="sLh" min="1.2" max="2.4" step="0.05"><output id="oLh"></output></div>
@@ -182,7 +281,33 @@
       <div class="seg" id="fonts" role="group" aria-label="Typeface"></div>
     </div>
 
-    <div class="grp">
+    <div class="grp" id="pdfGroup" hidden>
+      <span class="lbl" id="pgLbl">PDF pages</span>
+      <div class="field"><label for="sPgw">Page width</label><input type="range" id="sPgw" min="30" max="100" step="1"><output id="oPgw"></output></div>
+      <label class="check" id="tintRow"><input type="checkbox" id="sTint"> Tint pages to match the colours above</label>
+      <label class="check" id="trimRow"><input type="checkbox" id="sTrim"> Trim white margins from pages</label>
+      <p class="hint" id="pgHint">Text size, typeface and spacing apply when the PDF is shown as reflowed text.</p>
+      <div class="row pdftools" id="pdfTools" style="flex-wrap:wrap;gap:8px"><button class="btn" id="pdfPrintBtn">Print…</button><button class="btn" id="pdfSaveBtn">Download original</button><button class="btn" id="pdfSaveHlBtn">Download with highlights and marks</button><button class="btn" id="pdfInfoBtn">Document details</button><button class="btn" id="pdfOcrBtn">Recognise text…</button></div>
+    </div>
+
+    <div class="grp" id="dgGuide">
+      <span class="lbl">Reading guide</span>
+      <div class="seg" id="gmodes" role="group" aria-label="Guide style"></div>
+      <div class="field"><label for="sGpos">Position</label><input type="range" id="sGpos" min="8" max="85" step="1"><output id="oGpos"></output></div>
+      <div class="field"><label for="sGh">Height</label><input type="range" id="sGh" min="1" max="5" step="0.5"><output id="oGh"></output></div>
+      <div class="colors"><label>Guide colour <input type="color" id="cGuide"></label><label class="check"><input type="checkbox" id="sGuideAuto"> Match the accent colour</label></div>
+    </div>
+
+    <div class="grp" id="dgScroll">
+      <span class="lbl">Scroll style</span>
+      <div class="seg" id="styles" role="group" aria-label="Scroll style"><button data-v="cinema">Cinema (free scroll)</button><button data-v="sweep">Page sweep</button><button data-v="pages">Pages</button></div>
+      <label class="check" id="bookRow"><input type="checkbox" id="sBook"> Book layout: keep every line on the same grid</label>
+      <p class="hint" id="styleHint"></p>
+      <label class="check"><input type="checkbox" id="sSmooth"> Smooth motion</label>
+      <p class="hint">Moves the text in fractions of a pixel so it glides instead of stepping. Turn it off if text looks slightly soft while it scrolls.</p>
+    </div>
+
+    <div class="grp" id="dgCol">
       <span class="lbl">Colours</span>
       <p class="hint" id="axColNote" hidden></p>
       <div class="swatches" id="swatches"></div>
@@ -193,15 +318,7 @@
       <div class="field"><label for="sBright">Brightness</label><input type="range" id="sBright" min="25" max="100" step="1"><output id="oBright"></output></div>
     </div>
 
-    <div class="grp">
-      <span class="lbl">Reading guide</span>
-      <div class="seg" id="gmodes" role="group" aria-label="Guide style"></div>
-      <div class="field"><label for="sGpos">Position</label><input type="range" id="sGpos" min="8" max="85" step="1"><output id="oGpos"></output></div>
-      <div class="field"><label for="sGh">Height</label><input type="range" id="sGh" min="1" max="5" step="0.5"><output id="oGh"></output></div>
-      <div class="colors"><label>Guide colour <input type="color" id="cGuide"></label><label class="check"><input type="checkbox" id="sGuideAuto"> Match the accent colour</label></div>
-    </div>
-
-    <div class="grp">
+    <div class="grp" id="dgTts">
       <span class="lbl">Read aloud</span>
       <div class="field"><label for="ttsVoice">Voice</label><select id="ttsVoice" class="hzsel"></select><span></span></div>
       <div class="field"><label for="sTtsRate">Reading speed</label><input type="range" id="sTtsRate" min="0.5" max="2" step="0.05"><output id="oTtsRate"></output></div>
@@ -212,8 +329,37 @@
         <p class="hint" id="nvStatus" role="status"></p>
         <div class="row" style="flex-wrap:wrap;gap:8px"><button class="btn" id="nvAbout">About natural voices</button><button class="btn" id="nvRemove" hidden>Remove downloaded voices</button><a class="btn" href="licences.html" target="_blank" rel="noopener">Licences</a></div>
       </div>
+
     </div>
 
+    <div class="grp" id="storyGrp">
+      <span class="lbl">Story mode<span class="plustag" id="storyTag">Plus</span></span>
+      <label class="check"><input type="checkbox" id="sStory"> Illustrated pages</label>
+      <div class="grp" id="storyOpts" hidden>
+        <div class="field"><label for="sStoryTheme">Theme</label><select id="sStoryTheme" class="hzsel"></select></div>
+        <p class="hint" id="storyBookNote" hidden></p>
+        <div class="grp" id="storyPics" hidden>
+          <div class="stthumbs" id="stThumbs" role="radiogroup" aria-label="Your pictures"></div>
+          <div class="row" style="flex-wrap:wrap;gap:8px"><button class="btn" id="stAdd">Add a picture</button><button class="btn" id="stNight" title="Optional: a version of this picture for dark pages. Without one, the picture is dimmed.">Night version</button><button class="btn" id="stRemove">Remove</button></div>
+          <div class="field"><label for="sStVeil">Veil</label><input type="range" id="sStVeil" min="0" max="100" step="1"><output id="oStVeil"></output></div>
+          <div class="field"><label for="sStDim">Dim</label><input type="range" id="sStDim" min="0" max="80" step="1"><output id="oStDim"></output></div>
+          <div class="field"><label for="sStPos">Phone focus</label><input type="range" id="sStPos" min="0" max="100" step="1"><output id="oStPos"></output></div>
+          <p class="hint">Your pictures stay on this device. They’re never uploaded or synced. The veil is the page colour behind the text; Phone focus picks which part of the picture shows on a phone.</p>
+          <input type="file" id="stFile" accept="image/*" hidden>
+        </div>
+        <div class="grp" id="storyInk">
+          <div class="field"><label for="sStoryFinish">Dark pages</label><select id="sStoryFinish" class="hzsel"><option value="auto">The theme’s choice</option><option value="gold">Gold foil</option><option value="silver">Silver foil</option><option value="ink">Soft ink</option></select></div>
+          <div class="field"><label for="sStoryArt">Drawing</label><input type="range" id="sStoryArt" min="30" max="100" step="1"><output id="oStoryArt"></output></div>
+        </div>
+      </div>
+      <p class="hint" id="storyHint"></p>
+      <div class="row" id="storyTry" hidden style="flex-wrap:wrap;gap:8px"><button class="btn primary" id="storyKeep">Keep Story mode</button></div>
+    </div>
+
+    </div>
+
+    <details class="dmore" id="dispMore"><summary>More: magnifier, dictionary, translate, refresh rate, shortcuts</summary>
+    <div class="dcols">
     <div class="grp">
       <span class="lbl">Magnifier</span>
       <div class="seg" id="lensShapes" role="group" aria-label="Magnifier shape"><button data-v="circle">Circle</button><button data-v="rect">Rectangle</button></div>
@@ -222,17 +368,23 @@
       <p class="hint">Turn it on with the magnifier button or the M key. Drag its rim to move it, or the dot on the rim to resize it.</p>
     </div>
 
-    <div class="grp">
-      <span class="lbl">Scroll style</span>
-      <div class="seg" id="styles" role="group" aria-label="Scroll style"><button data-v="cinema">Cinema (free scroll)</button><button data-v="sweep">Page sweep</button><button data-v="pages">Pages</button></div>
-      <label class="check" id="bookRow"><input type="checkbox" id="sBook"> Book layout: keep every line on the same grid</label>
-      <p class="hint" id="styleHint"></p>
+    <div class="grp" id="dictGrp">
+      <span class="lbl">Dictionary</span>
+      <p class="hint">Select a word (or double-click it), then choose <strong>Define</strong>. Modern meanings come from WordNet, and older ones from Webster’s 1913 dictionary, for the words in classic books. It works offline once it’s downloaded (about 14 MB, once).</p>
+      <p class="hint" id="dictStatus" role="status"></p>
+      <div class="row" style="flex-wrap:wrap;gap:8px"><button class="btn" id="dictGet">Download the dictionary</button><button class="btn" id="dictRemove" hidden>Remove the dictionary</button></div>
+    </div>
+
+    <div class="grp" id="trGrp">
+      <span class="lbl">Translate <span class="newtag">Experimental</span></span>
+      <div class="field"><label for="sTrLang">Translate into</label><select id="sTrLang" class="hzsel"><option value="">Off (the original text)</option><option value="es" data-noi18n>Español (Spanish)</option></select><span></span></div>
+      <p class="hint"><strong>Experimental.</strong> Translates English books as you read, on this device, with Mozilla’s open-source translator (the one in Firefox). Machine translation makes mistakes, especially with old-fashioned or poetic writing, names and dialogue, so treat it as a reading aid, not a faithful translation. Highlights and notes are paused while it’s on.</p>
+      <p class="hint" id="trStatus" role="status"></p>
+      <div class="row" style="flex-wrap:wrap;gap:8px"><button class="btn" id="trRemove" hidden>Remove the translation files</button></div>
     </div>
 
     <div class="grp">
       <span class="lbl">Motion</span>
-      <label class="check"><input type="checkbox" id="sSmooth"> Smooth motion</label>
-      <p class="hint">Moves the text in fractions of a pixel so it glides instead of stepping. Turn it off if text looks slightly soft while it scrolls.</p>
       <div class="field"><label for="sHz">Refresh rate</label>
         <select id="sHz" class="hzsel">
           <option value="auto" id="hzAuto">Auto</option>
@@ -242,14 +394,7 @@
       <p class="hint">Auto measures your screen. Choose a rate yourself if motion still judders, for example on a monitor that changes its rate.</p>
     </div>
 
-    <div class="grp" id="pdfGroup" hidden>
-      <span class="lbl" id="pgLbl">PDF pages</span>
-      <div class="field"><label for="sPgw">Page width</label><input type="range" id="sPgw" min="30" max="100" step="1"><output id="oPgw"></output></div>
-      <label class="check" id="tintRow"><input type="checkbox" id="sTint"> Tint pages to match the colours above</label>
-      <p class="hint" id="pgHint">Text size, typeface and spacing apply when the PDF is shown as reflowed text.</p>
-    </div>
-
-    <div class="grp">
+    <div class="grp" id="dgKeys">
       <span class="lbl">Shortcuts</span>
       <div class="keys">
         <kbd>Space</kbd> play / pause · tap the text to do the same<br>
@@ -266,6 +411,8 @@
         <kbd>Esc</kbd> close panel, then back to library
       </div>
     </div>
+    </div>
+    </details>
   </aside>
 </div>
 
@@ -284,11 +431,27 @@
         <label for="dTitle">Title<input id="dTitle" autocomplete="off"></label>
         <label for="dAuthor">Author<input id="dAuthor" autocomplete="off"></label>
         <div class="dbio" id="dBio" aria-live="polite" hidden></div>
+        <div class="dline">
+        <div class="dgenre">
+          <div class="modeseg dkind" role="group" aria-label="Fiction or non-fiction"><button type="button" id="dFic" aria-pressed="false">Fiction</button><button type="button" id="dNon" aria-pressed="false">Non-fiction</button></div>
+          <label for="dGenre" class="dgl"><span class="vh">Genre</span><select id="dGenre"></select></label>
+        </div>
         <div class="drow2">
           <label for="dYear">First published<input id="dYear" inputmode="numeric" placeholder="e.g. 1890" autocomplete="off"></label>
           <label for="dIsbn">ISBN<input id="dIsbn" placeholder="e.g. 978-0-14-118776-1" autocomplete="off" spellcheck="false" aria-describedby="dIsbnMsg"></label>
         </div>
+        </div>
         <p class="hint isbnmsg" id="dIsbnMsg" aria-live="polite"></p>
+        <div class="dline dline2">
+        <div class="dmodes"><span class="dml" id="dModesL">Show in</span>
+          <div class="modeseg" role="group" aria-labelledby="dModesL">
+            <button type="button" id="dStudy" aria-pressed="true" title="Show this book in Study mode"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c0 1.5 2.7 3 6 3s6-1.5 6-3v-5"/><path d="M22 9v6"/></svg><span>Study</span></button>
+            <button type="button" id="dRelax" aria-pressed="true" title="Show this book in Relaxed mode"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M17 11h1.5a2.5 2.5 0 0 1 0 5H17"/><path d="M8 3c0 1.5 1 1.5 1 3M12 3c0 1.5 1 1.5 1 3"/></svg><span>Relaxed</span></button>
+          </div>
+        </div>
+        <div class="dstory" id="dStoryRow"><label for="dStory">Story mode</label><select id="dStory"></select></div>
+        </div>
+        <p class="hint" id="dModesHint" aria-live="polite"></p>
       </div>
 
     <div class="grp dcov">
@@ -300,6 +463,7 @@
         <label class="btn" for="dImg">Upload image</label><input type="file" id="dImg" accept="image/*" hidden>
         <div class="urlrow" id="dUrlRow"><input id="dUrl" type="url" inputmode="url" placeholder="Or paste an image’s web address" aria-label="Cover image web address" autocomplete="off"><button class="btn" id="dUrlGo">Use</button></div>
       </div>
+      <p class="hint dplusnote" id="dPlusNote" hidden>Genre designs are part of Velvet Scroll Plus. Try them here as much as you like; saving one asks for Plus.</p>
       <p class="hint" id="dCoverHint">Images are shaped to a 2:3 cover. You can also paste an image, or drop one onto the preview.</p>
       </div>
       </div>
@@ -316,6 +480,22 @@
   </div>
 </div>
 
+<div id="noteDlg" class="modal" hidden>
+  <div class="sheet notesheet" role="dialog" aria-modal="true" aria-labelledby="noteH">
+    <header class="sh-head"><h2 id="noteH">Note</h2></header>
+    <blockquote id="noteQuote" class="notequote"></blockquote>
+    <label for="noteText" class="lbl">Your note</label>
+    <textarea id="noteText" rows="5" placeholder="Write a note about this passage"></textarea>
+    <footer class="sh-foot"><button class="btn" id="noteDel">Delete highlight</button><button class="btn" id="noteCancel">Cancel</button><button class="btn primary" id="noteSave">Save</button></footer>
+  </div>
+</div>
+<div id="pinfo" class="modal side" hidden>
+  <div class="sheet" role="dialog" aria-modal="false" aria-labelledby="pinfoH">
+    <header class="sh-head"><h2 id="pinfoH">Document details</h2><button class="btn" id="pinfoClose">Done</button></header>
+    <dl id="pinfoList" class="pinfo"></dl>
+  </div>
+</div>
+<div id="printBox" aria-hidden="true"></div>
 <div id="ax" class="modal side" hidden>
   <div class="sheet" role="dialog" aria-modal="false" aria-labelledby="axH">
     <header class="sh-head"><h2 id="axH">Accessibility</h2><button class="btn" id="axClose">Done</button></header>
@@ -345,6 +525,11 @@
       <div class="seg" id="axMotion" role="group" aria-labelledby="axMoL"><button data-v="auto">Match my device</button><button data-v="reduce">Reduce motion</button></div>
       <p class="hint" id="axMoHint"></p>
     </div>
+    <div class="grp">
+      <span class="lbl">Keyboard</span>
+      <label class="check"><input type="checkbox" id="axKeys"> Single-letter shortcuts (H, M, R, F, G, B, S, [ and ])</label>
+      <p class="hint">Turn these off if they clash with your screen reader or speech software. Space, the arrow keys and Page Up / Page Down still work, and every shortcut also has a button. With a screen reader, Read aloud (the speaker button in the reader) reads the book to you and follows along on the page.</p>
+    </div>
     <footer class="sh-foot"><button class="btn" id="axReset">Reset accessibility</button></footer>
   </div>
 </div>
@@ -353,6 +538,11 @@
   <div class="sheet" role="dialog" aria-modal="false" aria-labelledby="apH">
     <header class="sh-head"><h2 id="apH">Appearance</h2><button class="btn" id="apClose">Done</button></header>
     <p class="hint">Colours for the library and panels. The reading page has its own colours under Display in the reader.</p>
+    <div class="grp">
+      <label class="lbl" for="apLang">Language</label>
+      <select id="apLang" class="hzsel langsel"><option value="auto">Automatic (device language)</option><option value="en" data-noi18n>English</option><option value="es" data-noi18n>Español</option><option value="pt" data-noi18n>Português (Brasil)</option><option value="de" data-noi18n>Deutsch</option><option value="fr" data-noi18n>Français</option></select>
+      <p class="hint">Changes the words in Velvet Scroll’s menus and windows. Your books stay in their own language.</p>
+    </div>
     <div class="grp">
       <span class="lbl">Theme</span>
       <div class="seg" id="apMode" role="group" aria-label="Theme"></div>
@@ -382,6 +572,18 @@
   </div>
 </div>
 
+<div id="urlDlg" class="modal" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="urlH">
+    <header class="sh-head"><h2 id="urlH">Add from a web address</h2><button class="btn" id="urlClose">Close</button></header>
+    <p class="hint">Paste a link to an ebook or PDF: EPUB, PDF, MOBI, AZW3, FB2, TXT or CBZ. Links to a book’s page on Project Gutenberg or arXiv work too, as do shared Dropbox, Google Drive and GitHub links. DRM-protected books can’t be added.</p>
+    <div class="urlrow"><input id="urlIn" type="url" inputmode="url" placeholder="https://…" aria-label="Web address of the book or PDF" autocomplete="off"><button class="btn primary" id="urlGo">Add</button></div>
+    <progress id="urlProg" class="urlprog" hidden></progress>
+    <p class="hint" id="urlSt" role="status" aria-live="polite"></p>
+    <div class="row" id="urlAct" style="flex-wrap:wrap;gap:8px"></div>
+    <p class="hint" id="urlExtHint">Many sites don’t let other websites download their files. If a link doesn’t work here, download the file in your browser and use Add books, or use the Velvet Scroll browser extension, which can download from any site you allow.</p>
+  </div>
+</div>
+
 <div id="nvdlg" class="modal" hidden>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="nvH">
     <header class="sh-head"><h2 id="nvH">Natural voices</h2><button class="btn" id="nvClose">Close</button></header>
@@ -399,6 +601,46 @@
     </div>
     <p class="hint" id="nvDlgSt" role="status"></p>
     <footer class="sh-foot"><a class="btn" href="licences.html" target="_blank" rel="noopener">Licences</a><button class="btn" id="nvCancel">Not now</button><button class="btn primary" id="nvGo">Download</button></footer>
+  </div>
+</div>
+
+<div id="ocrdlg" class="modal" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="ocrH">
+    <header class="sh-head"><h2 id="ocrH">Recognise text</h2><button class="btn" id="ocrClose">Close</button></header>
+    <p id="ocrLead"></p>
+    <div class="grp">
+      <span class="lbl">Before you start</span>
+      <ul class="nvinfo">
+        <li><strong>Runs on your device.</strong> Velvet Scroll reads the page images itself with Tesseract, an open-source text recogniser. Nothing from your book is uploaded.</li>
+        <li><strong>A one-time download</strong> of about <span class="ocrMB">7</span> MB (English language data<span class="ocrEng"> and the recognition engine</span>) from jsDelivr. Your browser keeps it, so it isn’t downloaded again unless you clear this site’s data.</li>
+        <li><strong>Takes a little while:</strong> a second or two per page on most computers, longer on phones. You can keep reading while it works and stop at any time. Finished pages are kept.</li>
+        <li><strong>Works best on clear, printed English.</strong> Other languages in the Latin alphabet come out less accurately, handwriting isn’t recognised, and there may be some mistakes.</li>
+        <li><strong>Openly licensed.</strong> Tesseract and Tesseract.js are free software under the Apache 2.0 licence. See Licences for details.</li>
+      </ul>
+      <p class="hint">The recognised text is saved in this browser with the book, so it’s ready next time. Removing the book removes it too.</p>
+    </div>
+    <p class="hint" id="ocrDlgSt" role="status"></p>
+    <footer class="sh-foot"><a class="btn" href="licences.html" target="_blank" rel="noopener">Licences</a><button class="btn" id="ocrCancel">Not now</button><button class="btn primary" id="ocrGo">Download and start</button></footer>
+  </div>
+</div>
+
+<div id="trdlg" class="modal" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="trH">
+    <header class="sh-head"><h2 id="trH">Translate (experimental)</h2><button class="btn" id="trClose">Close</button></header>
+    <div class="grp">
+      <span class="lbl">Before you turn it on</span>
+      <ul class="nvinfo">
+        <li><strong>An experimental feature.</strong> It may be slow, make mistakes or not work on some devices, and it may change or be removed.</li>
+        <li><strong>Machine translation, not a translator.</strong> It’s good for getting the gist and for language practice, but it can get meaning, tone, names and idioms wrong, especially in older or literary books.</li>
+        <li><strong>Runs on your device.</strong> Nothing from your book is sent anywhere: the translator runs in your browser with Mozilla’s open-source Firefox Translations engine and models.</li>
+        <li><strong>A one-time download</strong> of about <span id="trMB">30</span> MB from velvetscroll.net. Your browser keeps it, so it isn’t downloaded again unless you remove it or clear this site’s data.</li>
+        <li><strong>English books only for now,</strong> into Spanish. More languages may follow.</li>
+        <li><strong>For your own reading.</strong> Velvet Scroll shows the translation on screen as you read; it never saves or shares a translated copy.</li>
+        <li><strong>Openly licensed.</strong> The engine and models are free software from Mozilla under the Mozilla Public License 2.0. See Licences for details.</li>
+      </ul>
+    </div>
+    <p class="hint" id="trDlgSt" role="status"></p>
+    <footer class="sh-foot"><a class="btn" href="licences.html#translation" target="_blank" rel="noopener">Licences</a><button class="btn" id="trCancel">Not now</button><button class="btn primary" id="trGo">Download and translate</button></footer>
   </div>
 </div>
 
@@ -440,6 +682,13 @@
       </div>
       <p class="hint" id="bkLoadSt" role="status"></p>
     </div>
+    <div class="grp" id="gdGrp">
+      <span class="lbl">Google Drive sync</span>
+      <p class="hint">Keep your reading places, shelves, book details, highlights, notes and settings in step on all your devices, through one small file in your own Google Drive. Velvet Scroll can only see the files it creates there. The books themselves aren’t uploaded: copy them to each device once with a backup.</p>
+      <div class="row" style="flex-wrap:wrap;gap:8px"><button class="btn primary" id="gdConnect">Connect Google Drive</button><button class="btn" id="gdNow" hidden>Sync now</button><button class="btn" id="gdOff" hidden>Disconnect</button></div>
+      <p class="hint" id="gdSt" role="status"></p>
+      <div id="gdMissing" hidden><p class="hint">In your Google Drive sync but not in this library:</p><ul class="missing" id="gdList"></ul></div>
+    </div>
     <div class="grp" id="syncGrp" hidden>
       <span class="lbl" id="syncLbl">Browser sync</span>
       <label class="check"><input type="checkbox" id="syncOn"> Sync reading positions, shelves, book details and settings</label>
@@ -478,7 +727,45 @@
   </div>
 </div>
 
-<div id="toast" class="toast" hidden role="status"></div>
+<div id="plusDlg" class="modal" hidden>
+  <div class="sheet plussheet" role="dialog" aria-modal="true" aria-labelledby="plusH">
+    <header class="sh-head"><h2 id="plusH">Velvet Scroll Plus</h2><button class="btn" id="plusClose">Close</button></header>
+    <p class="plusctx" id="plusCtx" hidden></p>
+    <div class="plusbody">
+    <div class="plusside">
+    <p class="pluslede">Velvet Scroll has no ads and never will. The reader, read aloud and every accessibility setting are free for everyone. Velvet Scroll Plus is a one-time purchase that unlocks extra tools for study, syncing and atmosphere. It supports the time that goes into building and maintaining Velvet Scroll, and keeps it independent.</p>
+    <a class="plusmore" id="plusMore" href="plus.html" target="_blank" rel="noopener">
+      <span><strong>See everything in Plus</strong><span class="muted">Sync across your phone, tablet and computer, your own pictures as pages, Story mode, tools for study</span></span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    </a>
+    <p class="hint"><strong>A$15, one payment, no subscription.</strong> 30-day no-questions <a href="https://velvetscroll.net/refunds.html" target="_blank" rel="noopener">refund</a>. One licence key unlocks Plus on the website and in the Chrome, Firefox and Edge extensions, on all your devices. Checking the key happens on your device, and nothing about it is sent anywhere.</p>
+    <div id="plusOff">
+      <div class="row"><button class="btn primary" id="plusBuy">Buy Plus · A$15</button></div>
+      <label for="plusKey" class="pluskeylbl">Have a licence key?<textarea id="plusKey" rows="2" spellcheck="false" placeholder="Paste your key, starting VSP1-"></textarea></label>
+      <div class="row end"><button class="btn primary" id="plusApply">Unlock Plus</button></div>
+      <p class="hint" id="plusSt" role="status"></p>
+    </div>
+    <div id="plusOnBox" hidden>
+      <p class="pluson"><strong>Plus is unlocked on this device.</strong> <span id="plusWho"></span> Thank you for supporting Velvet Scroll.</p>
+      <div id="plusKeyBox" class="pluskeybox" hidden>
+        <label for="plusKeyShow" class="pluskeylbl">Your licence key: keep a copy to unlock Plus on your other devices and in the extensions<textarea id="plusKeyShow" rows="3" readonly spellcheck="false"></textarea></label>
+        <div class="row"><button class="btn" id="plusKeyCopy">Copy key</button></div>
+      </div>
+      <div class="row"><button class="btn" id="plusRemove">Remove the key from this device</button></div>
+    </div>
+    </div>
+    <div class="plusgrid">
+      <div class="pluscol"><span class="lbl">Free for everyone, always</span>
+        <ul><li>Auto-scrolling and the reading guide</li><li>Read aloud, including the natural voices</li><li>Every display and accessibility setting</li><li>Your library, shelves, covers and author bios</li><li>Search, highlights and notes in your books</li><li>Backups and sync codes</li></ul></div>
+      <div class="pluscol plus"><span class="lbl">Plus</span>
+        <ul><li class="plushl"><strong>Your own pictures</strong>: any photo or painting as your reading page <span class="newtag">New</span></li><li>Google Drive sync across all your devices</li><li>Recognise text in scanned PDFs</li><li>Download PDFs with your highlights</li><li>Export all your notes</li><li>Cover designs: horror, fantasy, 1960s science fiction, romance, mystery, Art Deco, Victorian cloth and children’s classics, plus covers that match each book’s Story theme</li><li>Story mode: illustrated themes for your books <span class="soon">coming soon</span></li></ul></div>
+    </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast" hidden aria-hidden="true"></div>
+<div id="srLive" class="vh" role="status" aria-live="polite"></div>
 <script src="lib/jszip.min.js"></script>
 <script src="lib/Readability.js"></script>
 <script src="clip-core.js"></script>

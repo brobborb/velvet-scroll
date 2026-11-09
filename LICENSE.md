@@ -6,4 +6,4 @@ Velvet Scroll is free to use. Its source code is published here so that anyone c
 
 The name "Velvet Scroll" and its icon identify this project. Please don't use them for other apps, extensions or websites.
 
-This applies only to Velvet Scroll's own work. The third-party open-source software, voices and language data it includes or downloads keep their own licences, listed at https://velvetscroll.net/licences.html (full texts: LICENSE-GPL-3.0.txt and the notices in source/vendor and lib).
+This applies only to Velvet Scroll's own work. The third-party open-source software, voices and language data it includes or downloads keep their own licences, listed at https://velvetscroll.net/licences.html (full texts: LICENSE-GPL-3.0.txt, LICENSE-Apache-2.0.txt, and the notices in source/vendor and lib).

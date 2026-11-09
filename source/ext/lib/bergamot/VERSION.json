@@ -1,0 +1,10 @@
+{
+    "upstream": "https://github.com/mozilla/translations",
+    "release": "v0.6.0",
+    "revision": "df4ab487a117903b53e62cf3ac4305966fbbd2d6",
+    "emsdk": "3.1.8",
+    "artifacts": {
+        "wasm": "bergamot-translator.wasm",
+        "module": "bergamot-translator.mjs"
+    }
+}

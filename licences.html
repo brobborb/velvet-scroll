@@ -59,16 +59,39 @@ if(t.fixed)set(t.fixed);else if(t.light&&t.dark){var mq=matchMedia('(prefers-col
 </ul>
 <p>The GNU GPL lets you copy, change and share eSpeak NG. If you would like a copy of the exact eSpeak NG and piper-phonemize source code used by the build above, it is available from the links above, or ask through <a href="https://github.com/brobborb/velvet-scroll/issues">the project page</a> and we will provide it.</p>
 
+<h2>Recognising text in scanned PDFs (optional)</h2>
+<ul>
+<li><strong>Tesseract</strong> (the Tesseract OCR project), which recognises printed text in page images, Apache License 2.0 (<a href="LICENSE-Apache-2.0.txt">full text</a>): <a href="https://github.com/tesseract-ocr/tesseract">github.com/tesseract-ocr/tesseract</a>.</li>
+<li><strong>Tesseract.js</strong> 7.0.0 and <strong>tesseract.js-core</strong> 7.0.0 (Project Naptha), which run Tesseract in the browser as WebAssembly, Apache License 2.0: <a href="https://github.com/naptha/tesseract.js">github.com/naptha/tesseract.js</a> and <a href="https://github.com/naptha/tesseract.js-core">github.com/naptha/tesseract.js-core</a>. Velvet Scroll uses the unmodified npm releases. They include small libraries under the MIT and BSD licences (regenerator-runtime, buffer, ieee754 and zlib.js), whose notices come with the files.</li>
+<li><strong>English language data</strong> from the Tesseract project’s <a href="https://github.com/tesseract-ocr/tessdata_best">tessdata_best</a> models (integer version), Apache License 2.0, as published in <a href="https://www.npmjs.com/package/@tesseract.js-data/eng/v/1.0.0">@tesseract.js-data/eng 1.0.0</a>. It is downloaded from jsDelivr only when you choose Recognise text.</li>
+</ul>
+
+<h2>Dictionary (optional)</h2>
+<ul>
+<li><strong>WordNet 3.1</strong>, the lexical database used for modern meanings, examples and words that mean the same. WordNet 3.0 Copyright 2006 and WordNet 3.1 Copyright 2011 by Princeton University. All rights reserved. Used under the WordNet licence (<a href="LICENSE-WordNet.txt">full text</a>), which allows use, copying, modification and distribution with this notice and its disclaimer: THE DATABASE IS PROVIDED "AS IS" AND PRINCETON UNIVERSITY MAKES NO REPRESENTATIONS OR WARRANTIES, EXPRESS OR IMPLIED. Data from the npm packages <a href="https://www.npmjs.com/package/wordnet-db/v/3.1.14">wordnet-db 3.1.14</a> and, for irregular word forms, <a href="https://www.npmjs.com/package/wndb-with-exceptions/v/3.0.2">wndb-with-exceptions 3.0.2</a>; <a href="https://wordnet.princeton.edu/">wordnet.princeton.edu</a>.</li>
+<li><strong>Webster’s Revised Unabridged Dictionary</strong> (1913), used for older meanings, in the public domain. From Project Gutenberg ebook <a href="https://www.gutenberg.org/ebooks/29765">29765</a>, as converted to JSON in <a href="https://github.com/matthewreagan/WebstersEnglishDictionary">github.com/matthewreagan/WebstersEnglishDictionary</a>.</li>
+<li>Velvet Scroll shortens both into its own compact files (source/tools/make_dictionary.py), which are downloaded from velvetscroll.net only when you choose to download the dictionary.</li>
+</ul>
+
+<h2 id="translation">Translating books (optional, experimental)</h2>
+<ul>
+<li><strong>Bergamot translator</strong>, Mozilla’s translation engine behind Firefox Translations (<a href="https://github.com/mozilla/translations">github.com/mozilla/translations</a>, release v0.6.0), compiled to WebAssembly. Mozilla Public License 2.0 (<a href="LICENSE-MPL-2.0.txt">full text</a>); its source code is available at that address. The WebAssembly build used is the unmodified one published in the npm package @bandf/i18n 1.1.2 (MIT). The engine includes Marian NMT and intgemm (MIT), SentencePiece (Apache 2.0), ssplit-cpp (MIT) and protobuf-lite (BSD 3-clause).</li>
+<li><strong>Translation models</strong> from Mozilla’s Firefox Translations model registry (<a href="https://mozilla.github.io/translations/model-registry/">mozilla.github.io/translations/model-registry</a>), distributed by Mozilla under the Mozilla Public License 2.0. Velvet Scroll serves unmodified copies from velvetscroll.net, downloaded only when you turn on Translate.</li>
+</ul>
+
 <h2>Reading and library</h2>
 <ul>
 <li><strong>PDF.js</strong> 3.11.174 (Mozilla), Apache License 2.0: <a href="https://github.com/mozilla/pdf.js">github.com/mozilla/pdf.js</a></li>
+<li><strong>pdf-lib</strong> 1.17.1 (Andrew Dillon), used to save a copy of a PDF with your highlights, MIT licence: <a href="https://github.com/Hopding/pdf-lib">github.com/Hopding/pdf-lib</a></li>
 <li><strong>JSZip</strong> 3.10.1, MIT licence: <a href="https://github.com/Stuk/jszip">github.com/Stuk/jszip</a></li>
+<li><strong>Mammoth</strong> 1.13.0 (Michael Williamson), used to open Word (DOCX) documents, BSD 2-clause licence: Copyright (c) 2013, Michael Williamson. All rights reserved. Redistributed unmodified (<a href="LICENSE-Mammoth.txt">full licence</a>): <a href="https://github.com/mwilliamson/mammoth.js">github.com/mwilliamson/mammoth.js</a>. The website loads it from jsDelivr only when you open a DOCX; the extension includes it.</li>
 <li><strong>Readability</strong> 0.6.0 (Mozilla), Apache License 2.0: <a href="https://github.com/mozilla/readability">github.com/mozilla/readability</a></li>
 <li><strong>Fonts</strong>: Literata, Atkinson Hyperlegible, Lexend and Young Serif, SIL Open Font License 1.1.</li>
+<li><strong>Cover fonts</strong>: UnifrakturMaguntia (© 2010 j. ‘mach’ wust, © 2009 Peter Wiegel), Cinzel Decorative (© 2012 Natanael Gama), Michroma (© 2011 The Michroma Project Authors), Great Vibes (© 2010 The Great Vibes Pro Project Authors), Bebas Neue (© 2019 The Bebas Neue Project Authors) Grandstander (© 2020 The Grandstander Project Authors), Limelight (© 2010 Sorkin Type Co) and IM FELL English SC (© 2010 Igino Marini), SIL Open Font License 1.1. Used for the genre cover designs.</li>
 </ul>
 
 <h2>Website pictures</h2>
-<p>The photographs used to show “your own pictures” on the Plus page (a lightning storm, New York at night, a chalkboard and a wolf at moonrise) come from <a href="https://www.publicdomainpictures.net/">PublicDomainPictures.net</a> and are released into the public domain under <a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0 1.0</a>.</p>
+<p>The photographs used to show “your own pictures” on the Plus page (a lightning storm, New York at night, a chalkboard and a wolf at moonrise) come from <a href="https://www.publicdomainpictures.net/">PublicDomainPictures.net</a> and are released into the public domain under <a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0 1.0</a>. The sample text in the Story mode preview is from <i>Wuthering Heights</i> by Emily Brontë (1847), from the Project Gutenberg edition.</p>
 
 <p><a href="./">← Back to Velvet Scroll</a></p>
 </main>
