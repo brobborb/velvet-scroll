@@ -3892,16 +3892,22 @@ function findMarks(){ const on = String(!$('#findBar').hidden); $('#railFind').s
 /* centre the title on the window when the buttons either side leave room; otherwise it fills the space between them */
 function titleCentre(){
   const t = document.querySelector('.r-title'), bar = t.parentElement; if(R.hidden) return;
-  bar.classList.remove('tcenter'); t.style.maxWidth = '';
+  bar.classList.remove('tcenter'); t.style.maxWidth = ''; t.style.left = '';
   if(innerWidth <= 560) return;
   const br = bar.getBoundingClientRect(), mid = br.left + br.width / 2; let lEnd = br.left, rStart = br.right;
   for(const k of bar.children){ if(k === t || !k.offsetWidth || k.classList.contains('r-spacer')) continue;
     const r = k.getBoundingClientRect(); if(r.right <= mid) lEnd = Math.max(lEnd, r.right); else if(r.left >= mid) rStart = Math.min(rStart, r.left); else return; }
-  const half = Math.min(mid - lEnd, rStart - mid) - 12;
-  if(half < 120) return;
-  bar.classList.add('tcenter'); t.style.maxWidth = half * 2 + 'px';
+  // centred on the window; when the buttons on one side take more room, as close to the centre as the space allows
+  const room = rStart - lEnd - 24;
+  if(room < 160) return;
+  bar.classList.add('tcenter'); t.style.maxWidth = room + 'px';
+  const w = t.offsetWidth, left = Math.max(lEnd + 12, Math.min(mid - w / 2, rStart - 12 - w));
+  t.style.left = (left - br.left) + 'px';
 }
 new ResizeObserver(() => titleCentre()).observe(document.querySelector('.r-top'));
+// and again when the title, the chapter or the buttons change
+{ let raf = 0; new MutationObserver(() => { cancelAnimationFrame(raf); raf = requestAnimationFrame(titleCentre); })
+    .observe(document.querySelector('.r-top'), {subtree:true, childList:true, characterData:true, attributes:true, attributeFilter:['hidden']}); }
 
 
 /* ---------- highlights and notes (saved per book; found again from the quoted text and the words around it) ---------- */

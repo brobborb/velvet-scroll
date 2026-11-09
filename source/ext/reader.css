@@ -636,7 +636,7 @@ body.dragging .drop{display:grid}
 .r-spacer{display:none}
 /* wider windows: the title centred on the window, not just in the space between the buttons */
 .r-top.tcenter{position:relative}
-.r-top.tcenter .r-title{position:absolute;left:50%;transform:translateX(-50%);width:max-content}
+.r-top.tcenter .r-title{position:absolute;left:0;width:max-content}
 .r-top.tcenter .r-spacer{display:block;flex:1}
 .r-title strong{font-family:var(--f-read);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .r-title span{font-size:13px;opacity:.7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
