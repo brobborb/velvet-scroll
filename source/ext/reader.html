@@ -265,10 +265,13 @@
   </aside>
 
   <aside id="setPanel" class="panel right" hidden aria-label="Display settings">
+    <button class="dgrab" id="dGrab" aria-label="Show more of the panel"></button>
     <header><h2>Display</h2><button class="btn" data-close>Close</button></header>
-    <button class="btn" id="axFromReader" style="align-self:flex-start">Accessibility settings</button>
+    <button class="btn" id="axFromReader">Accessibility settings</button>
+    <nav class="djump" id="dJump" aria-label="Jump to"><button data-to="dgText">Text</button><button data-to="dgGuide">Reading guide</button><button data-to="dgScroll">Scroll style</button><button data-to="dgCol">Colours</button><button data-to="dgTts">Read aloud</button><button data-to="storyGrp">Story mode</button><button data-to="dispMore">More</button></nav>
 
-    <div class="grp">
+    <div class="dcols">
+    <div class="grp" id="dgText">
       <span class="lbl">Text</span>
       <div class="field"><label for="sSize">Size</label><input type="range" id="sSize" min="14" max="56" step="1"><output id="oSize"></output></div>
       <div class="field"><label for="sLh">Line spacing</label><input type="range" id="sLh" min="1.2" max="2.4" step="0.05"><output id="oLh"></output></div>
@@ -276,7 +279,33 @@
       <div class="seg" id="fonts" role="group" aria-label="Typeface"></div>
     </div>
 
-    <div class="grp">
+    <div class="grp" id="pdfGroup" hidden>
+      <span class="lbl" id="pgLbl">PDF pages</span>
+      <div class="field"><label for="sPgw">Page width</label><input type="range" id="sPgw" min="30" max="100" step="1"><output id="oPgw"></output></div>
+      <label class="check" id="tintRow"><input type="checkbox" id="sTint"> Tint pages to match the colours above</label>
+      <label class="check" id="trimRow"><input type="checkbox" id="sTrim"> Trim white margins from pages</label>
+      <p class="hint" id="pgHint">Text size, typeface and spacing apply when the PDF is shown as reflowed text.</p>
+      <div class="row pdftools" id="pdfTools" style="flex-wrap:wrap;gap:8px"><button class="btn" id="pdfPrintBtn">Print…</button><button class="btn" id="pdfSaveBtn">Download original</button><button class="btn" id="pdfSaveHlBtn">Download with highlights and marks</button><button class="btn" id="pdfInfoBtn">Document details</button><button class="btn" id="pdfOcrBtn">Recognise text…</button></div>
+    </div>
+
+    <div class="grp" id="dgGuide">
+      <span class="lbl">Reading guide</span>
+      <div class="seg" id="gmodes" role="group" aria-label="Guide style"></div>
+      <div class="field"><label for="sGpos">Position</label><input type="range" id="sGpos" min="8" max="85" step="1"><output id="oGpos"></output></div>
+      <div class="field"><label for="sGh">Height</label><input type="range" id="sGh" min="1" max="5" step="0.5"><output id="oGh"></output></div>
+      <div class="colors"><label>Guide colour <input type="color" id="cGuide"></label><label class="check"><input type="checkbox" id="sGuideAuto"> Match the accent colour</label></div>
+    </div>
+
+    <div class="grp" id="dgScroll">
+      <span class="lbl">Scroll style</span>
+      <div class="seg" id="styles" role="group" aria-label="Scroll style"><button data-v="cinema">Cinema (free scroll)</button><button data-v="sweep">Page sweep</button><button data-v="pages">Pages</button></div>
+      <label class="check" id="bookRow"><input type="checkbox" id="sBook"> Book layout: keep every line on the same grid</label>
+      <p class="hint" id="styleHint"></p>
+      <label class="check"><input type="checkbox" id="sSmooth"> Smooth motion</label>
+      <p class="hint">Moves the text in fractions of a pixel so it glides instead of stepping. Turn it off if text looks slightly soft while it scrolls.</p>
+    </div>
+
+    <div class="grp" id="dgCol">
       <span class="lbl">Colours</span>
       <p class="hint" id="axColNote" hidden></p>
       <div class="swatches" id="swatches"></div>
@@ -285,6 +314,20 @@
         <label>Text <input type="color" id="cFg"></label>
       </div>
       <div class="field"><label for="sBright">Brightness</label><input type="range" id="sBright" min="25" max="100" step="1"><output id="oBright"></output></div>
+    </div>
+
+    <div class="grp" id="dgTts">
+      <span class="lbl">Read aloud</span>
+      <div class="field"><label for="ttsVoice">Voice</label><select id="ttsVoice" class="hzsel"></select><span></span></div>
+      <div class="field"><label for="sTtsRate">Reading speed</label><input type="range" id="sTtsRate" min="0.5" max="2" step="0.05"><output id="oTtsRate"></output></div>
+      <label class="check"><input type="checkbox" id="sTtsHl"> Highlight each word as it’s read</label>
+      <p class="hint" id="ttsHint">Starts from the line on the reading guide and keeps the spoken words on it. While it’s reading, tap any sentence to read from there, use the ⏮ ⏭ buttons (or ← →) to skip a paragraph, or pick a chapter from Contents. Uses the voices installed on your device.</p>
+      <p class="hint" id="ttsTip"></p>
+      <div id="nvRow" class="grp" hidden>
+        <p class="hint" id="nvStatus" role="status"></p>
+        <div class="row" style="flex-wrap:wrap;gap:8px"><button class="btn" id="nvAbout">About natural voices</button><button class="btn" id="nvRemove" hidden>Remove downloaded voices</button><a class="btn" href="licences.html" target="_blank" rel="noopener">Licences</a></div>
+      </div>
+
     </div>
 
     <div class="grp" id="storyGrp">
@@ -311,25 +354,24 @@
       <div class="row" id="storyTry" hidden style="flex-wrap:wrap;gap:8px"><button class="btn primary" id="storyKeep">Keep Story mode</button></div>
     </div>
 
-    <div class="grp">
-      <span class="lbl">Reading guide</span>
-      <div class="seg" id="gmodes" role="group" aria-label="Guide style"></div>
-      <div class="field"><label for="sGpos">Position</label><input type="range" id="sGpos" min="8" max="85" step="1"><output id="oGpos"></output></div>
-      <div class="field"><label for="sGh">Height</label><input type="range" id="sGh" min="1" max="5" step="0.5"><output id="oGh"></output></div>
-      <div class="colors"><label>Guide colour <input type="color" id="cGuide"></label><label class="check"><input type="checkbox" id="sGuideAuto"> Match the accent colour</label></div>
     </div>
 
+    <details class="dmore" id="dispMore"><summary>More: magnifier, dictionary, translate, refresh rate, shortcuts</summary>
+    <div class="dcols">
     <div class="grp">
-      <span class="lbl">Read aloud</span>
-      <div class="field"><label for="ttsVoice">Voice</label><select id="ttsVoice" class="hzsel"></select><span></span></div>
-      <div class="field"><label for="sTtsRate">Reading speed</label><input type="range" id="sTtsRate" min="0.5" max="2" step="0.05"><output id="oTtsRate"></output></div>
-      <label class="check"><input type="checkbox" id="sTtsHl"> Highlight each word as it’s read</label>
-      <p class="hint" id="ttsHint">Starts from the line on the reading guide and keeps the spoken words on it. While it’s reading, tap any sentence to read from there, use the ⏮ ⏭ buttons (or ← →) to skip a paragraph, or pick a chapter from Contents. Uses the voices installed on your device.</p>
-      <p class="hint" id="ttsTip"></p>
-      <div id="nvRow" class="grp" hidden>
-        <p class="hint" id="nvStatus" role="status"></p>
-        <div class="row" style="flex-wrap:wrap;gap:8px"><button class="btn" id="nvAbout">About natural voices</button><button class="btn" id="nvRemove" hidden>Remove downloaded voices</button><a class="btn" href="licences.html" target="_blank" rel="noopener">Licences</a></div>
-      </div>
+      <span class="lbl">Magnifier</span>
+      <div class="seg" id="lensShapes" role="group" aria-label="Magnifier shape"><button data-v="circle">Circle</button><button data-v="rect">Rectangle</button></div>
+      <div class="field"><label for="sLensSize">Size</label><input type="range" id="sLensSize" min="120" max="480" step="10"><output id="oLensSize"></output></div>
+      <div class="field"><label for="sLensZoom">Magnification</label><input type="range" id="sLensZoom" min="1.25" max="5" step="0.25"><output id="oLensZoom"></output></div>
+      <p class="hint">Turn it on with the magnifier button or the M key. Drag its rim to move it, or the dot on the rim to resize it.</p>
+    </div>
+
+    <div class="grp" id="dictGrp">
+      <span class="lbl">Dictionary</span>
+      <p class="hint">Select a word (or double-click it), then choose <strong>Define</strong>. Modern meanings come from WordNet, and older ones from Webster’s 1913 dictionary, for the words in classic books. It works offline once it’s downloaded (about 14 MB, once).</p>
+      <p class="hint" id="dictStatus" role="status"></p>
+      <div class="row" style="flex-wrap:wrap;gap:8px"><button class="btn" id="dictGet">Download the dictionary</button><button class="btn" id="dictRemove" hidden>Remove the dictionary</button></div>
+    </div>
 
     <div class="grp" id="trGrp">
       <span class="lbl">Translate <span class="newtag">Experimental</span></span>
@@ -339,33 +381,8 @@
       <div class="row" style="flex-wrap:wrap;gap:8px"><button class="btn" id="trRemove" hidden>Remove the translation files</button></div>
     </div>
 
-    <div class="grp" id="dictGrp">
-      <span class="lbl">Dictionary</span>
-      <p class="hint">Select a word (or double-click it), then choose <strong>Define</strong>. Modern meanings come from WordNet, and older ones from Webster’s 1913 dictionary, for the words in classic books. It works offline once it’s downloaded (about 14 MB, once).</p>
-      <p class="hint" id="dictStatus" role="status"></p>
-      <div class="row" style="flex-wrap:wrap;gap:8px"><button class="btn" id="dictGet">Download the dictionary</button><button class="btn" id="dictRemove" hidden>Remove the dictionary</button></div>
-    </div>
-    </div>
-
-    <div class="grp">
-      <span class="lbl">Magnifier</span>
-      <div class="seg" id="lensShapes" role="group" aria-label="Magnifier shape"><button data-v="circle">Circle</button><button data-v="rect">Rectangle</button></div>
-      <div class="field"><label for="sLensSize">Size</label><input type="range" id="sLensSize" min="120" max="480" step="10"><output id="oLensSize"></output></div>
-      <div class="field"><label for="sLensZoom">Magnification</label><input type="range" id="sLensZoom" min="1.25" max="5" step="0.25"><output id="oLensZoom"></output></div>
-      <p class="hint">Turn it on with the magnifier button or the M key. Drag its rim to move it, or the dot on the rim to resize it.</p>
-    </div>
-
-    <div class="grp">
-      <span class="lbl">Scroll style</span>
-      <div class="seg" id="styles" role="group" aria-label="Scroll style"><button data-v="cinema">Cinema (free scroll)</button><button data-v="sweep">Page sweep</button><button data-v="pages">Pages</button></div>
-      <label class="check" id="bookRow"><input type="checkbox" id="sBook"> Book layout: keep every line on the same grid</label>
-      <p class="hint" id="styleHint"></p>
-    </div>
-
     <div class="grp">
       <span class="lbl">Motion</span>
-      <label class="check"><input type="checkbox" id="sSmooth"> Smooth motion</label>
-      <p class="hint">Moves the text in fractions of a pixel so it glides instead of stepping. Turn it off if text looks slightly soft while it scrolls.</p>
       <div class="field"><label for="sHz">Refresh rate</label>
         <select id="sHz" class="hzsel">
           <option value="auto" id="hzAuto">Auto</option>
@@ -375,16 +392,7 @@
       <p class="hint">Auto measures your screen. Choose a rate yourself if motion still judders, for example on a monitor that changes its rate.</p>
     </div>
 
-    <div class="grp" id="pdfGroup" hidden>
-      <span class="lbl" id="pgLbl">PDF pages</span>
-      <div class="field"><label for="sPgw">Page width</label><input type="range" id="sPgw" min="30" max="100" step="1"><output id="oPgw"></output></div>
-      <label class="check" id="tintRow"><input type="checkbox" id="sTint"> Tint pages to match the colours above</label>
-      <label class="check" id="trimRow"><input type="checkbox" id="sTrim"> Trim white margins from pages</label>
-      <p class="hint" id="pgHint">Text size, typeface and spacing apply when the PDF is shown as reflowed text.</p>
-      <div class="row pdftools" id="pdfTools" style="flex-wrap:wrap;gap:8px"><button class="btn" id="pdfPrintBtn">Print…</button><button class="btn" id="pdfSaveBtn">Download original</button><button class="btn" id="pdfSaveHlBtn">Download with highlights and marks</button><button class="btn" id="pdfInfoBtn">Document details</button><button class="btn" id="pdfOcrBtn">Recognise text…</button></div>
-    </div>
-
-    <div class="grp">
+    <div class="grp" id="dgKeys">
       <span class="lbl">Shortcuts</span>
       <div class="keys">
         <kbd>Space</kbd> play / pause · tap the text to do the same<br>
@@ -399,6 +407,8 @@
         <kbd>Esc</kbd> close panel, then back to library
       </div>
     </div>
+    </div>
+    </details>
   </aside>
 </div>
 
