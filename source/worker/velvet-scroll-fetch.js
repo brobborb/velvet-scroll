@@ -18,7 +18,9 @@ const HOSTS = ['gutenberg.org', 'gutenberg.net.au', 'e-book.au', 'arxiv.org', 'f
   'ws-export.wmcloud.org', 'archive.org',
   'oapen.org', 'zenodo.org', 'europepmc.org', 'plos.org', 'hal.science', 'archives-ouvertes.fr', 'osf.io',
   // Find details: the book databases and their covers, for any the website can't read directly
-  'openlibrary.org', 'gutendex.com', 'wikidata.org', 'wikimedia.org'];
+  'openlibrary.org', 'gutendex.com', 'wikidata.org', 'wikimedia.org',
+  // references: Crossref, for filling in a DOI's details
+  'crossref.org'];
 const MAX = 300 * 1024 * 1024;
 const allowedHost = h => HOSTS.some(d => h === d || h.endsWith('.' + d));
 

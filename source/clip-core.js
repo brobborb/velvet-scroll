@@ -72,8 +72,8 @@ async function velvetArticle(doc, url, opts){
   try{ if(!site) site = new URL(url).hostname.replace(/^www\./, ''); }catch(e){}
   const title = (parsed.title || doc.title || site || 'Untitled article').trim();
   const byline = (parsed.byline || '').replace(/^by\s+/i, '').trim();
-  let published = '';
-  if(parsed.publishedTime){ const d = new Date(parsed.publishedTime); if(!isNaN(d)) published = d.toLocaleDateString(undefined, {year:'numeric', month:'long', day:'numeric'}); }
+  let published = '', pubIso = '';
+  if(parsed.publishedTime){ const d = new Date(parsed.publishedTime); if(!isNaN(d)){ published = d.toLocaleDateString(undefined, {year:'numeric', month:'long', day:'numeric'}); pubIso = d.toISOString().slice(0, 10); } }
 
   // the article body, with images made absolute and, where the site allows it, copied in for offline reading
   const body = new DOMParser().parseFromString('<div>' + parsed.content + '</div>', 'text/html').body.firstElementChild;
@@ -137,8 +137,8 @@ async function velvetArticle(doc, url, opts){
   const meta = [byline, site, published].filter(Boolean).map(esc).join(' · ');
   const html = '<!doctype html><html lang="' + esc(parsed.lang || doc.documentElement && doc.documentElement.lang || '') + '"><head><meta charset="utf-8">' +
     '<title>' + esc(title) + '</title><meta name="author" content="' + esc(byline || site) + '">' +
-    '<meta name="velvet-kind" content="article"><meta name="velvet-source" content="' + esc(url) + '"><meta name="velvet-site" content="' + esc(site) + '">' +
+    '<meta name="velvet-kind" content="article"><meta name="velvet-source" content="' + esc(url) + '"><meta name="velvet-site" content="' + esc(site) + '">' + (pubIso ? '<meta name="velvet-published" content="' + pubIso + '">' : '') +
     '</head><body><h1>' + esc(title) + '</h1>' + (meta ? '<p><em>' + meta + '</em></p>' : '') + body.innerHTML +
     '<hr><p><a href="' + esc(url) + '">Read the original on ' + esc(site || 'the web') + '</a></p></body></html>';
-  return {html, title, author: byline || site, site, excerpt: (parsed.excerpt || '').slice(0, 300), url, cover, words: text.split(/\s+/).length, copied, images: imgs.length};
+  return {html, title, author: byline || site, site, published: pubIso, excerpt: (parsed.excerpt || '').slice(0, 300), url, cover, words: text.split(/\s+/).length, copied, images: imgs.length};
 }

@@ -476,7 +476,7 @@
       <ul class="results" id="dResults"></ul>
     </div>
     </div>
-    <footer class="sh-foot"><button class="btn" id="dCancel">Cancel</button><button class="btn primary" id="dSave">Save</button></footer>
+    <footer class="sh-foot"><button class="btn" id="dCite">Cite…</button><button class="btn" id="dCancel">Cancel</button><button class="btn primary" id="dSave">Save</button></footer>
   </div>
 </div>
 
@@ -744,6 +744,44 @@
   </div>
 </div>
 
+<div id="refdlg" class="modal" hidden data-type="book">
+  <div class="sheet refsheet" role="dialog" aria-modal="true" aria-labelledby="refH">
+    <header class="sh-head"><h2 id="refH">Cite this</h2><button class="btn" id="refClose">Close</button></header>
+    <div class="refbody">
+      <div class="reffields">
+        <div class="seg" id="refType" role="group" aria-label="Type of source"><button type="button" data-t="book">Book</button><button type="button" data-t="journal">Journal article</button><button type="button" data-t="news">News or magazine</button><button type="button" data-t="web">Web page</button></div>
+        <label for="ref_authors">Authors<input id="ref_authors" autocomplete="off"></label>
+        <p class="hint">Separate authors with semicolons, for example Kelleher, Tom; Edmunds, Mia.</p>
+        <label class="check"><input type="checkbox" id="refOrg"> The author is an organisation</label>
+        <div class="refgrid">
+          <label for="ref_date">Date published<input id="ref_date" autocomplete="off" placeholder="e.g. 3 May 2024"></label>
+          <label for="ref_title" class="wide">Title<input id="ref_title" autocomplete="off"></label>
+          <label for="ref_cont" class="wide"><span id="refContL">Publisher</span><input id="ref_cont" autocomplete="off"></label>
+          <label for="ref_vol" class="rj">Volume<input id="ref_vol" autocomplete="off"></label>
+          <label for="ref_iss" class="rj">Issue<input id="ref_iss" autocomplete="off"></label>
+          <label for="ref_pages" class="rj">Pages<input id="ref_pages" autocomplete="off" placeholder="e.g. 172–188"></label>
+          <label for="ref_ed" class="rb">Edition<input id="ref_ed" autocomplete="off" placeholder="e.g. 2nd"></label>
+          <label for="ref_place" class="rb wide2">Place of publication<input id="ref_place" autocomplete="off" placeholder="e.g. Sydney"></label>
+          <label for="ref_doi" class="rbj wide">DOI<span class="urlrow"><input id="ref_doi" autocomplete="off" spellcheck="false" placeholder="e.g. 10.1111/j.1460-2466.2008.01410.x"><button class="btn" type="button" id="refDoiGo">Fill in from DOI</button></span></label>
+          <label for="ref_url" class="wide">Web address<input id="ref_url" type="url" inputmode="url" autocomplete="off" spellcheck="false"></label>
+          <label for="ref_acc" class="rw wide">Date accessed<span class="urlrow"><input id="ref_acc" autocomplete="off"><button class="btn" type="button" id="refToday">Today</button></span></label>
+        </div>
+        <p class="hint rbj">Fill in from DOI sends only the DOI to Crossref, a public registry of journal articles and books.</p>
+      </div>
+      <div class="refres">
+        <div class="seg" id="refStyle" role="group" aria-label="Referencing style"><button type="button" data-s="apa">APA 7th</button><button type="button" data-s="har">Harvard</button></div>
+        <span class="lbl">Reference list</span>
+        <div class="refout" id="refOut" data-noi18n></div>
+        <span class="lbl">In-text citation</span>
+        <div class="refout refcite" id="refCite" data-noi18n></div>
+        <p class="hint">Check it against your course’s guide, as universities differ in small details. APA uses sentence case for titles: if your source capitalises every word, lower-case all but the first word and names.</p>
+        <p class="hint dplusnote" id="refPlusNote">References are part of Velvet Scroll Plus. Try them here as much as you like; copying one asks for Plus.</p>
+        <p class="hint" id="refSt" role="status"></p>
+      </div>
+    </div>
+    <footer class="sh-foot"><button class="btn" id="refCopyCite">Copy in-text</button><button class="btn" id="refCopy">Copy reference</button><button class="btn primary" id="refDone">Done</button></footer>
+  </div>
+</div>
 <div id="plusDlg" class="modal" hidden>
   <div class="sheet plussheet" role="dialog" aria-modal="true" aria-labelledby="plusH">
     <header class="sh-head"><h2 id="plusH">Velvet Scroll Plus</h2><button class="btn" id="plusClose">Close</button></header>

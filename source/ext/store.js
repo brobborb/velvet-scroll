@@ -31,6 +31,7 @@ async function velvetStoreArticle(a){
     const id = (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
     const meta = {id, title:a.title, author:a.author || '', year:null, isbn:'', added:Date.now(), upd:Date.now(), shelf:'', file:'article.html',
       size:bytes.byteLength, fp: await velvetFingerprint(bytes.buffer), kind:'article', source:a.url, site:a.site || '', excerpt:a.excerpt || '', looked:true};
+    if(a.published) meta.pub = a.published;   // for references: the date the article was published
     const c = a.cover && velvetDataUrlToBuffer(a.cover);
     if(c){ meta.coverBuf = c.buf; meta.coverType = c.type; meta.coverSrc = 'own'; }
     const tx = db.transaction(['meta','files'], 'readwrite');

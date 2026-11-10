@@ -456,7 +456,7 @@ main.wrap{padding-block:20px 48px;display:flex;flex-direction:column;gap:16px}
 .plustag{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:999px;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;background:var(--accent);color:var(--accent-fg);vertical-align:middle}
 /* once Plus is unlocked: the label goes and the star is filled in the accent colour */
 /* the live site before Plus launches (BETA_EXTRAS false): Plus features and the experimental Translate are hidden */
-html.no-extras :is(#plusOpen,#storyGrp,#dStoryRow,#trGrp,#gdGrp,#dJump [data-to="storyGrp"],#pdfOcrBtn,#mOcr,#pdfSaveHlBtn,#mSaveHl,#notesPdf,#notesExport,#dPlusNote,#plusDlg){display:none!important}
+html.no-extras :is(#plusOpen,#storyGrp,#dStoryRow,#trGrp,#gdGrp,#dJump [data-to="storyGrp"],#pdfOcrBtn,#mOcr,#pdfSaveHlBtn,#mSaveHl,#notesPdf,#notesExport,#dPlusNote,#plusDlg,#dCite,#refdlg){display:none!important}
 #plusOpen.on{color:var(--accent)}
 #plusOpen.on svg{fill:currentColor}
 #plusOpen.on #plusLbl{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
@@ -520,6 +520,24 @@ html.ax-hc .dbio{border:2px solid var(--fg)}
 .dprev .seg{flex-direction:column}
 .dprev .seg button{font-size:12.5px;padding:5px 8px}
 #dlg .dplusnote{color:var(--fg)}
+/* references (Plus): fields | the reference, side by side on wide screens */
+#refdlg .sheet{width:min(1100px,100%)}
+.refbody{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:16px 28px;align-items:start}
+@media (max-width:760px){ .refbody{grid-template-columns:minmax(0,1fr)} .refres{order:-1} }   /* phones: the reference first, as it's mostly filled in already */
+@media (max-width:520px){ .refgrid{grid-template-columns:repeat(2,minmax(0,1fr))} }
+.reffields,.refres{display:flex;flex-direction:column;gap:8px;min-width:0}
+.reffields label{display:flex;flex-direction:column;gap:3px;font-size:13px;font-weight:700;color:var(--muted)}
+.reffields label.check{flex-direction:row;align-items:center;gap:8px;font-weight:400;font-size:14px;color:var(--fg)}
+.reffields input:not([type=checkbox]){font:inherit;font-size:15px;font-weight:400;color:var(--fg);padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);min-width:0;width:100%}
+.refgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 10px}
+.refgrid .wide{grid-column:1/-1} .refgrid .wide2{grid-column:span 2}
+.refgrid .urlrow{flex:none}
+#refdlg[data-type="book"] .rj,#refdlg[data-type="journal"] .rb,#refdlg:is([data-type="news"],[data-type="web"]) :is(.rj,.rb,.rbj),#refdlg:is([data-type="book"],[data-type="journal"]) .rw{display:none}
+.refout{padding:12px 14px 12px 2.2em;text-indent:-1.6em;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--fg);font-size:15px;line-height:1.55;overflow-wrap:anywhere;user-select:text;-webkit-user-select:text}
+.refout.refcite{padding-left:14px;text-indent:0}
+.refout a{color:inherit}
+#refdlg .hint{font-size:12.5px;margin:0} #refdlg .dplusnote{color:var(--fg)}
+#dlg #dCite{margin-right:auto}
 .ctile .plustag{margin-left:4px;padding:0 5px;font-size:9px}
 @media (min-width:641px) and (max-width:999px){ #dlg .sheet{width:min(960px,100%)} #dlg .dbody{grid-template-columns:150px minmax(0,1fr)} }
 @media (min-width:1000px) and (min-height:560px){
