@@ -9,7 +9,8 @@
 
    Setting it up (no settings needed): Cloudflare → Workers & Pages → Create → Create Worker → name it
    velvet-scroll-fetch → Deploy → Edit code → replace everything with this file → Deploy.
-   Then its address (https://velvet-scroll-fetch.NAME.workers.dev) goes in FETCHER in source/bookroll.html. */
+   It answers at https://fetch.velvetscroll.net (a Worker route on velvetscroll.net, so the zone's rate limiting rule covers
+   it; the DNS record is an AAAA 100:: placeholder, proxied). That address is FETCHER in source/bookroll.html. */
 
 const ORIGINS = ['https://velvetscroll.net', 'https://www.velvetscroll.net', 'https://brobborb.github.io'];
 const HOSTS = ['gutenberg.org', 'gutenberg.net.au', 'e-book.au', 'arxiv.org', 'fadedpage.com', 'wikisource.org',
