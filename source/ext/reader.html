@@ -19,7 +19,7 @@
     <div class="hdrbtns">
     <nav class="hquiet" aria-label="Library tools">
       <a id="aboutLink" class="qbtn" href="about.html" title="About Velvet Scroll: what it does, the video and the browser extensions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/></svg><span>About</span></a>
-      <button id="find" class="qbtn" hidden title="Look up titles, authors, dates and covers in public databases"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.4-4.4"/><path d="M8.5 9.5h5M8.5 12.5h3"/></svg><span>Find details</span></button>
+      <button id="find" class="qbtn" title="Look up titles, authors, dates and covers in public databases"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.4-4.4"/><path d="M8.5 9.5h5M8.5 12.5h3"/></svg><span>Find details</span></button>
       <button id="apOpen" class="qbtn" title="Appearance: theme, colours and fonts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.2 0 2-.9 2-2 0-.6-.3-1-.6-1.4-.3-.4-.6-.8-.6-1.4 0-1.1.9-2 2-2H17a4 4 0 0 0 4-4c0-4-4-7.2-9-7.2z"/><circle cx="7.5" cy="11" r="1.1"/><circle cx="10" cy="7" r="1.1"/><circle cx="14.5" cy="7" r="1.1"/></svg><span>Appearance</span></button>
       <button id="axOpen" class="qbtn" title="Accessibility: larger text, contrast and motion"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="4.5" r="1.8"/><path d="M5 8.5l7 1.5 7-1.5M12 10v5M12 15l-3 6M12 15l3 6"/></svg><span>Accessibility</span></button>
       <button id="bkOpen" class="qbtn" title="Backup, restore and sync codes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h11.5L20 7.5V19a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/><path d="M8 4v4.5h7V4"/><rect x="7.5" y="13" width="9" height="7"/></svg><span>Backup</span></button>
@@ -621,6 +621,23 @@
     </div>
     <p class="hint" id="ocrDlgSt" role="status"></p>
     <footer class="sh-foot"><a class="btn" href="licences.html" target="_blank" rel="noopener">Licences</a><button class="btn" id="ocrCancel">Not now</button><button class="btn primary" id="ocrGo">Download and start</button></footer>
+  </div>
+</div>
+
+<div id="lkdlg" class="modal" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="lkH">
+    <header class="sh-head"><h2 id="lkH">Find details online</h2><button class="btn" id="lkClose">Close</button></header>
+    <p>Velvet Scroll can look up a book’s title, author, year, genre and cover in public book databases.</p>
+    <div class="grp">
+      <span class="lbl">Before you allow it</span>
+      <ul class="nvinfo">
+        <li><strong>Only the search words are sent:</strong> a book’s title and author, or its ISBN, to Open Library, Wikidata and Project Gutenberg. Never the book itself, your notes or what you read.</li>
+        <li><strong>Some requests pass through velvetscroll.net</strong>, for databases that don’t let websites read them directly. Nothing is stored or logged there.</li>
+        <li><strong>Books you add are looked up too.</strong> Once allowed, new books get their details automatically, but only where the title and author both match.</li>
+      </ul>
+      <p class="hint">Those services handle requests under their own privacy policies.</p>
+    </div>
+    <footer class="sh-foot"><a class="btn" href="privacy.html" target="_blank" rel="noopener">Privacy</a><button class="btn" id="lkCancel">Not now</button><button class="btn primary" id="lkGo">Allow</button></footer>
   </div>
 </div>
 

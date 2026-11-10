@@ -2,6 +2,7 @@
    A Cloudflare Worker. Browsers only let a website download a file from another site if that site allows it, and
    Project Gutenberg, arXiv and similar free libraries don't. So for these few public libraries only, the Velvet Scroll
    website asks this Worker, which downloads the book and passes it straight back.
+   Find details uses it the same way, for book databases and covers the website can't read directly.
    (The browser extensions don't need this: they can download from any site you allow.)
 
    It only fetches from the libraries listed in HOSTS, only for velvetscroll.net and the beta site, only GET, and
@@ -15,7 +16,9 @@
 const ORIGINS = ['https://velvetscroll.net', 'https://www.velvetscroll.net', 'https://brobborb.github.io'];
 const HOSTS = ['gutenberg.org', 'gutenberg.net.au', 'e-book.au', 'arxiv.org', 'fadedpage.com', 'wikisource.org',
   'ws-export.wmcloud.org', 'archive.org',
-  'oapen.org', 'zenodo.org', 'europepmc.org', 'plos.org', 'hal.science', 'archives-ouvertes.fr', 'osf.io'];
+  'oapen.org', 'zenodo.org', 'europepmc.org', 'plos.org', 'hal.science', 'archives-ouvertes.fr', 'osf.io',
+  // Find details: the book databases and their covers, for any the website can't read directly
+  'openlibrary.org', 'gutendex.com', 'wikidata.org', 'wikimedia.org'];
 const MAX = 300 * 1024 * 1024;
 const allowedHost = h => HOSTS.some(d => h === d || h.endsWith('.' + d));
 
